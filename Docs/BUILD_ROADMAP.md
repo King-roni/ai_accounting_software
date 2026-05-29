@@ -4,6 +4,8 @@
 
 This is the authoritative, dependency-ordered plan for the work that remains. Follow it top to bottom. It supersedes the Plane "Stage-3 sub-doc walk" framing — see "How Plane maps to this" at the end.
 
+> **Progress — updated 2026-05-29 (build session 2):** ✅ **Done:** R0.1, R0.2, R0.3, R0.4, R1.1, R1.2, R1.3, R2.1, R2.2, R2.3, R2.4, R2.5 (12 tickets, all verified in-browser). ▶ **Resume at R2.6** (OUT/IN workflows + invoice generator). Remaining: R2.6, R2.7, R2.8, R3, R4. See `Docs/handoff/2026-05-29_session2_frontend_R0_R1_R2.md`. ⚠ session-2 work is **uncommitted**. Test business "Demo Trading Ltd" seeded (login `admin@admin.com`/`admin123`).
+
 ---
 
 ## 1. Verified current state (checked 2026-05-29, not assumed)
