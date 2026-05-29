@@ -6,6 +6,8 @@
 node_modules/
 .claude/
 .playwright-mcp/
+__pycache__/
+*.pyc
 
 # Supabase local
 supabase/.branches/
