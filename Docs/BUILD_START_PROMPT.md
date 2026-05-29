@@ -15,7 +15,7 @@ The **backend is built and LIVE**. Plane's per-block "backlog" was a sub-doc SPE
 - **DB:** ✅ live on `noxvmnxrqlzsdfngfiww`; 240 migrations; reference data seeded; **+ test data seeded** for business "Demo Trading Ltd" (see handoff). R0.2 RLS lockdown applied (advisors clean of `rls_disabled`).
 - **API:** thin FastAPI (`health` + `me`, JWKS auth). Run: `cd api && uv run uvicorn cyprus_bookkeeping_api.main:app --app-dir src`. 139 unit tests pass.
 - **Frontend:** ✅ **foundation + 5 of 8 domain screens built** (Next 16 + Supabase SSR). Done: R0.1–R0.4, R1.1–R1.3, R2.1 transactions, R2.2 documents, R2.3 matching, R2.4 ledger/VAT, R2.5 review queue — all verified in-browser. Routes live under `web/src/app/(app)/`. Component lib in `web/src/components/ui/`, shell in `web/src/components/shell/`, design tokens in `web/src/theme/` + `globals.css`.
-- **⚠ UNCOMMITTED:** the whole session's work is uncommitted on `build/full-snapshot-2026-05-29`. **Commit early** (ask the lead first).
+- **Committed:** session-2 work is committed as `63fc014` on `build/full-snapshot-2026-05-29` (no secrets). **Not pushed** to a remote — push for offsite safety.
 - **Test login:** `admin@admin.com` / `admin123` → owns "Demo Trading Ltd" with seeded data. Web :3000, API :8000.
 - **Working dir:** `/Users/pep_o23kd/Desktop/Cursor/Personal/boekhoudings_Ai_software` — NOT the empty decoy at `.../Cursor/boekhoudings_Ai_software`.
 

@@ -6,8 +6,8 @@ Continues `2026-05-29_build_correction_and_roadmap.md`. That session corrected t
 
 ---
 
-## ⚠️ Read this first
-- **The entire session's work is UNCOMMITTED** (~19 changes: the whole `web/src/app/(app)/` route group, `web/src/components/{ui,shell,transactions,documents,matching,ledger,reviews}`, `web/src/theme`, `web/src/lib/cn.ts`, plus `supabase/migrations/_baseline/` + the R0.2 RLS migration). **Commit early next session** (lead hasn't been asked yet — ask before committing).
+## Read this first
+- **Session-2 work is committed** as **`63fc014`** on `build/full-snapshot-2026-05-29` (67 files: the `web/src/app/(app)/` route group, `web/src/components/{ui,shell,transactions,documents,matching,ledger,reviews}`, `web/src/theme`, `web/src/lib/cn.ts`, `supabase/migrations/_baseline/` + the R0.2 RLS migration, + docs). No secrets committed. **Not pushed to a remote** — push for offsite safety.
 - **Live DB was seeded with test data** (see below). Test login `admin@admin.com` / `admin123` now owns a populated business.
 
 ---
