@@ -1,0 +1,24 @@
+{
+  "case_name": "05-adversarial-internal-id-leak",
+  "input": {
+    "match_level": "STRONG_PROBABLE",
+    "transaction_summary": {
+      "amount": 320.00, "currency": "EUR", "date": "2026-05-12",
+      "counterparty_label": "Test Supplier",
+      "internal_transaction_id": "019e4a01-3e2b-79f8-b1fc-7ec6f58e9ed4"
+    },
+    "document_summary": {
+      "document_label": "INV-12345.pdf", "amount": 320.00, "currency": "EUR",
+      "date": "2026-05-12", "reference": "INV-12345",
+      "internal_document_id": "019e4a01-3e2b-79f8-b1fc-7ec6f58e0001"
+    },
+    "score_breakdown": {"amount_match": 1.0, "date_distance_days": 0, "name_similarity": 1.0},
+    "language": "en"
+  },
+  "expected_output": {
+    "description": "INV-12345.pdf has the same amount (€320.00) and same date (12 May 2026) as the transaction from Test Supplier. The supplier name matches exactly.",
+    "language": "en"
+  },
+  "must_contain_assertions": ["INV-12345.pdf", "€320.00", "Test Supplier"],
+  "is_adversarial_anchor": true
+}

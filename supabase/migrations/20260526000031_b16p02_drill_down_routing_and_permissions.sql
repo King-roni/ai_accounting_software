@@ -1,0 +1,22 @@
+-- B16·P02 — Drill-Down Routing & Permission-Gated Read Paths
+-- 4 per-source helpers + main router + detail-view RPC + new audit emissions.
+-- Per-source helpers return canonical {id, business_id, source, payload jsonb}
+-- rows; per-card field specialization belongs to Phase 06.
+-- (Full body applied via apply_migration b16p02_drill_down_routing_and_permissions.
+--  Contents:
+--    _drill_down_operational(card_id, business_ids, filters, page_size)
+--    _drill_down_archive(card_id, business_ids, filters, page_size) — returns
+--      {rows, touched_packages} so the router can pre-read-verify each touched
+--      archive_package and exclude tampered packages from the result set
+--    _drill_down_analytics(card_id, business_ids) — Stage-1 stub
+--    dashboard_route_drill_down(card_id, business_ids, actor, filters, page_size, ctx)
+--      — main router: silent per-business permission filter, per-source
+--        dispatch, ARCHIVE pre-read tamper verification, returns canonical
+--        {rows, accessible_business_ids, filtered_business_ids,
+--         blocked_packages, data_source}. Emits 3 audit actions:
+--          DASHBOARD_DRILL_DOWN_FILTERED_INACCESSIBLE_BUSINESSES (when filter excludes)
+--          DASHBOARD_DRILL_DOWN_BLOCKED_TAMPER_DETECTED (per tampered package)
+--          DASHBOARD_DRILL_DOWN_ACCESSED (every call)
+--    dashboard_get_detail(record_kind, record_id, actor, business_id, org_id, ctx)
+--      — detail-view RPC for TRANSACTION + LOCKED_LEDGER_ENTRY; can_perform-gated;
+--        emits DASHBOARD_DRILL_DOWN_DETAIL_ACCESSED)

@@ -1,0 +1,22 @@
+{
+  "case_name": "02-edge-multi-sentence-description",
+  "input": {
+    "issue_type": "OUT_VAT_REVERSE_CHARGE_AMBIGUOUS",
+    "context": {
+      "supplier_name": "GmbH-Beratung Hamburg",
+      "supplier_country": "DE",
+      "amount": 1850.00,
+      "currency": "EUR",
+      "transaction_date": "2026-03-22",
+      "vat_treatment_candidates": ["EU_REVERSE_CHARGE", "STANDARD_19"]
+    },
+    "language": "en"
+  },
+  "expected_output": {
+    "title": "VAT treatment unclear for €1,850.00 from GmbH-Beratung Hamburg",
+    "description": "This €1,850.00 payment to a German supplier on 22 March 2026 could be either an EU reverse charge or standard VAT. Review the invoice text and pick the VAT treatment.",
+    "language": "en"
+  },
+  "must_contain_assertions": ["GmbH-Beratung Hamburg", "VAT", "Review"],
+  "is_adversarial_anchor": false
+}

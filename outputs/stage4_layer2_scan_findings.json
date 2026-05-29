@@ -1,0 +1,123 @@
+{
+  "scan_date": "2026-05-15",
+  "corpus_size": 173,
+  "findings_count": 14,
+  "blocking_count": 1,
+  "high_count": 2,
+  "medium_count": 9,
+  "low_count": 2,
+  "findings": [
+    {
+      "id": 1,
+      "severity": "BLOCKING",
+      "category": "ENUM_DRIFT",
+      "file": "Docs/sub/policies/soft_delete_vs_status_policy.md",
+      "description": "Lines 15 and 108 apply the terminal state value 'COMPLETED' to workflow runs. The canonical run_status_enum (defined in workflow_run_schema.md and workflow_state_enum.md) does not contain COMPLETED; the correct terminal success state for a workflow run is FINALIZED. COMPLETED is only valid for phase_states and tool_invocations, not for workflow_runs.",
+      "fix": "Replace 'COMPLETED' with 'FINALIZED' in the references to workflow_runs terminal states (line 15: change `COMPLETED, FAILED, CANCELLED` to `FINALIZED, FAILED, CANCELLED`; line 108: change 'A workflow_run reaching COMPLETED' to 'A workflow_run reaching FINALIZED'). Add a clarifying note that COMPLETED is valid only for phase_states and tool_invocation status columns, not for the run_status_enum."
+    },
+    {
+      "id": 2,
+      "severity": "HIGH",
+      "category": "NAMING_VIOLATION",
+      "file": "Docs/sub/schemas/gate_function_library_schema.md",
+      "description": "The schema states that gate function names follow the tool_naming_convention_policy with 'the block short-name prefix drawn from the allowlist', yet every example and the sole registered set of gate names all use 'gate' as the first segment (e.g., gate.out.ingestion_complete, gate.finalization.approval_recorded). 'gate' does not appear in the tool_naming_convention_policy block short-name allowlist (which is: auth, engine, data, security, ai, intake, classification, matching, ledger, out_workflow, in_workflow, review_queue, archive, report). Additionally, the naming pattern is three parts (<name>.<context>.<descriptor>) which diverges from the two-part pattern mandated by tool_naming_convention_policy (<block_short_name>.<action>).",
+      "fix": "Either (a) add 'gate' to the block short-name allowlist in tool_naming_convention_policy with a decisions_log amendment ratifying the 3-part gate naming convention as an intentional exception for gate functions, OR (b) update the gate_function_library_schema to remove the incorrect claim that gate names follow tool_naming_convention_policy's allowlist and document the 3-part convention as a distinct gate-specific standard. The CHECK constraint (3-part regex) is correct; only the prose needs fixing."
+    },
+    {
+      "id": 3,
+      "severity": "HIGH",
+      "category": "DUPLICATE_DEFINITION",
+      "file": "Docs/sub/schemas/workflow_approval_schema.md; Docs/sub/policies/human_review_approval_staleness_policy.md",
+      "description": "CREATE TABLE workflow_run_approvals is defined in two separate sub-docs with divergent column sets. workflow_approval_schema.md (the canonical Layer 2 definition) includes: approval_id, workflow_run_id, approved_by_user_id, approval_method, approval_context, approved_at, step_up_token_id, is_stale, stale_reason, revoked_by_user_id, revoked_at. human_review_approval_staleness_policy.md contains a different definition with: id, workflow_run_id, approved_by_user_id, approved_at, data_state_hash, data_state_summary_json, revoked_at, revoked_reason — omitting approval_method, step_up_token_id, is_stale, stale_reason, revoked_by_user_id, and using 'id' instead of 'approval_id'. These two definitions are irreconcilably different.",
+      "fix": "Remove the full CREATE TABLE block from human_review_approval_staleness_policy.md and replace it with a reference to workflow_approval_schema.md as the canonical source. The staleness policy should only show the staleness-relevant columns (data_state_hash, is_stale, stale_reason) as an excerpt with a comment noting the full table definition is in workflow_approval_schema.md."
+    },
+    {
+      "id": 4,
+      "severity": "MEDIUM",
+      "category": "DUPLICATE_DEFINITION",
+      "file": "Docs/sub/schemas/archive_schema.md; Docs/sub/schemas/locked_ledger_entries_schema.md",
+      "description": "CREATE TABLE archive.locked_ledger_entries is defined in two sub-docs. locked_ledger_entries_schema.md is the declared canonical Layer 2 source with a full column set. archive_schema.md (a Layer 1 cross-block schema) contains a divergent partial definition: it omits many columns present in the canonical schema (organization_id, transaction_id, invoice_id, entry_type, debit/credit_account_code, amount, currency, vat fields, tax period fields, chart_version_id) and has a different CHECK constraint structure. The comment '-- Full structure mirrors operational' in archive_schema.md suggests it was meant to be a placeholder, but it still contains a runnable CREATE TABLE statement.",
+      "fix": "Replace the CREATE TABLE archive.locked_ledger_entries block in archive_schema.md with a prose reference to locked_ledger_entries_schema.md as the canonical Layer 2 source. Retain only a summary comment in archive_schema.md explaining that the table lives in the archive schema; the full definition is in locked_ledger_entries_schema.md."
+    },
+    {
+      "id": 5,
+      "severity": "MEDIUM",
+      "category": "CONSTRAINT_INCONSISTENCY",
+      "file": "Docs/sub/policies/step_up_validity_window_policy.md; Docs/sub/schemas/workflow_approval_schema.md",
+      "description": "The step_up_tokens table in step_up_validity_window_policy.md uses gen_uuid_v7() for its primary key 'id', which is the token value passed to clients. workflow_approval_schema.md (line 92) states: 'UUID v4 is mandated here (not v7) because step-up token IDs are security-sensitive' and cites 'data_layer_conventions_policy exception table: Step-up token IDs use UUID v4.' However, that exact text does not appear in data_layer_conventions_policy.md, which only lists session IDs, password reset tokens, invitation tokens, and OAuth state nonces as UUID v4 exceptions. This creates a three-way inconsistency: the policy, the step_up_tokens schema, and the workflow_approval_schema all disagree.",
+      "fix": "Align all three documents: (1) Add 'Step-up token IDs' to the UUID v4 exception table in data_layer_conventions_policy.md with rationale (security-sensitive credential, time-prefix leaks token creation time); (2) Update step_up_validity_window_policy.md to use gen_random_uuid() instead of gen_uuid_v7() for step_up_tokens.id; (3) Update workflow_approval_schema.md to cite the corrected data_layer_conventions_policy exception. All three changes should land in the same PR with a decisions_log amendment."
+    },
+    {
+      "id": 6,
+      "severity": "MEDIUM",
+      "category": "TAXONOMY_GAP",
+      "file": "Docs/sub/schemas/in_monthly_type_definition.md",
+      "description": "Line 97 uses 'STATEMENT_INGESTION_COMPLETED' as the event_type for the IN_MONTHLY event-driven trigger subscription. This event name does not appear anywhere in audit_event_taxonomy.md. The comment in the file states the outer subscription is to STATEMENT_UPLOAD_COMPLETED, but declares a separate inner coordination event STATEMENT_INGESTION_COMPLETED. Since the trigger_events_processed_schema stores event_type values as audit-event names, this event either needs to be added to the taxonomy or the trigger should use an already-catalogued event.",
+      "fix": "Either (a) add STATEMENT_INGESTION_COMPLETED to audit_event_taxonomy.md under the STATEMENT/INTAKE domain and define its emission site and payload, or (b) change the trigger in in_monthly_type_definition.md to use the already-catalogued STATEMENT_UPLOAD_COMPLETED (or another existing event) and update the shared_phase_coordination_policy to document how the inner IN_MONTHLY trigger fires after INGESTION completes without introducing a new event name."
+    },
+    {
+      "id": 7,
+      "severity": "MEDIUM",
+      "category": "TAXONOMY_GAP",
+      "file": "Docs/sub/schemas/in_monthly_type_definition.md",
+      "description": "Line 180 states that audit events IN_WORKFLOW_TYPE_REGISTERED, IN_WORKFLOW_RUN_STARTED_MANUALLY, IN_WORKFLOW_RUN_STARTED_BY_EVENT, and IN_WORKFLOW_RUN_REJECTED_PERIOD_FINALIZED 'exist in audit_event_taxonomy'. None of these four event names appear in audit_event_taxonomy.md. The taxonomy contains IN_WORKFLOW_CONFIG_INITIALIZED, IN_WORKFLOW_CONFIG_UPDATED, IN_WORKFLOW_AUTO_START_SUPPRESSED, and IN_WORKFLOW_RUN_REJECTED_RETENTION_EXPIRED but not the four claimed events.",
+      "fix": "Add the four missing events to audit_event_taxonomy.md under the IN_WORKFLOW domain (Block 13), or correct the in_monthly_type_definition.md to reference only the events that actually exist in the taxonomy. If IN_WORKFLOW_RUN_STARTED_MANUALLY and IN_WORKFLOW_RUN_STARTED_BY_EVENT are conceptually covered by IN_WORKFLOW_RUN_CREATED, document that mapping explicitly."
+    },
+    {
+      "id": 8,
+      "severity": "MEDIUM",
+      "category": "TAXONOMY_GAP",
+      "file": "Docs/sub/runbooks/live_integration_test_runbook.md",
+      "description": "The Audit events section declares five events under a 'LIVE_TEST' domain: LIVE_TEST_RUN_STARTED, LIVE_TEST_RUN_COMPLETED, LIVE_TEST_BUDGET_EXCEEDED, LIVE_TEST_DRIFT_DETECTED, and INTEGRATION_REPLAY_NO_MATCH. None of these events appear in audit_event_taxonomy.md. Furthermore, the LIVE_TEST domain is not present in the audit_log_policies.md domain allowlist, making this both a taxonomy gap and a domain allowlist violation.",
+      "fix": "Add the LIVE_TEST domain to the audit_log_policies.md domain allowlist with a decisions_log amendment, and add the five LIVE_TEST events to audit_event_taxonomy.md under a new LIVE_TEST section. Alternatively, map LIVE_TEST events to an existing approved domain (e.g., under AI or WORKFLOW) if that is architecturally appropriate. The INTEGRATION_REPLAY_NO_MATCH event name should also be reviewed to confirm it follows the <DOMAIN>_<PAST_VERB> naming convention."
+    },
+    {
+      "id": 9,
+      "severity": "MEDIUM",
+      "category": "POLICY_VIOLATION",
+      "file": "Docs/sub/tools/tool_credit_note_ledger_mapping.md",
+      "description": "This tool declares side_effect_class: [WRITES_RUN_STATE, WRITES_AUDIT] (ledger.prepare_credit_note_entries) but contains no reference to mobile_write_rejection_endpoints.md. Per the policy requirement, any sub-doc defining a write operation (including tools with WRITES_* side-effect class) must note that mobile clients are rejected.",
+      "fix": "Add a 'Mobile policy' section or inline note stating that this tool is rejected for mobile clients per mobile_write_rejection_endpoints.md. Reference the policy doc in the ## Cross-references section."
+    },
+    {
+      "id": 10,
+      "severity": "MEDIUM",
+      "category": "POLICY_VIOLATION",
+      "file": "Docs/sub/tools/tool_invoice_lifecycle_integration.md",
+      "description": "This tool declares side_effect_class: [WRITES_RUN_STATE, WRITES_AUDIT] (matching.apply_income_outcome) but contains no reference to mobile_write_rejection_endpoints.md. Per the policy requirement, any sub-doc defining a write operation must note that mobile clients are rejected.",
+      "fix": "Add a 'Mobile policy' section or inline note stating that this tool is an internal engine tool whose upstream entry points are all mobile-rejected per mobile_write_rejection_endpoints.md. Reference the policy doc in the ## Cross-references section."
+    },
+    {
+      "id": 11,
+      "severity": "MEDIUM",
+      "category": "POLICY_VIOLATION",
+      "file": "Docs/sub/tools/tool_vendor_memory_writeback.md; Docs/sub/tools/tool_vendor_memory_increment.md",
+      "description": "Both tools (classification.writeback_vendor_memory and classification.increment_vendor_memory_confirmation) declare side_effect_class: [WRITES_RUN_STATE, WRITES_AUDIT] but neither references mobile_write_rejection_endpoints.md. Per policy, write-surface sub-docs must include this reference.",
+      "fix": "Add a mobile policy note and ## Cross-references entry for mobile_write_rejection_endpoints.md in both files. Note that these are internal engine tools invoked during workflow execution, with mobile write rejection enforced at the upstream user-facing entry points."
+    },
+    {
+      "id": 12,
+      "severity": "MEDIUM",
+      "category": "CONSTRAINT_INCONSISTENCY",
+      "file": "Docs/sub/schemas/workflow_approval_schema.md",
+      "description": "Line 92 states: 'Per data_layer_conventions_policy exception table: Step-up token IDs use UUID v4.' This specific text — 'Step-up token IDs use UUID v4' — does not appear in data_layer_conventions_policy.md. The policy's UUID v4 exception table lists session IDs, password reset tokens, invitation tokens, and OAuth state nonces, but does not mention step-up token IDs. The claim is a false cross-reference.",
+      "fix": "Either (a) add 'Step-up token IDs' to the UUID v4 exception table in data_layer_conventions_policy.md (correct fix, see finding 5), or (b) update workflow_approval_schema.md to justify the UUID v4 choice with the general catch-all 'Anything where seeing creation time leaks security-relevant info' clause from the policy rather than citing a non-existent specific entry."
+    },
+    {
+      "id": 13,
+      "severity": "LOW",
+      "category": "FORWARD_REF_UNRESOLVED",
+      "file": "Docs/sub/schemas/out_adjustment_type_definition.md",
+      "description": "Line 151 and line 206 mark adjustment_record_schema as a 'forward reference, not yet written': 'defined in adjustment_record_schema — forward reference, not yet written'. The file Docs/sub/schemas/adjustment_record_schema.md now exists, making the forward-reference note stale.",
+      "fix": "Remove the '— forward reference, not yet written' qualifier from lines 151 and 206 in out_adjustment_type_definition.md. Update the reference to a standard cross-reference to adjustment_record_schema.md."
+    },
+    {
+      "id": 14,
+      "severity": "LOW",
+      "category": "FORWARD_REF_UNRESOLVED",
+      "file": "Docs/sub/schemas/in_adjustment_type_definition.md",
+      "description": "Line 150 and line 190 mark adjustment_record_schema as a 'forward reference, not yet written'. The file Docs/sub/schemas/adjustment_record_schema.md now exists, making the forward-reference note stale.",
+      "fix": "Remove the '— forward reference, not yet written' qualifier from lines 150 and 190 in in_adjustment_type_definition.md. Update the reference to a standard cross-reference to adjustment_record_schema.md."
+    }
+  ]
+}

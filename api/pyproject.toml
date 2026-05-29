@@ -1,0 +1,41 @@
+[project]
+name = "cyprus-bookkeeping-api"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "king-roni", email = "pepvanerptk@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.136.1",
+    "httpx>=0.28.1",
+    "pydantic>=2",
+    "pydantic-settings>=2.14.1",
+    "python-jose[cryptography]>=3.5.0",
+    "supabase>=2.30.0",
+    "uvicorn[standard]>=0.47.0",
+]
+
+[project.scripts]
+cyprus-bookkeeping-api = "cyprus_bookkeeping_api:main"
+
+[build-system]
+requires = ["uv_build>=0.9.8,<0.10.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "mypy>=2.1.0",
+    "pytest>=9.0.3",
+    "pytest-asyncio>=1.3.0",
+    "ruff>=0.15.13",
+]
+
+[tool.pytest.ini_options]
+# src-layout project: ensure pytest sees the package even when the
+# editable install's .pth lookup is skipped (uv_build writes the .pth
+# without a trailing newline in some flows, which Python's site.py can
+# silently ignore).
+pythonpath = ["src"]
+testpaths = ["tests"]

@@ -1,0 +1,16 @@
+-- B16·P09 — Export Pipelines & Format Dispatcher
+-- 2 new enums + 2 new tables (export_catalogue_definitions seeded with 13 rows
+-- + exports per-request job log) + 4 RPCs (request_export, mark_export_completed,
+-- mark_export_failed, record_export_download).
+-- (Full body applied via apply_migration b16p09_exports_dispatcher.
+--  Net deliverables:
+--    enums: export_format_enum (CSV/XLSX/PDF/JSON/XML/ZIP) +
+--           export_status_enum (PENDING/RUNNING/COMPLETED/FAILED)
+--    tables: export_catalogue_definitions (13 seed rows) + exports (per-request
+--            job log with RLS own-business SELECT + no writes from authenticated)
+--    RPCs: request_export — permission gate via can_perform + format-validity
+--          gate via supported_formats array membership + data-hash idempotency
+--          dedup; mark_export_completed/failed lifecycle helpers; record_export_download
+--    audits: EXPORT_REQUESTED (cached:bool flag) + EXPORT_REQUEST_REJECTED_PERMISSION
+--            + EXPORT_REQUEST_REJECTED_INVALID_FORMAT + EXPORT_COMPLETED +
+--            EXPORT_FAILED + EXPORT_DOWNLOADED (EXPORT domain))

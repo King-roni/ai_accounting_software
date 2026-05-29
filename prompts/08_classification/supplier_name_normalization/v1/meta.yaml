@@ -1,0 +1,23 @@
+prompt_id: classification.supplier_name_normalization
+version: 1.0.0
+purpose: |
+  Normalize a raw supplier name (as it appears on a bank line, invoice header,
+  or receipt) into a canonical display-ready form. Handles trim, whitespace
+  collapse, conservative trailing-period rules, and legal-form-suffix casing.
+ai_tier: EXTERNAL_LLM
+input_schema:
+  type: object
+  required: [raw]
+  properties:
+    raw:
+      type: string
+      description: Raw supplier-name string from the source document.
+  additionalProperties: false
+output_schema:
+  type: object
+  required: [n]
+  properties:
+    n:
+      type: string
+      description: Normalized supplier name.
+  additionalProperties: false

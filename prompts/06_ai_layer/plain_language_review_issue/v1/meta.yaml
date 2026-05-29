@@ -1,0 +1,39 @@
+prompt_id: ai_layer.plain_language.review_issue
+version: 1.0.0
+purpose: |
+  Render a user-facing (title, description) pair for a review-queue issue card.
+  Tier 2 by default; calling phase can request Tier 3 via options.preferred_tier
+  for complex cases (multi-linked records, unusual VAT treatments).
+ai_tier: LOCAL_LLM
+input_schema:
+  type: object
+  required: [issue_type, context, language]
+  properties:
+    issue_type:
+      type: string
+      description: Internal enum code (e.g. OUT_EXPENSE_NO_INVOICE). The model
+        MUST NOT echo it.
+    context:
+      type: object
+      description: Structured transaction context (supplier name, amount,
+        currency, date, related record ids).
+    language:
+      type: string
+      enum: [en]
+      description: Target language. MVP supports en only; cache key includes
+        this so future locales don't collide.
+  additionalProperties: false
+output_schema:
+  type: object
+  required: [title, description, language]
+  properties:
+    title:
+      type: string
+      description: Single line, max 80 characters, no trailing punctuation.
+    description:
+      type: string
+      description: 1-3 sentences, max 300 characters, last sentence is an action.
+    language:
+      type: string
+      enum: [en]
+  additionalProperties: false

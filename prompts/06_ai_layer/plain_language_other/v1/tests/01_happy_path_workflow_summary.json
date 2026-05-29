@@ -1,0 +1,22 @@
+{
+  "case_name": "01-happy-path-workflow-summary",
+  "input": {
+    "context_kind": "WORKFLOW_SUMMARY",
+    "structured_data": {
+      "workflow_type": "OUT_MONTHLY",
+      "period_start": "2026-03-01",
+      "period_end": "2026-03-31",
+      "transaction_count": 142,
+      "review_issue_count": 3,
+      "status": "AWAITING_APPROVAL"
+    },
+    "language": "en"
+  },
+  "expected_output": {
+    "title": "March 2026 expense run is ready for review",
+    "description": "We processed 142 expense transactions for March 2026 and surfaced 3 review issues. Open the review queue and resolve the items to finalize the month.",
+    "language": "en"
+  },
+  "must_contain_assertions": ["March 2026", "142", "3 review issues"],
+  "is_adversarial_anchor": false
+}

@@ -1,0 +1,21 @@
+{
+  "case_name": "01-happy-path-missing-invoice",
+  "input": {
+    "issue_type": "OUT_EXPENSE_NO_INVOICE",
+    "context": {
+      "supplier_name": "Acme Ltd",
+      "amount": 450.00,
+      "currency": "EUR",
+      "transaction_date": "2026-04-15",
+      "bank_reference": "ACME-INV-042"
+    },
+    "language": "en"
+  },
+  "expected_output": {
+    "title": "Missing invoice for €450.00 payment to Acme Ltd",
+    "description": "We could not find an invoice for the €450.00 payment to Acme Ltd on 15 April 2026. Upload the invoice or mark this as a personal expense to continue.",
+    "language": "en"
+  },
+  "must_contain_assertions": ["Acme Ltd", "Upload the invoice"],
+  "is_adversarial_anchor": false
+}

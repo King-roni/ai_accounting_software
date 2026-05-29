@@ -1,0 +1,16 @@
+{
+  "case_name": "01-happy-path-exact-match",
+  "input": {
+    "match_level": "EXACT",
+    "transaction_summary": {"amount": 450.00, "currency": "EUR", "date": "2026-04-15", "counterparty_label": "Acme Ltd"},
+    "document_summary": {"document_label": "Invoice INV-2026-042", "amount": 450.00, "currency": "EUR", "date": "2026-04-15", "reference": "INV-2026-042"},
+    "score_breakdown": {"amount_match": 1.0, "date_distance_days": 0, "name_similarity": 1.0},
+    "language": "en"
+  },
+  "expected_output": {
+    "description": "Invoice INV-2026-042 from Acme Ltd has the same amount (€450.00) and same date (15 April 2026) as the transaction. The supplier name matches exactly.",
+    "language": "en"
+  },
+  "must_contain_assertions": ["Invoice INV-2026-042", "€450.00", "Acme Ltd"],
+  "is_adversarial_anchor": false
+}

@@ -1,0 +1,198 @@
+# Cyprus VAT Compliance Guide
+
+**Block:** ledger  
+**Layer:** 2 — Sub-Doc  
+**Status:** Draft
+
+## Overview
+
+This guide covers Cyprus VAT obligations as they apply within the bookkeeping system. It is intended for accountants configuring VAT settings, preparing VAT returns, and advising clients. It does not replace professional tax advice. References to legal provisions are to the Cyprus VAT Law (N. 95(I)/2000) as amended.
+
+---
+
+## VAT Registration Requirements
+
+A Cyprus business must register for VAT if:
+
+- Taxable turnover exceeds **EUR 15,600** in any 12-month rolling period (compulsory registration threshold as at 2026).
+- The business makes intra-EU acquisitions of goods exceeding **EUR 10,251.61** in a calendar year.
+- The business receives services from abroad that are subject to reverse charge and are VATable in Cyprus.
+- Voluntary registration is available below the threshold if the business makes taxable supplies.
+
+Registration is made via the Tax Department's TaxisNet portal. Once registered, the business is issued a VAT registration number (see format below).
+
+In the system, the VAT registration number is stored in `business_entities.vat_number`. The field is validated against the format described in the next section before the entity is marked `vat_registered = true`.
+
+---
+
+## VAT Number Format
+
+Cyprus VAT numbers follow this pattern:
+
+```
+CY + 8 digits + L
+```
+
+Examples:
+- `CY10099887L`
+- `CY00012345L`
+
+The 8-digit body is assigned by the Tax Department. The trailing `L` is a fixed literal, not a checksum. In VIES lookups, Cyprus VAT numbers are represented without leading spaces and with the `CY` prefix.
+
+The system validates the format on input using the regex: `^CY\d{8}L$`.
+
+---
+
+## VAT Rates
+
+### Standard Rate
+
+| Rate | Applies to |
+|---|---|
+| **19%** | All goods and services not listed under reduced or zero rates |
+
+### Reduced Rates
+
+| Rate | Applies to |
+|---|---|
+| **9%** | Hotel accommodation; provision of food and beverages in restaurants and cafes; transport of passengers |
+| **5%** | Books, newspapers, magazines; food products for human consumption (not restaurant-prepared); pharmaceutical products; admission to cultural events, museums, zoos |
+
+### Zero Rate (0%)
+
+Zero-rated supplies include:
+
+- Export of goods outside the EU.
+- International transport services.
+- Supplies within Cyprus that qualify as deemed exports under specific provisions.
+- Intra-EU supplies of goods to VAT-registered buyers in other EU member states.
+
+Zero-rated is distinct from exempt. Zero-rated supplies are taxable at 0%; the business can still recover input VAT on related costs. Exempt supplies are outside the VAT system; input VAT on costs related to exempt supplies is generally not recoverable.
+
+### Exempt Supplies
+
+Common exempt categories: financial services, insurance, residential property rental, educational services by approved bodies. Exempt supplies are not reported in VAT return boxes 1A–1C or Box 8; they are reported in Box 9.
+
+---
+
+## VAT Rate Configuration in the System
+
+Each `transaction` row holds a `vat_rate` field. The classification engine (`tool_classify`) assigns a default rate based on the `classification_code` and the `vendor_master` VAT rate override. Accountants can manually override the rate on individual transactions via the Transaction Detail page.
+
+The system does not enforce split accounting for partial-exempt businesses automatically. If a business makes both taxable and exempt supplies, the accountant must configure the partial exemption method in `business_entities.vat_partial_exemption_method`. The `tool_vat_calc` tool will then apply the appropriate recovery restriction.
+
+---
+
+## Filing Frequency
+
+Cyprus VAT returns are filed either quarterly or monthly.
+
+| Frequency | Who | Threshold / rule |
+|---|---|---|
+| **Quarterly** | Most businesses | Default for businesses below the monthly threshold |
+| **Monthly** | Businesses in a VAT refund position consistently | Can request monthly filing to reclaim input VAT faster |
+
+Filing frequency is stored in `business_entities.vat_filing_frequency` (`QUARTERLY` or `MONTHLY`). Changing filing frequency requires updating this field and notifying the Tax Department.
+
+---
+
+## Filing Deadlines
+
+Deadlines are driven by `business_entities.vat_filing_frequency`:
+
+| Period | Deadline |
+|---|---|
+| Q1 (Jan–Mar) | 10 April |
+| Q2 (Apr–Jun) | 10 July |
+| Q3 (Jul–Sep) | 10 October |
+| Q4 (Oct–Dec) | 10 January (following year) |
+| Monthly (any month M) | 10th of month M+1 |
+
+If the 10th falls on a weekend or public holiday, the deadline moves to the next business day. The system calculates `vat_returns.filing_deadline` using this rule at the time the VAT return row is created.
+
+Overdue VAT returns (past `filing_deadline` and `status != PAID`) trigger an `overdue_invoice` notification (type: `system_alert`) to the assigned accountant and business admin.
+
+---
+
+## VAT Return Generation
+
+The VAT return is generated by the `tool_vat_calc` engine tool, which runs as part of the standard workflow after the ledger posting phase.
+
+### Process
+
+1. `tool_vat_calc` reads all `transactions` for the `workflow_run`'s period with `classification_status = CLASSIFIED`.
+2. It aggregates output VAT by rate into box values (Box 1A, 1B, 1C).
+3. It identifies intra-EU acquisitions and reverse-charge transactions and populates Box 2 and Box 4.
+4. It identifies zero-rated exports and populates Box 8.
+5. It aggregates input VAT from purchases and allocates between Box 4 and Box 5.
+6. It calculates Box 3 (total output), Box 6 (total input), and Box 7 (net payable or refundable).
+7. A `vat_returns` row is created with `status = DRAFT`.
+8. An audit event `vat_calc.tool_invoked` is written to `audit_log`.
+
+The `vat_return_schema` defines the full output format. See `/sub/schemas/vat_return_schema.md`.
+
+---
+
+## VIES Reporting Obligations
+
+VIES (VAT Information Exchange System) reports are required for:
+
+- Intra-EU supplies of goods to VAT-registered buyers in other EU member states where the value in a calendar quarter exceeds the reporting threshold (currently EUR 0 — all intra-EU supplies must be reported).
+- Intra-EU supplies of services where the recipient is a business (B2B) and the place of supply is the buyer's country.
+
+VIES submissions in Cyprus are quarterly, with the same deadline as the VAT return (10th of month following quarter end).
+
+The system creates `vies_entries` rows for each qualifying transaction. The `tool_vat_calc` tool populates these automatically based on `transactions.transaction_type = 'INTRA_EU_SUPPLY'` or `INTRA_EU_ACQUISITION`. The VIES submission report is generated separately from the VAT return.
+
+VIES submissions are currently exported as a structured XML file compatible with the Cyprus Tax Department's TaxisNet portal. See `/sub/ui/vies_submission_ui_spec.md`.
+
+---
+
+## Intra-EU Acquisitions
+
+When a Cyprus VAT-registered business purchases goods from a VAT-registered supplier in another EU member state, the acquisition is subject to VAT under the reverse charge:
+
+- The Cyprus buyer self-assesses VAT at the Cyprus standard rate (19%) on the value of the acquisition.
+- The output self-assessed VAT is reported in **Box 2** and **Box 4**.
+- The same VAT is recoverable as input VAT (reported in **Box 4**) for businesses with full VAT recovery.
+- The net effect is typically zero for fully-taxable businesses.
+
+---
+
+## Reverse Charge Mechanism
+
+Services received from foreign suppliers (both EU and non-EU) where the place of supply is Cyprus are subject to reverse charge:
+
+- The Cyprus recipient accounts for VAT on the supply as if they were the supplier.
+- Output tax: reported in **Box 2**.
+- Input tax (if recoverable): reported in **Box 4** or **Box 5** depending on implementation.
+
+Common examples: cloud software subscriptions from US/EU vendors, legal services from foreign firms, consulting services from non-established providers.
+
+In the system, reverse-charge transactions are identified by `transactions.vat_treatment = 'REVERSE_CHARGE'`. The classification engine sets this flag based on vendor country and service type rules.
+
+---
+
+## Submission to Cyprus Tax Department
+
+Currently, VAT returns are submitted via manual portal upload:
+
+1. From the Run Detail page, navigate to the VAT Return tab.
+2. Click "Export for TaxisNet" to download the completed return as an XML file.
+3. Log in to the Cyprus Tax Department TaxisNet portal (taxisnet.mof.gov.cy).
+4. Navigate to VAT Returns and upload the XML file.
+5. Note the submission reference number and enter it in the system's VAT return record (`vat_returns.submission_reference`). This updates `vat_returns.status` to `SENT`.
+
+Direct API submission to TaxisNet is not currently available. The system will integrate with TaxisNet when a public API is made available by the Cyprus Tax Department.
+
+---
+
+## Related Documents
+
+- `/sub/schemas/vat_return_schema.md` — `vat_returns` table and box mapping
+- `/sub/tools/tool_vat_calc.md` — VAT calculation tool specification
+- `/sub/ui/settings_vat_ui_spec.md` — VAT settings configuration in the UI
+- `/sub/ui/vies_submission_ui_spec.md` — VIES submission UI
+- `/sub/ui/vat_period_overview_ui_spec.md` — VAT period overview dashboard
+- `/sub/fixtures/vat_return_fixture_content.md` — Test fixtures for VAT returns
+- `/sub/reference/vat_account_code_reference.md` — VAT account codes

@@ -1,0 +1,337 @@
+{
+  "scan_date": "2026-05-16",
+  "corpus_size": 353,
+  "findings": [
+    {
+      "id": 1,
+      "severity": "HIGH",
+      "check": "DUPLICATE_DDL",
+      "file": "Docs/sub/schemas/transactions_schema.md",
+      "line": 52,
+      "description": "CREATE TABLE transactions conflicts with transaction_schema.md. transactions_schema.md defines PK as 'transaction_id', REFERENCES businesses(id), uses bigint amounts, encrypted counterparty fields, source_row_hash, fingerprint, and dedup/classification columns. transaction_schema.md defines PK as 'id', REFERENCES business_entities(id), uses NUMERIC amounts, has workflow_run_id and bank_upload_id FKs, and different column set entirely. These cannot coexist.",
+      "suggested_fix": "Consolidate into a single authoritative schema. The canonical table definition should use transaction_schema.md's PK ('id'), REFERENCES business_entities(id), and reconcile the column differences. Remove the conflicting DDL from the non-authoritative file and replace with a cross-reference."
+    },
+    {
+      "id": 2,
+      "severity": "HIGH",
+      "check": "DUPLICATE_DDL",
+      "file": "Docs/sub/schemas/transaction_schema.md",
+      "line": 23,
+      "description": "Duplicate CREATE TABLE transactions — see finding #1. This file defines transactions with PK 'id', REFERENCES business_entities(id), NUMERIC amounts, dedup_status_enum columns (UNIQUE/DUPLICATE_POSSIBLE/DUPLICATE_CONFIRMED/EXCEPTION_DOCUMENTED). Conflicts with transactions_schema.md on PK name, FK target, amount type, and nearly every operational column.",
+      "suggested_fix": "Designate one file as authoritative for the transactions DDL; demote the other to a cross-reference. Reconcile all column differences including PK name, FK target (business_entities vs businesses), amount type (bigint vs NUMERIC), and dedup_status enum values."
+    },
+    {
+      "id": 3,
+      "severity": "HIGH",
+      "check": "DUPLICATE_DDL",
+      "file": "Docs/sub/schemas/ledger_account_chart_schema.md",
+      "line": 27,
+      "description": "CREATE TABLE chart_of_accounts conflicts with chart_of_accounts_schema.md. ledger_account_chart_schema.md defines a simpler table with REFERENCES business_entities(id), no chart_mapping_version_id FK, and no tax-related columns (deductibility, vat_treatment_hint, vies_eligible, retired_at, retired_reason, normal_side). chart_of_accounts_schema.md has all those extra columns plus REFERENCES businesses(id).",
+      "suggested_fix": "Consolidate into one DDL. The canonical definition should use REFERENCES business_entities(id) and include all required columns. Remove conflicting DDL from the non-authoritative file."
+    },
+    {
+      "id": 4,
+      "severity": "HIGH",
+      "check": "DUPLICATE_DDL",
+      "file": "Docs/sub/schemas/chart_of_accounts_schema.md",
+      "line": 35,
+      "description": "Duplicate CREATE TABLE chart_of_accounts — see finding #3. This file defines account_type_enum as (ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE, OFF_BALANCE) while ledger_account_chart_schema.md defines it as (ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE, VAT_CONTROL). The sixth value is a direct conflict.",
+      "suggested_fix": "Resolve the account_type_enum conflict: decide whether the sixth type is VAT_CONTROL or OFF_BALANCE, update all references consistently, and remove the duplicate DDL."
+    },
+    {
+      "id": 5,
+      "severity": "HIGH",
+      "check": "DUPLICATE_DDL",
+      "file": "Docs/sub/schemas/ledger_account_chart_schema.md",
+      "line": 12,
+      "description": "CREATE TYPE account_type_enum defines values (ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE, VAT_CONTROL). chart_of_accounts_schema.md at line 68 defines the same type with (ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE, OFF_BALANCE). The sixth enum value is a direct conflict — VAT_CONTROL vs OFF_BALANCE.",
+      "suggested_fix": "Canonicalise account_type_enum in one schema file, add the correct sixth value, and remove the conflicting CREATE TYPE from the other file."
+    },
+    {
+      "id": 6,
+      "severity": "HIGH",
+      "check": "DUPLICATE_DDL",
+      "file": "Docs/sub/schemas/transactions_schema.md",
+      "line": 22,
+      "description": "CREATE TYPE dedup_status_enum defines (NEW, DUPLICATE_EXACT, DUPLICATE_POSSIBLE, NEEDS_REVIEW). transaction_schema.md at line 85 defines the same type as (UNIQUE, DUPLICATE_POSSIBLE, DUPLICATE_CONFIRMED, EXCEPTION_DOCUMENTED). Only DUPLICATE_POSSIBLE is shared; three of four values differ in each definition.",
+      "suggested_fix": "Decide the canonical dedup_status_enum values. Likely correct set is the one used by the classification/matching pipeline (UNIQUE, DUPLICATE_POSSIBLE, DUPLICATE_CONFIRMED, EXCEPTION_DOCUMENTED per transaction_schema.md). Remove the conflicting definition from transactions_schema.md."
+    },
+    {
+      "id": 7,
+      "severity": "HIGH",
+      "check": "DUPLICATE_DDL",
+      "file": "Docs/sub/schemas/classification_rule_schema.md",
+      "line": 25,
+      "description": "CREATE TABLE classification_rules conflicts with classification_rule_predicate_schema.md. classification_rule_schema.md uses PK column 'id', REFERENCES business_entities(id), has target_category, confidence_override, rule_name, version columns. classification_rule_predicate_schema.md uses PK column 'rule_id', REFERENCES businesses(id), has rule_kind, result_transaction_type, created_by_user_id columns. The PK column name and nearly all operational columns differ.",
+      "suggested_fix": "Merge into a single authoritative DDL. Resolve FK target (business_entities), settle on PK column name ('id' or 'rule_id'), and reconcile columns."
+    },
+    {
+      "id": 8,
+      "severity": "HIGH",
+      "check": "DUPLICATE_DDL",
+      "file": "Docs/sub/schemas/invoice_sequence_schema.md",
+      "line": 18,
+      "description": "CREATE TABLE invoice_sequences conflicts with invoice_numbering_sequence_policy.md. invoice_sequence_schema.md uses PK column 'sequence_id', invoice_series_enum for series, and has created_at/updated_at/CHECK constraints. invoice_numbering_sequence_policy.md at line 52 uses PK column 'id' and plain text for series (not enum). PK column name mismatch and type divergence on the series column.",
+      "suggested_fix": "The canonical DDL should be in the schema file with PK 'sequence_id', invoice_series_enum type for series, and REFERENCES business_entities(id). Update the policy file to remove the conflicting DDL and replace with a cross-reference to the schema file."
+    },
+    {
+      "id": 9,
+      "severity": "HIGH",
+      "check": "ENUM_DRIFT",
+      "file": "Docs/sub/policies/match_scoring_weights_policy.md",
+      "line": 90,
+      "description": "Uses HIGH, MEDIUM, LOW as match_level values: 'The EXACT, HIGH, MEDIUM, LOW values are canonical.' The canonical match_level_enum is (EXACT, STRONG_PROBABLE, WEAK_POSSIBLE, NO_MATCH) per match_record_schema.md, match_level_enum.md, and the audit event taxonomy. HIGH/MEDIUM/LOW are the old pre-rename values.",
+      "suggested_fix": "Replace all references to HIGH/MEDIUM/LOW match levels in this file with STRONG_PROBABLE/WEAK_POSSIBLE/NO_MATCH respectively. Line 85: HIGH -> STRONG_PROBABLE, line 86: MEDIUM -> WEAK_POSSIBLE, line 87: LOW -> NO_MATCH, line 90: update the enum list, line 130: update the narrative."
+    },
+    {
+      "id": 10,
+      "severity": "HIGH",
+      "check": "ENUM_DRIFT",
+      "file": "Docs/sub/schemas/income_matching_schema.md",
+      "line": 42,
+      "description": "Uses HIGH and LOW as match_level values: 'match_level_enum (EXACT | HIGH | MEDIUM | LOW)'. Lines 52, 71, 74, 142 also reference HIGH/LOW as valid match_level values. The canonical enum is (EXACT, STRONG_PROBABLE, WEAK_POSSIBLE, NO_MATCH).",
+      "suggested_fix": "Replace: HIGH -> STRONG_PROBABLE, MEDIUM -> WEAK_POSSIBLE, LOW -> NO_MATCH throughout the file. Update line 42 enum description, line 52 auto-confirm rule, line 71 auto-confirm condition, line 74 narrative, line 142 cross-reference."
+    },
+    {
+      "id": 11,
+      "severity": "HIGH",
+      "check": "AUDIT_EVENT_ORPHAN",
+      "file": "Docs/sub/runbooks/bank_statement_live_integration_runbook.md",
+      "line": 40,
+      "description": "References BANK_UPLOAD_COMPLETED as an emitted audit event and even lists it under 'audit_event_taxonomy' in cross-references (line 143). This event does not exist in the taxonomy. The BANK_UPLOAD domain registers: BANK_UPLOAD_RECEIVED, BANK_UPLOAD_PARSE_COMPLETED, BANK_UPLOAD_PARSE_FAILED, BANK_UPLOAD_ROW_SKIPPED, BANK_UPLOAD_DEDUP_HARD_DUPLICATE_DETECTED.",
+      "suggested_fix": "Replace BANK_UPLOAD_COMPLETED with the appropriate registered event. The nearest equivalent is BANK_UPLOAD_PARSE_COMPLETED (emitted when upload_status transitions to PARSED). If a post-ingestion completion event is needed, register BANK_UPLOAD_COMPLETED in the taxonomy's BANK_UPLOAD section."
+    },
+    {
+      "id": 12,
+      "severity": "HIGH",
+      "check": "AUDIT_EVENT_ORPHAN",
+      "file": "Docs/sub/runbooks/bank_statement_live_integration_runbook.md",
+      "line": 125,
+      "description": "References LIVE_TEST_FAILED as an emitted audit event under the LIVE_TEST domain. This event is not registered in audit_event_taxonomy.md. The LIVE_TEST section registers only: LIVE_TEST_RUN_STARTED, LIVE_TEST_RUN_COMPLETED, LIVE_TEST_BUDGET_EXCEEDED, LIVE_TEST_DRIFT_DETECTED. LIVE_TEST_FAILED is also used in classification_live_integration_runbook.md (line 148), document_intake_live_integration_runbook.md (line 130), matching_live_integration_runbook.md (line 137), and ledger_live_integration_runbook.md (line 149).",
+      "suggested_fix": "Add LIVE_TEST_FAILED to the LIVE_TEST section of audit_event_taxonomy.md with MEDIUM severity (a test failure requires investigation). Payload should include: test_name, business_id, step_failed, assertion_failure_message, fixture_suffix."
+    },
+    {
+      "id": 13,
+      "severity": "HIGH",
+      "check": "AUDIT_EVENT_ORPHAN",
+      "file": "Docs/sub/tools/tool_session_refresh.md",
+      "line": 61,
+      "description": "Declares and emits four events not registered in audit_event_taxonomy.md: AUTH_SESSION_REFRESHED (line 61), AUTH_SESSION_DEVICE_MISMATCH (line 69), AUTH_SESSION_REFRESH_FAILED (line 83), AUTH_SESSION_REFRESH_RATE_LIMITED (line 108). The taxonomy has SESSION_REFRESHED under TENANCY/LOGIN (line 29) but not these AUTH_SESSION_* variants. The SESSION domain (Block 02) registers SESSION_CREATED, SESSION_REVOKED, SESSION_TERMINATED, SESSION_EVICTED_MAX_CONCURRENCY — none matching these events.",
+      "suggested_fix": "Either: (a) Register AUTH_SESSION_REFRESHED, AUTH_SESSION_DEVICE_MISMATCH, AUTH_SESSION_REFRESH_FAILED, AUTH_SESSION_REFRESH_RATE_LIMITED in the AUTH section of the taxonomy; or (b) Rename the events to align with the existing SESSION domain — SESSION_REFRESHED (already exists), SESSION_DEVICE_MISMATCH, SESSION_REFRESH_FAILED, SESSION_REFRESH_RATE_LIMITED — and add the missing ones to the SESSION block."
+    },
+    {
+      "id": 14,
+      "severity": "HIGH",
+      "check": "AUDIT_EVENT_ORPHAN",
+      "file": "Docs/sub/policies/tag_conflict_resolution_policy.md",
+      "line": 38,
+      "description": "Emits CLASSIFICATION_MANUAL_OVERRIDE_SET (LOW) when a MANUAL_OVERRIDE tag is set or cleared. This event is not in audit_event_taxonomy.md. The CLASSIFICATION section (lines 393-415) does not include this event. Lines 38, 90, and 94 all assert its emission.",
+      "suggested_fix": "Register CLASSIFICATION_MANUAL_OVERRIDE_SET in the CLASSIFICATION domain of audit_event_taxonomy.md. Severity: LOW. Payload: transaction_id, business_id, tag_type, tag, action (SET or CLEARED), actor_user_id."
+    },
+    {
+      "id": 15,
+      "severity": "HIGH",
+      "check": "AUDIT_EVENT_ORPHAN",
+      "file": "Docs/sub/schemas/match_signal_evidence_schema.md",
+      "line": 129,
+      "description": "Emits MATCHING_SCORING_CONFIG_INVALID (BLOCKING) when weight sum deviates from 1.0. This event is not in audit_event_taxonomy.md. The MATCHING section registers MATCHING_SCORING_CONFIG_UPDATED but not MATCHING_SCORING_CONFIG_INVALID.",
+      "suggested_fix": "Register MATCHING_SCORING_CONFIG_INVALID in the MATCHING section of audit_event_taxonomy.md. Severity: BLOCKING. Payload: business_id, workflow_run_id, weight_sum_found, expected_sum (1.0), deviation."
+    },
+    {
+      "id": 16,
+      "severity": "HIGH",
+      "check": "AUDIT_EVENT_ORPHAN",
+      "file": "Docs/sub/reference/vies_record_format.md",
+      "line": 148,
+      "description": "Emits VIES_VALIDATION_SYSTEM_ERROR when INVALID_REQUESTER_INFO is returned by the VIES SOAP API. This event is not in audit_event_taxonomy.md. The VIES domain registers VIES_LOOKUP_COMPLETED and VIES_LOOKUP_FAILED but not VIES_VALIDATION_SYSTEM_ERROR.",
+      "suggested_fix": "Register VIES_VALIDATION_SYSTEM_ERROR in the VIES section of audit_event_taxonomy.md. Severity: HIGH (system-level configuration error). Payload: counterparty_vat_number, query_country_code, error_code (INVALID_REQUESTER_INFO), attempted_at."
+    },
+    {
+      "id": 17,
+      "severity": "HIGH",
+      "check": "AUDIT_EVENT_ORPHAN",
+      "file": "Docs/sub/policies/side_phase_routing_policy.md",
+      "line": 152,
+      "description": "Emits WORKFLOW_MANUAL_UPLOAD_REMINDER_SENT when the manual upload reminder fires after 7 days. This event is not in audit_event_taxonomy.md. The WORKFLOW domain does not include this event.",
+      "suggested_fix": "Register WORKFLOW_MANUAL_UPLOAD_REMINDER_SENT in the WORKFLOW section (or a suitable OUT_WORKFLOW sub-section) of audit_event_taxonomy.md. Severity: LOW. Payload: workflow_run_id, business_id, transaction_id, reminder_sent_at."
+    },
+    {
+      "id": 18,
+      "severity": "HIGH",
+      "check": "AUDIT_EVENT_ORPHAN",
+      "file": "Docs/sub/schemas/ledger_account_mapping_schema.md",
+      "line": 175,
+      "description": "References CHART_MAPPING_VERSION_FROZEN as an event 'declared in Block 11 Phase 01' that is emitted during finalization. This event is not present anywhere in audit_event_taxonomy.md. The taxonomy's LEDGER section (lines 460-480) includes CHART_MAPPING_VERSION_CREATED but not CHART_MAPPING_VERSION_FROZEN.",
+      "suggested_fix": "Register CHART_MAPPING_VERSION_FROZEN in the LEDGER / CHART block of audit_event_taxonomy.md alongside CHART_MAPPING_VERSION_CREATED. Severity: LOW. Payload: version_id, business_id, frozen_at, frozen_during_run_id."
+    },
+    {
+      "id": 19,
+      "severity": "MEDIUM",
+      "check": "ENUM_DRIFT",
+      "file": "Docs/sub/ui/invoice_lifecycle_ui_spec.md",
+      "line": 14,
+      "description": "Uses ISSUED as an invoice status value (DRAFT -> ISSUED -> PAID) throughout the file (lines 14, 25, 26, 28, 77). The invoice_status_enum in invoice_schema.md defines DRAFT, SENT, PARTIALLY_PAID, PAID, OVERPAID, and further states. ISSUED is only valid for credit_note_status_enum. The correct invoice status after DRAFT is SENT.",
+      "suggested_fix": "Replace all references to invoice status 'ISSUED' with 'SENT' throughout invoice_lifecycle_ui_spec.md. Note: ISSUED is correct for credit notes (credit_note_status_enum uses ISSUED), so retain ISSUED where it refers to credit note status."
+    },
+    {
+      "id": 20,
+      "severity": "MEDIUM",
+      "check": "ENUM_DRIFT",
+      "file": "Docs/sub/ui/drill_down_list_detail_ui_spec.md",
+      "line": 67,
+      "description": "Lists invoices.status pill badge values as 'DRAFT (grey), ISSUED (blue), PAID (green), OVERDUE (red)'. ISSUED is not a valid invoice_status_enum value. The correct status after DRAFT is SENT.",
+      "suggested_fix": "Change 'ISSUED (blue)' to 'SENT (blue)' in the status badge table."
+    },
+    {
+      "id": 21,
+      "severity": "MEDIUM",
+      "check": "ENUM_DRIFT",
+      "file": "Docs/sub/runbooks/in_workflow_live_integration_runbook.md",
+      "line": 28,
+      "description": "Uses ISSUED as invoice status in multiple test fixture assertions (lines 28, 31, 43, 51, 52, 53, 73, 83, 91, 99). The correct invoice status enum value is SENT, not ISSUED.",
+      "suggested_fix": "Replace ISSUED with SENT for all tax invoice and pro-forma invoice status references. Retain ISSUED only where it refers to credit note status (credit_note_status_enum correctly uses ISSUED)."
+    },
+    {
+      "id": 22,
+      "severity": "MEDIUM",
+      "check": "MOBILE_WRITE_MISSING",
+      "file": "Docs/sub/tools/tool_period_report_generator.md",
+      "line": 54,
+      "description": "Declares side_effect_class READ_ONLY | WRITES_AUDIT but contains no section noting mobile client rejection. Every tool file with WRITES_AUDIT must contain a section stating mobile rejection policy per mobile_write_rejection_endpoints.md.",
+      "suggested_fix": "Add a Mobile Rejection section: 'report.generate_period_report is invoked internally by Block 15 and Block 16 and is not a direct user-callable endpoint. Mobile write rejection is enforced at the report.trigger_export layer per mobile_write_rejection_endpoints.md. This tool itself has no independent mobile exposure.' Add a cross-reference to mobile_write_rejection_endpoints.md in the Cross-references section."
+    },
+    {
+      "id": 23,
+      "severity": "MEDIUM",
+      "check": "MOBILE_WRITE_MISSING",
+      "file": "Docs/sub/tools/tool_can_perform_helper.md",
+      "line": 15,
+      "description": "Declares side_effect_class READ_ONLY | WRITES_AUDIT but contains no section noting mobile client rejection. auth.can_perform is an internal middleware function but the policy requires all tools with WRITES_AUDIT to document mobile rejection.",
+      "suggested_fix": "Add a Mobile Rejection section: 'auth.can_perform is an internal permission check invoked before every write operation; it is not directly callable by clients. Mobile write rejection is enforced upstream at the API gateway layer per mobile_write_rejection_endpoints.md before auth.can_perform is ever invoked for a mobile client attempting a write.' Add cross-reference to mobile_write_rejection_endpoints.md."
+    },
+    {
+      "id": 24,
+      "severity": "MEDIUM",
+      "check": "MOBILE_WRITE_MISSING",
+      "file": "Docs/sub/tools/tool_classification_vendor_memory_apply.md",
+      "line": 44,
+      "description": "Declares side_effect_class READ_ONLY | WRITES_AUDIT but contains no section noting mobile client rejection. The policy requires all tools with WRITES_AUDIT to document mobile rejection.",
+      "suggested_fix": "Add a Mobile Rejection section noting this tool is an internal classification pipeline step, not a user-callable endpoint. Mobile rejection is enforced at the workflow engine layer. Add cross-reference to mobile_write_rejection_endpoints.md."
+    },
+    {
+      "id": 25,
+      "severity": "MEDIUM",
+      "check": "MOBILE_WRITE_MISSING",
+      "file": "Docs/sub/tools/tool_gateway_invoke_ai.md",
+      "line": 15,
+      "description": "Declares side_effect_class EXTERNAL_CALL | WRITES_AUDIT but contains no section noting mobile client rejection. The policy requires all tools with WRITES_AUDIT to document mobile rejection.",
+      "suggested_fix": "Add a Mobile Rejection section: 'ai.invoke is an internal pipeline tool not exposed as a direct endpoint. Mobile write rejection is enforced at the caller level (the workflow engine rejects mobile clients before invoking ai.invoke). This tool itself has no independent mobile exposure.' Add cross-reference to mobile_write_rejection_endpoints.md."
+    },
+    {
+      "id": 26,
+      "severity": "MEDIUM",
+      "check": "FK_TARGET",
+      "file": "Docs/sub/schemas/workflow_run_schema.md",
+      "line": 46,
+      "description": "business_id column references businesses(id). Per the FK_TARGET rule, FK references to business entities must use REFERENCES business_entities(id), never REFERENCES businesses(id). This is one of 43 instances across 40 files.",
+      "suggested_fix": "Change REFERENCES businesses(id) to REFERENCES business_entities(id)."
+    },
+    {
+      "id": 27,
+      "severity": "MEDIUM",
+      "check": "FK_TARGET",
+      "file": "Docs/sub/schemas/invoice_schema.md",
+      "line": 35,
+      "description": "business_id REFERENCES businesses(id). Should be REFERENCES business_entities(id).",
+      "suggested_fix": "Change REFERENCES businesses(id) to REFERENCES business_entities(id)."
+    },
+    {
+      "id": 28,
+      "severity": "MEDIUM",
+      "check": "FK_TARGET",
+      "file": "Docs/sub/schemas/transactions_schema.md",
+      "line": 54,
+      "description": "business_id REFERENCES businesses(id). Should be REFERENCES business_entities(id).",
+      "suggested_fix": "Change REFERENCES businesses(id) to REFERENCES business_entities(id)."
+    },
+    {
+      "id": 29,
+      "severity": "MEDIUM",
+      "check": "FK_TARGET",
+      "file": "Docs/sub/schemas/match_record_schema.md",
+      "line": 33,
+      "description": "business_id REFERENCES businesses(id). Should be REFERENCES business_entities(id).",
+      "suggested_fix": "Change REFERENCES businesses(id) to REFERENCES business_entities(id)."
+    },
+    {
+      "id": 30,
+      "severity": "MEDIUM",
+      "check": "FK_TARGET",
+      "file": "Docs/sub/schemas/credit_note_schema.md",
+      "line": 20,
+      "description": "business_id REFERENCES businesses(id). Should be REFERENCES business_entities(id).",
+      "suggested_fix": "Change REFERENCES businesses(id) to REFERENCES business_entities(id)."
+    },
+    {
+      "id": 31,
+      "severity": "MEDIUM",
+      "check": "FK_TARGET",
+      "file": "Docs/sub/schemas/ledger_entry_schema.md",
+      "line": 14,
+      "description": "business_id REFERENCES businesses(id). Should be REFERENCES business_entities(id).",
+      "suggested_fix": "Change REFERENCES businesses(id) to REFERENCES business_entities(id)."
+    },
+    {
+      "id": 32,
+      "severity": "MEDIUM",
+      "check": "FK_TARGET",
+      "file": "Docs/sub/schemas/review_issues_schema.md",
+      "line": 31,
+      "description": "business_id REFERENCES businesses(id). Should be REFERENCES business_entities(id).",
+      "suggested_fix": "Change REFERENCES businesses(id) to REFERENCES business_entities(id)."
+    },
+    {
+      "id": 33,
+      "severity": "MEDIUM",
+      "check": "FK_TARGET",
+      "file": "Docs/sub/schemas/bank_upload_schema.md",
+      "line": 14,
+      "description": "business_id REFERENCES businesses(id). Should be REFERENCES business_entities(id). (Representative entry — 36 additional files listed in summary have the same violation.)",
+      "suggested_fix": "Change REFERENCES businesses(id) to REFERENCES business_entities(id). This must be applied globally across all 40 affected files: adjustment_record_schema.md, ai_gateway_schema.md, ai_usage_records_schema.md, bank_statement_rows_schema.md, bank_upload_status_transitions_schema.md, chart_of_accounts_schema.md (x2), classification_output_schema.md, classification_rule_predicate_schema.md, client_multi_name_alias_schema.md (x2), client_schema.md, counterparty_resolver_tracing_schema.md, counterparty_schema.md, document_source_schema.md, end_scan_schema.md, evidence_pdf_schema.md, income_matching_schema.md, invoice_line_item_schema.md, invoice_payment_allocations_schema.md, ledger_account_mapping_schema.md, match_signal_evidence_schema.md, oauth_token_encryption_schema.md, out_config_schema.md, recurring_invoice_run_schema.md, rejection_memory_schema.md, split_payment_relationship_schema.md, tag_taxonomy_version_schema.md (x2), trigger_events_processed_schema.md, vat_entry_schema.md, vendor_memory_schema.md, vies_record_schema.md, plus policies/step_up_validity_window_policy.md and integrations/transactional_email_service_integration.md."
+    },
+    {
+      "id": 34,
+      "severity": "MEDIUM",
+      "check": "FORWARD_REF_STALE",
+      "file": "Docs/sub/policies/match_scoring_weights_policy.md",
+      "line": 21,
+      "description": "Forward reference to 'match_scoring_config' table (also line 96): 'table definition is deferred — forward reference to Block 10 Phase 02 sub-doc'. This sub-doc has not been written; no match_scoring_config schema file exists in Docs/sub/schemas/. The forward reference remains unresolved.",
+      "suggested_fix": "Either: (a) Write the match_scoring_config schema sub-doc and update line 21 and 96 to reference it properly; or (b) If the table definition is intentionally deferred to a future stage, mark with a stage note and a GitHub issue reference rather than an open 'forward reference' annotation."
+    },
+    {
+      "id": 35,
+      "severity": "MEDIUM",
+      "check": "FORWARD_REF_STALE",
+      "file": "Docs/sub/schemas/vendor_memory_schema.md",
+      "line": 65,
+      "description": "Forward reference: 'records the conflict in the vendor_memory_conflicts table (forward reference, Block 08 Phase 03)'. No vendor_memory_conflicts schema file exists in Docs/sub/schemas/.",
+      "suggested_fix": "Write a vendor_memory_conflicts schema sub-doc under Docs/sub/schemas/ and update line 65 to replace the forward-reference annotation with a proper cross-reference."
+    },
+    {
+      "id": 36,
+      "severity": "MEDIUM",
+      "check": "FORWARD_REF_STALE",
+      "file": "Docs/sub/schemas/accountant_pack_manifest_schema.md",
+      "line": 7,
+      "description": "Forward reference: 'accountant_pack_tamper_runbook (deferred Layer 2 forward reference)' appears at lines 7, 146, and 198. No accountant_pack_tamper_runbook file exists in Docs/sub/runbooks/ or anywhere else in the corpus.",
+      "suggested_fix": "Write the accountant_pack_tamper_runbook under Docs/sub/runbooks/ and update all three lines to replace the forward-reference annotations with proper cross-references."
+    }
+  ],
+  "summary": {
+    "BLOCKING": 0,
+    "HIGH": 18,
+    "MEDIUM": 18,
+    "LOW": 0,
+    "total": 36
+  }
+}

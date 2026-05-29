@@ -1,0 +1,8 @@
+-- B16·P13 — End-to-End Dashboard Tests & Visual Regression
+-- dashboard_fixture_registry (110 seed rows across 12 categories) +
+-- register_dashboard_fixture (idempotent UPSERT) + list_dashboard_fixtures
+-- + run_dashboard_fixture (stub returning NOT_IMPLEMENTED — actual harness
+-- lives in tests/dashboard/runDashboardFixture.ts) + v_dashboard_fixture_coverage.
+-- Visual regression baselines (10) flagged with is_baseline_only=true; the
+-- light/dark x 375/1024/1440 matrix expansion is sub-doc owned.
+-- (Full body applied via apply_migration b16p13_e2e_fixtures_and_visual_regression.)

@@ -1,0 +1,18 @@
+-- B16·P01 — Schema, Preferences & Analytics Consumption
+-- 4 tables + 4 RPCs + 3 enums + 11 card definitions + tool_registry row.
+-- (Full body applied via apply_migration b16p01_schema_preferences_analytics_consumption.
+--  Contents:
+--    enums: dashboard_drilldown_mode_enum / data_source / chart_type
+--    tables: dashboard_user_preferences (own-row RLS),
+--            dashboard_card_definitions (global registry),
+--            dashboard_refresh_state (per-business),
+--            dashboard_processed_events (dedup set keyed on audit event_id)
+--    11 card definitions seeded
+--    issue_type_registry: dashboard.refresh_failed (HIGH)
+--    RPCs: dashboard_handle_archive_promotion_event (dedup + refresh + audits)
+--          dashboard_update_preferences (own-prefs UPSERT)
+--          dashboard_trigger_manual_refresh (MANUAL trigger)
+--          dashboard_record_refresh_failure (retry-attempt-3 → HIGH issue)
+--    tool_registry: dashboard.handle_archive_promotion_event v1.0.0
+--      side_effect=WRITES_RUN_STATE, ai_tier=NONE,
+--      failure_semantics=IDEMPOTENT_AT_MOST_ONCE)

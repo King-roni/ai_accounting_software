@@ -1,0 +1,5 @@
+-- B15·P07 fix-up: audit_events_actor_kind_chk requires xor of USER+actor_user_id
+-- vs SYSTEM+actor_system. verify_archive_package passed both, tripping the
+-- constraint at emission time. Rewrite SYSTEM-emitted audits to drop the user
+-- arg (the requesting user id is preserved inside after_state for traceability).
+-- (Full body applied via apply_migration b15p07_actor_kind_xor_fix.)

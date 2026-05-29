@@ -1,0 +1,16 @@
+-- B15·P08 — Re-Finalization for Adjustment Runs
+-- Adjustment-specific entry-gate composite + phase registry wiring.
+-- (Full migration body applied via apply_migration
+--  b15p08_adjustment_preconditions_and_phase_wiring. Net deliverables:
+--  1. gate_registry row for gate.finalization.adjustment_preconditions_satisfied
+--  2. phase_gate_assignments rows for {OUT_ADJUSTMENT, IN_ADJUSTMENT} ×
+--     ADJUSTMENT_FINALIZATION kind=ENTRY
+--  3. phase_tool_expectations rows for both pairs pointing at
+--     finalization.execute_adjustment_lock_sequence
+--  4. gate_finalization_adjustment_preconditions_satisfied(adjustment_run_id,
+--     parent_archive_package_id) — 4 short-circuit checks: reason present,
+--     parent package exists, parent FINALIZED, age <= 6 years.
+--  5. execute_adjustment_lock_sequence patched to call the gate BEFORE
+--     transition_run; emits FINALIZATION_ADJUSTMENT_PRECONDITIONS_PASSED/FAILED
+--     + discrete _REJECTED_PARENT_NOT_FINALIZED / _REJECTED_RETENTION_EXPIRED
+--     for the two most-frequent denial reasons.

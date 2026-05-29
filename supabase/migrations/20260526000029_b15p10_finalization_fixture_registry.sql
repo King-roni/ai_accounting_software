@@ -1,0 +1,6 @@
+-- B15·P10 — End-to-End Finalization Tests
+-- Mirror of B14·P10's pattern: finalization_fixture_registry table + 67 seeded
+-- fixtures across 11 categories + list_finalization_fixtures RPC +
+-- run_finalization_fixture stub (real harness app-layer) +
+-- v_finalization_fixture_coverage view.
+-- (Full body applied via apply_migration b15p10_finalization_fixture_registry.)

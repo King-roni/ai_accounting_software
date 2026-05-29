@@ -1,0 +1,12 @@
+-- B15·P07 — Storage Object Lock & Three-Layer Immutability
+-- Layer 1: tighten RLS so INSERTs are session-var gated (replaces P01 deny_insert).
+-- Layer 2: storage Object Lock is out-of-process; SQL ships
+--          FINALIZATION_OBJECT_LOCK_APPLIED audit (P04 step-5 success).
+-- Layer 3: verify_archive_package + ARCHIVE_TAMPER_DETECTED + BLOCKING
+--          tamper review_issue + ARCHIVE_TAMPER_FORMALLY_ACCEPTED.
+-- (Full migration body applied via apply_migration b15p07_three_layer_immutability.
+--  Contents: drop P01 deny_insert policies on archive_packages + archive_manifests;
+--  create session-var INSERT gates for all 3 archive tables + archive_files;
+--  register archive.tamper_detected issue_type; refactor gate 1 to also block on
+--  business-wide tamper issues; add verify_archive_package, log_archive_data_read,
+--  accept_archive_tamper; patch execute_lock_sequence to emit OBJECT_LOCK_APPLIED.)

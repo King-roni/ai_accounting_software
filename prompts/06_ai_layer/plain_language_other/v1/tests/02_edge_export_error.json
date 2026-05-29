@@ -1,0 +1,20 @@
+{
+  "case_name": "02-edge-export-error",
+  "input": {
+    "context_kind": "EXPORT_ERROR",
+    "structured_data": {
+      "export_kind": "VAT_RETURN_XML",
+      "period": "2026-Q1",
+      "error_category": "MISSING_VIES_VALIDATION",
+      "missing_count": 4
+    },
+    "language": "en"
+  },
+  "expected_output": {
+    "title": "VAT return export for Q1 2026 needs more data",
+    "description": "4 EU-customer invoices on the Q1 2026 VAT return have not been VIES-validated yet. Validate the VAT numbers in the review queue and re-run the export.",
+    "language": "en"
+  },
+  "must_contain_assertions": ["Q1 2026", "VAT", "Validate"],
+  "is_adversarial_anchor": false
+}

@@ -1,0 +1,21 @@
+{
+  "case_name": "03-edge-unicode-supplier-name",
+  "input": {
+    "context_kind": "NOTIFICATION_SUBJECT",
+    "structured_data": {
+      "event": "new_invoice_received",
+      "supplier_name": "Αθήνα Λογιστικά ΕΠΕ",
+      "amount": 320.00,
+      "currency": "EUR",
+      "received_at": "2026-05-22"
+    },
+    "language": "en"
+  },
+  "expected_output": {
+    "title": "New invoice from Αθήνα Λογιστικά ΕΠΕ for €320.00",
+    "description": "Αθήνα Λογιστικά ΕΠΕ sent a €320.00 invoice on 22 May 2026. Match it to a payment or upload supporting evidence to file it under expenses.",
+    "language": "en"
+  },
+  "must_contain_assertions": ["Αθήνα Λογιστικά ΕΠΕ", "€320.00"],
+  "is_adversarial_anchor": false
+}

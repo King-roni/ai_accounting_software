@@ -1,0 +1,16 @@
+-- B16·P12 — Accessibility, i18n, Mobile Read-Only, Performance
+-- Cross-cutting quality gates with concrete SQL surface:
+--   * dashboard_locale_enum ('en','el') + users.dashboard_locale column (default 'en')
+--   * 2 CI observability log tables: dashboard_accessibility_audit_runs +
+--     dashboard_performance_violations (RLS + no writes from authenticated)
+--   * _reject_mobile_write helper raises MOBILE_WRITE_REJECTED when
+--     request_context.client_form_factor = 'MOBILE'
+--   * 3 SECURITY DEFINER RPCs:
+--       record_dashboard_accessibility_audit_run -> DASHBOARD_ACCESSIBILITY_AUDIT_RAN
+--       record_dashboard_performance_violation   -> DASHBOARD_PERFORMANCE_BUDGET_VIOLATION_DETECTED
+--       update_user_dashboard_locale (self-only; Stage 1 rejects 'el') -> DASHBOARD_LOCALE_SWITCHED
+--   * Patched: dashboard_update_preferences + update_accountant_pack_config to
+--     call _reject_mobile_write at the top.
+-- Mobile-write rejection is a UX guard NOT a security event (no audit emit),
+-- per Block 14 P09's canonical contract.
+-- (Full body applied via apply_migration b16p12_accessibility_i18n_mobile_performance.)

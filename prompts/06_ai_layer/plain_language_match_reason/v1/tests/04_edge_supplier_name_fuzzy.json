@@ -1,0 +1,16 @@
+{
+  "case_name": "04-edge-supplier-name-fuzzy",
+  "input": {
+    "match_level": "STRONG_PROBABLE",
+    "transaction_summary": {"amount": 1200.00, "currency": "EUR", "date": "2026-02-20", "counterparty_label": "Stripe Payments Ireland Ltd"},
+    "document_summary": {"document_label": "Invoice from Stripe Payments", "amount": 1200.00, "currency": "EUR", "date": "2026-02-20", "reference": "stripe_INV-22A"},
+    "score_breakdown": {"amount_match": 1.0, "date_distance_days": 0, "name_similarity": 0.78},
+    "language": "en"
+  },
+  "expected_output": {
+    "description": "Invoice from Stripe Payments shows the same amount (€1,200.00) and same date (20 February 2026) as the transaction; the supplier name is shorter on the invoice (\"Stripe Payments\" vs \"Stripe Payments Ireland Ltd\") but clearly refers to the same company.",
+    "language": "en"
+  },
+  "must_contain_assertions": ["Stripe Payments", "€1,200.00"],
+  "is_adversarial_anchor": false
+}

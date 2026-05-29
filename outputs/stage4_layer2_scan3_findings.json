@@ -1,0 +1,157 @@
+{
+  "scan_date": "2026-05-15",
+  "corpus_size": 293,
+  "findings": [
+    {
+      "id": 1,
+      "severity": "HIGH",
+      "check": "DUPLICATE_DDL",
+      "file": "Docs/sub/schemas/match_record_schema.md",
+      "line": 12,
+      "description": "CREATE TYPE match_level_enum defines values EXACT, HIGH, MEDIUM, LOW — which directly contradicts the canonical definition in Docs/sub/reference/match_level_enum.md (EXACT, STRONG_PROBABLE, WEAK_POSSIBLE, NO_MATCH). match_signal_weights.md and match_scoring_calibration_policy.md use the canonical STRONG_PROBABLE/WEAK_POSSIBLE vocabulary throughout, making this a live inconsistency.",
+      "suggested_fix": "Replace the enum body in match_record_schema.md lines 12-17 with the canonical values EXACT, STRONG_PROBABLE, WEAK_POSSIBLE, NO_MATCH from match_level_enum.md. Update the column notes at lines 63 and 68 accordingly."
+    },
+    {
+      "id": 2,
+      "severity": "HIGH",
+      "check": "DUPLICATE_DDL",
+      "file": "Docs/sub/schemas/review_issue_card_schema.md",
+      "line": 14,
+      "description": "CREATE TABLE issue_type_registry in review_issue_card_schema.md has different columns from the canonical definition in issue_type_registry_schema.md. The review_issue_card_schema version uses: issue_type_registry_id (PK), block_short_name, allowed_resolution_actions, description. The canonical issue_type_registry_schema.md version uses: id (PK), display_label, auto_resolve_eligible, registered_by_block, deprecated_at. Both files are owned by Block 14 — the canonical one is issue_type_registry_schema.md.",
+      "suggested_fix": "Remove the CREATE TABLE issue_type_registry DDL block from review_issue_card_schema.md and replace it with a cross-reference to issue_type_registry_schema.md."
+    },
+    {
+      "id": 3,
+      "severity": "HIGH",
+      "check": "DUPLICATE_DDL",
+      "file": "Docs/sub/schemas/workflow_approval_schema.md",
+      "line": 24,
+      "description": "CREATE TABLE workflow_run_approvals in workflow_approval_schema.md defines columns: approval_id (PK), approved_by_user_id (NOT NULL), approval_method, approval_context, is_stale, stale_reason, revoked_by_user_id, revoked_at — a stale staleness-tracking model. The canonical workflow_run_approvals_schema.md defines: id (PK), approval_type, status (PENDING/APPROVED/REJECTED/EXPIRED), requested_by_user_id (NOT NULL), requested_at, resolved_at, expires_at, rejection_reason. These are fundamentally different schemas for the same table.",
+      "suggested_fix": "Remove the CREATE TABLE workflow_run_approvals DDL block from workflow_approval_schema.md and add a cross-reference to workflow_run_approvals_schema.md as the canonical owner."
+    },
+    {
+      "id": 4,
+      "severity": "HIGH",
+      "check": "DUPLICATE_DDL",
+      "file": "Docs/sub/schemas/invoice_sequence_schema.md",
+      "line": 18,
+      "description": "CREATE TABLE invoice_sequences in invoice_sequence_schema.md uses: sequence_id (PK), REFERENCES businesses(id), series as invoice_series_enum, last_sequence_number DEFAULT 0. The invoice_numbering_sequence_policy.md version uses: id (PK), REFERENCES business_entities(id), series as text, next_counter DEFAULT 1. Key differences: FK target (businesses vs business_entities), series column type (enum vs text), counter column name (last_sequence_number vs next_counter), and starting value (0 vs 1).",
+      "suggested_fix": "Align both files to use the same FK target (business_entities per data_layer_conventions_policy), same column name (next_counter starting at 1 per the allocation algorithm), and declare invoice_series_enum as the canonical type in invoice_sequence_schema.md."
+    },
+    {
+      "id": 5,
+      "severity": "HIGH",
+      "check": "DUPLICATE_DDL",
+      "file": "Docs/sub/schemas/oauth_token_encryption_schema.md",
+      "line": 14,
+      "description": "CREATE TABLE oauth_tokens in oauth_token_encryption_schema.md has columns: account_email, refresh_token_expires_at, provider_account_id, provider_metadata, plus encrypted blob columns (access_token_encrypted, refresh_token_encrypted). The gmail_oauth_integration.md definition has different encrypted column names: access_token_enc, refresh_token_enc, plus IV columns access_token_iv, refresh_token_iv. The two schemas are structurally incompatible.",
+      "suggested_fix": "Designate oauth_token_encryption_schema.md as the canonical DDL owner. Remove the CREATE TABLE oauth_tokens block from gmail_oauth_integration.md and replace with a cross-reference to oauth_token_encryption_schema.md."
+    },
+    {
+      "id": 6,
+      "severity": "HIGH",
+      "check": "DUPLICATE_DDL",
+      "file": "Docs/sub/schemas/tenancy_schema_definition.md",
+      "line": 50,
+      "description": "CREATE TABLE users in tenancy_schema_definition.md has: mfa_enabled, auth_user_id UNIQUE, deleted_at — but NOT email_verified, email_verified_at, avatar_url, is_active. The canonical user_schema.md has: email_verified, email_verified_at, display_name (nullable), avatar_url, is_active — but NOT mfa_enabled, auth_user_id, deleted_at. The two definitions are mutually incompatible.",
+      "suggested_fix": "Designate user_schema.md as the canonical DDL owner. Update tenancy_schema_definition.md to reference user_schema.md instead of re-declaring the table."
+    },
+    {
+      "id": 7,
+      "severity": "HIGH",
+      "check": "DUPLICATE_DDL",
+      "file": "Docs/sub/schemas/tenancy_schema_definition.md",
+      "line": 75,
+      "description": "CREATE TABLE business_entities in tenancy_schema_definition.md has: accounting_method, vat_registered, vat_period_type, status, base_currency, country (char(2)), deleted_at. The canonical business_schema.md has: display_name NOT NULL, is_active, timezone, fiscal_year_start_month, country_code (char(2)), currency (char(3)), created_by_user_id — fundamentally different column sets and naming (country vs country_code, base_currency vs currency).",
+      "suggested_fix": "Designate business_schema.md as the canonical DDL owner. Remove the duplicate CREATE TABLE business_entities block from tenancy_schema_definition.md and add a cross-reference."
+    },
+    {
+      "id": 8,
+      "severity": "HIGH",
+      "check": "AUDIT_EVENT_ORPHAN",
+      "file": "Docs/sub/runbooks/out_workflow_live_integration_runbook.md",
+      "line": 98,
+      "description": "OUT_WORKFLOW_MANUAL_HOLD_APPLIED and OUT_WORKFLOW_MANUAL_HOLD_RELEASED are referenced as real audit events that must be asserted in the runbook (lines 98, 100, 132, 164) but neither event name appears in audit_event_taxonomy.md. The full OUT_WORKFLOW domain section in the taxonomy has no MANUAL_HOLD entries.",
+      "suggested_fix": "Add OUT_WORKFLOW_MANUAL_HOLD_APPLIED (LOW) and OUT_WORKFLOW_MANUAL_HOLD_RELEASED (LOW) to audit_event_taxonomy.md under the OUT_WORKFLOW domain. Both events should record workflow_run_id, transaction_id, and user_id."
+    },
+    {
+      "id": 9,
+      "severity": "HIGH",
+      "check": "AUDIT_EVENT_ORPHAN",
+      "file": "Docs/sub/schemas/counterparty_resolver_tracing_schema.md",
+      "line": 249,
+      "description": "LEDGER_COUNTERPARTY_DISAGREEMENT_DETECTED is referenced as a real runtime audit event emitted by the counterparty resolver (lines 134, 249, 261 all claim 'the resolver emits' this event) but the event name is absent from audit_event_taxonomy.md. The LEDGER domain in the taxonomy has LEDGER_COUNTERPARTY_RESOLVED and LEDGER_COUNTERPARTY_UNRESOLVED but not DISAGREEMENT_DETECTED.",
+      "suggested_fix": "Add LEDGER_COUNTERPARTY_DISAGREEMENT_DETECTED (MEDIUM) to audit_event_taxonomy.md under the LEDGER domain. Payload: counterparty_id, business_id, source_a, source_b, disagreement_field, run_id."
+    },
+    {
+      "id": 10,
+      "severity": "MEDIUM",
+      "check": "DATA_ZONE_DRIFT",
+      "file": "Docs/sub/schemas/vies_submission_tracking_schema.md",
+      "line": 181,
+      "description": "Line 181 states 'files are deleted after 30 days per export_pipeline_policy' for the export-temp bucket. Line 210 cross-reference also says '30-day TTL'. The canonical export-temp TTL is 24 hours (export_pipeline_policy Section 4 and data_retention_policy). There is no 30-day TTL in any canonical policy for export-temp.",
+      "suggested_fix": "Replace '30 days' with '24 hours' on line 181 and update the cross-reference on line 210 to remove '30-day TTL'."
+    },
+    {
+      "id": 11,
+      "severity": "MEDIUM",
+      "check": "DATA_ZONE_DRIFT",
+      "file": "Docs/sub/schemas/vies_xml_schema.md",
+      "line": 136,
+      "description": "Lines 136, 161, and 173 reference 'the 30-day rule per export_pipeline_policy Section 4' and 'Raw Upload zone; 30-day export storage'. The canonical export-temp TTL is 24 hours. vies_submission_tracking_schema.md (line 121) confirms the XML is stored in export-temp, not a 30-day Raw Upload zone.",
+      "suggested_fix": "Replace all references to '30-day rule' and '30-day export storage' in vies_xml_schema.md with '24-hour TTL per export_pipeline_policy Section 4' and align the storage zone reference to export-temp."
+    },
+    {
+      "id": 12,
+      "severity": "MEDIUM",
+      "check": "DATA_ZONE_DRIFT",
+      "file": "Docs/sub/schemas/accountant_pack_config_schema.md",
+      "line": 200,
+      "description": "Cross-reference on line 200 describes export_pipeline_policy as governing 'operational export retention (30 days)'. The canonical rule is 24-hour TTL for export-temp; indefinite retention for archive-derived exports. No '30 days' rule exists in export_pipeline_policy.",
+      "suggested_fix": "Update the cross-reference to read 'export-temp 24h TTL; archive-derived exports indefinite per Object Lock' instead of 'operational export retention (30 days)'."
+    },
+    {
+      "id": 13,
+      "severity": "MEDIUM",
+      "check": "INVOICE_SERIES",
+      "file": "Docs/sub/policies/invoice_numbering_sequence_policy.md",
+      "line": 70,
+      "description": "The policy states 'Sequence numbers are allocated at the moment an invoice transitions from DRAFT to ISSUED status' (lines 27, 70, 133, 145, 189). However, the canonical invoice_status_enum (invoice_schema.md) for tax invoices has no ISSUED state — it uses SENT (DRAFT → SENT is the first transition out of DRAFT). Only credit_note_status_enum has an ISSUED state. The policy's allocation-timing rule is correct in intent (allocated at DRAFT exit, not at DRAFT time) but uses a non-existent status name for tax invoices.",
+      "suggested_fix": "Replace 'ISSUED' with 'SENT' for tax invoice references throughout invoice_numbering_sequence_policy.md lines 27, 70, 145, 189. Credit note references (line 133) correctly use ISSUED and should remain unchanged."
+    },
+    {
+      "id": 14,
+      "severity": "MEDIUM",
+      "check": "FORWARD_REF_STALE",
+      "file": "Docs/sub/policies/split_payment_detection_policy.md",
+      "line": 27,
+      "description": "Line 27 contains a stale forward reference: 'The invoice status is UNPAID or PARTIALLY_PAID (forward reference: invoice_lifecycle_state_enum in Block 13)'. The referenced enum invoice_lifecycle_state_enum does not exist. Block 13's actual enum is invoice_status_enum (defined in invoice_schema.md), which has PAYMENT_EXPECTED and PARTIALLY_PAID (not UNPAID). The correct status values and enum type are now fully defined.",
+      "suggested_fix": "Replace the forward reference text with 'The invoice status is PAYMENT_EXPECTED or PARTIALLY_PAID per invoice_status_enum (invoice_schema.md)'. Remove the parenthetical forward-reference annotation."
+    },
+    {
+      "id": 15,
+      "severity": "MEDIUM",
+      "check": "MOBILE_WRITE_MISSING",
+      "file": "Docs/sub/tools/tool_hash_chain_append.md",
+      "line": 33,
+      "description": "tool_hash_chain_append declares side_effect_class: WRITES_AUDIT (line 33) — a write operation. The file contains no mention of mobile rejection, no cross-reference to mobile_write_rejection_endpoints.md, and no note that mobile clients cannot invoke this tool. All other write-class tools in the corpus include a mobile rejection statement.",
+      "suggested_fix": "Add a Mobile section to tool_hash_chain_append.md noting: 'Mobile clients cannot directly invoke this tool. data.hash_chain_append is an internal primitive called only by security.emit_audit, which is itself rejected at all mobile write surfaces per mobile_write_rejection_endpoints.md.'"
+    },
+    {
+      "id": 16,
+      "severity": "LOW",
+      "check": "AUDIT_EVENT_ORPHAN",
+      "file": "Docs/sub/schemas/counterparty_resolver_tracing_schema.md",
+      "line": 261,
+      "description": "The cross-reference on line 261 cites audit_event_taxonomy for LEDGER_COUNTERPARTY_DISAGREEMENT_DETECTED but the event is not in the taxonomy (duplicate citation of finding #9 — same root cause, different line).",
+      "suggested_fix": "Resolved by adding LEDGER_COUNTERPARTY_DISAGREEMENT_DETECTED to audit_event_taxonomy.md per finding #9."
+    }
+  ],
+  "summary": {
+    "BLOCKING": 0,
+    "HIGH": 9,
+    "MEDIUM": 6,
+    "LOW": 1,
+    "total": 16
+  }
+}

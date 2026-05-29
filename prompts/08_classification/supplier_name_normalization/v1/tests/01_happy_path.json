@@ -1,0 +1,7 @@
+{
+  "case_name": "01-happy-path",
+  "input": {"raw": "ACME LTD."},
+  "expected_output": {"n": "Acme Ltd"},
+  "must_contain_assertions": ["Acme", "Ltd"],
+  "is_adversarial_anchor": false
+}

@@ -1,0 +1,17 @@
+{
+  "case_name": "04-edge-minimal-optional-fields",
+  "input": {
+    "context_kind": "PERIOD_FINALIZED",
+    "structured_data": {
+      "period_label": "April 2026"
+    },
+    "language": "en"
+  },
+  "expected_output": {
+    "title": "April 2026 has been finalized",
+    "description": "The April 2026 bookkeeping period is now locked. No action needed.",
+    "language": "en"
+  },
+  "must_contain_assertions": ["April 2026", "No action needed"],
+  "is_adversarial_anchor": false
+}

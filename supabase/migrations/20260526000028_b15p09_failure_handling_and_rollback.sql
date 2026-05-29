@@ -1,0 +1,9 @@
+-- B15·P09 — Failure Handling & Rollback Semantics
+-- Codify the 14-mode failure taxonomy:
+--   - register 11 missing finalization.* issue types
+--   - add _emit_finalization_failure + _emit_persistent_failure helpers
+--   - add sweep_storage_orphans + sweep_unaudited_finalizations sweepers
+--   - patch execute_lock_sequence to emit FINALIZATION_FAILURE_DETECTED
+--     inside the EXCEPTION block (with failure_mode + transient flag) and
+--     FINALIZATION_PERSISTENT_FAILURE_HIGH/BLOCKING after retry exhaustion
+-- Full body applied via apply_migration b15p09_failure_handling_and_rollback.

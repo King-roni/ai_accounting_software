@@ -1,0 +1,16 @@
+{
+  "case_name": "03-edge-date-off-by-one-day",
+  "input": {
+    "match_level": "STRONG_PROBABLE",
+    "transaction_summary": {"amount": 75.00, "currency": "EUR", "date": "2026-01-15", "counterparty_label": "Office Supplies"},
+    "document_summary": {"document_label": "Receipt-OS-2026-01-14", "amount": 75.00, "currency": "EUR", "date": "2026-01-14", "reference": "OS-2026-01-14"},
+    "score_breakdown": {"amount_match": 1.0, "date_distance_days": 1, "name_similarity": 0.95},
+    "language": "en"
+  },
+  "expected_output": {
+    "description": "Receipt-OS-2026-01-14 from Office Supplies has the same amount (€75.00) as the transaction; the receipt is dated one day earlier (14 January 2026 vs 15 January 2026), which is typical for card payments.",
+    "language": "en"
+  },
+  "must_contain_assertions": ["€75.00", "Office Supplies", "14 January 2026", "15 January 2026"],
+  "is_adversarial_anchor": false
+}

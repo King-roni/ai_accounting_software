@@ -1,0 +1,7 @@
+{
+  "case_name": "02-edge-unicode-whitespace",
+  "input": {"raw": "Acme Ltd"},
+  "expected_output": {"n": "Acme Ltd"},
+  "must_contain_assertions": ["Acme Ltd"],
+  "is_adversarial_anchor": false
+}

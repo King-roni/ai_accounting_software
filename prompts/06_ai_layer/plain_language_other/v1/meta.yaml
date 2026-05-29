@@ -1,0 +1,36 @@
+prompt_id: ai_layer.plain_language.other
+version: 1.0.0
+purpose: |
+  Generic plain-language renderer for ad-hoc cases from any block (run
+  summaries, notification subjects, export error summaries). Caller passes a
+  `context_kind` discriminator the block author chooses.
+ai_tier: LOCAL_LLM
+input_schema:
+  type: object
+  required: [context_kind, structured_data, language]
+  properties:
+    context_kind:
+      type: string
+      description: Free-form caller-chosen discriminator (e.g. WORKFLOW_SUMMARY,
+        EXPORT_ERROR, NOTIFICATION_SUBJECT). MUST NOT echo to output.
+    structured_data:
+      type: object
+      description: Caller-chosen structured payload to render.
+    language:
+      type: string
+      enum: [en]
+  additionalProperties: false
+output_schema:
+  type: object
+  required: [title, description, language]
+  properties:
+    title:
+      type: string
+      description: Single line, max 80 characters.
+    description:
+      type: string
+      description: 1-3 sentences, max 300 characters, last sentence is the next step.
+    language:
+      type: string
+      enum: [en]
+  additionalProperties: false

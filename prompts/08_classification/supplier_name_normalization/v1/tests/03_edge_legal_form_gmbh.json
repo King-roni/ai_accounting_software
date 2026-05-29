@@ -1,0 +1,7 @@
+{
+  "case_name": "03-edge-legal-form-gmbh",
+  "input": {"raw": "Schmidt Holding GMBH"},
+  "expected_output": {"n": "Schmidt Holding GmbH"},
+  "must_contain_assertions": ["GmbH"],
+  "is_adversarial_anchor": false
+}

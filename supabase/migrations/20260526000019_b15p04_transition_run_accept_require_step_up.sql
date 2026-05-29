@@ -1,0 +1,10 @@
+-- B15·P04 fix-up: transition_run's permission check rejected the matrix's
+-- canonical 'REQUIRE_STEP_UP' decision (it only accepted 'STEP_UP'). The
+-- matrix has consistently used 'REQUIRE_STEP_UP' (FINALIZATION rows + the
+-- B15·P03-introduced APPROVAL_STEP_UP rows). Accept both spellings so the
+-- engine reconciles with the matrix vocabulary; full migration body is in
+-- the DB and committed via apply_migration b15p04_transition_run_accept_require_step_up_v2.
+--
+-- Net change: the permission-check branch in transition_run treats
+--   v_perm_dec IN ('STEP_UP','REQUIRE_STEP_UP')
+-- equivalently. No other behavior changes.

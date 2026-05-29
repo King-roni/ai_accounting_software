@@ -1,0 +1,553 @@
+{
+  "scan_date": "2026-05-15",
+  "corpus_size": 233,
+  "findings": [
+    {
+      "id": 1,
+      "severity": "MEDIUM",
+      "check": "ENUM_DRIFT",
+      "file": "Docs/sub/schemas/layer1_rule_evaluation_schema.md",
+      "line": 103,
+      "description": "The retention / purge section states the run reaches a terminal state of 'COMPLETED, FAILED, or CANCELLED'. The canonical run_status_enum has no COMPLETED value; the correct terminal success state for workflow_runs is FINALIZED.",
+      "suggested_fix": "Replace 'COMPLETED' with 'FINALIZED' in the terminal-state list so it reads 'FINALIZED, FAILED, or CANCELLED'."
+    },
+    {
+      "id": 2,
+      "severity": "MEDIUM",
+      "check": "ENUM_DRIFT",
+      "file": "Docs/sub/schemas/bank_statement_rows_schema.md",
+      "line": 88,
+      "description": "The purge-after-run-completion section states the run transitions to a terminal state of 'COMPLETED, FAILED, CANCELLED'. The canonical run_status_enum has no COMPLETED value; the correct terminal success state for workflow_runs is FINALIZED.",
+      "suggested_fix": "Replace 'COMPLETED' with 'FINALIZED' in the terminal-state list so it reads 'FINALIZED, FAILED, CANCELLED'."
+    },
+    {
+      "id": 3,
+      "severity": "HIGH",
+      "check": "GATE_NAMING",
+      "file": "Docs/sub/policies/in_phase_gate_policy.md",
+      "line": 25,
+      "description": "All 8 gate function names in the IN_MONTHLY phase table use the deprecated 3-part gate.in.<descriptor> pattern (e.g. gate.in.ingestion_complete). The decisions_log 2026-05-15 amendment mandates engine.gate_<phase_descriptor> (2-part, engine namespace) as the canonical form; gate_function_library_schema.md was updated but this file was not.",
+      "suggested_fix": "Rename all gate references to use engine.gate_<descriptor> (e.g. gate.in.ingestion_complete → engine.gate_ingestion_complete) throughout the file."
+    },
+    {
+      "id": 4,
+      "severity": "HIGH",
+      "check": "GATE_NAMING",
+      "file": "Docs/sub/policies/out_manual_hold_policy.md",
+      "line": 11,
+      "description": "Gate references gate.out.matching_complete (line 11) and gate.out.manual_upload_hold_clear (lines 97, 112) use the deprecated 3-part pattern. Canonical form per decisions_log is engine.gate_matching_complete and engine.gate_manual_upload_hold_clear.",
+      "suggested_fix": "Replace gate.out.matching_complete with engine.gate_matching_complete and gate.out.manual_upload_hold_clear with engine.gate_manual_upload_hold_clear throughout the file."
+    },
+    {
+      "id": 5,
+      "severity": "HIGH",
+      "check": "GATE_NAMING",
+      "file": "Docs/sub/policies/archive_step_up_policy.md",
+      "line": 20,
+      "description": "Multiple references to gate.finalization.preconditions_satisfied, gate.finalization.approval_recorded, and related gate.finalization.* names use the deprecated 3-part pattern. Canonical form is engine.gate_finalization_preconditions_satisfied, engine.gate_approval_recorded, etc.",
+      "suggested_fix": "Replace all gate.finalization.<descriptor> references with engine.gate_<descriptor> throughout the file."
+    },
+    {
+      "id": 6,
+      "severity": "HIGH",
+      "check": "GATE_NAMING",
+      "file": "Docs/sub/schemas/finalization_gate_sql_schema.md",
+      "line": 5,
+      "description": "All 8 finalization gate definitions and the composite gate use the deprecated gate.finalization.<descriptor> 3-part naming (e.g. gate.finalization.no_open_blocking_issues, gate.finalization.preconditions_satisfied). Canonical form is engine.gate_<descriptor>.",
+      "suggested_fix": "Rename all gate.finalization.<descriptor> references to engine.gate_<descriptor> (e.g. gate.finalization.no_open_blocking_issues → engine.gate_no_open_blocking_issues) throughout the file."
+    },
+    {
+      "id": 7,
+      "severity": "HIGH",
+      "check": "GATE_NAMING",
+      "file": "Docs/sub/schemas/adjustment_finalization_precondition_schema.md",
+      "line": 7,
+      "description": "The composite gate gate.finalization.adjustment_preconditions_satisfied and its 4 sub-gates (gate.finalization.adjustment_parent_finalized etc.) use the deprecated 3-part pattern.",
+      "suggested_fix": "Rename all gate.finalization.adjustment_* references to engine.gate_adjustment_* throughout the file."
+    },
+    {
+      "id": 8,
+      "severity": "HIGH",
+      "check": "GATE_NAMING",
+      "file": "Docs/sub/reference/out_monthly_phase_sequence.md",
+      "line": 37,
+      "description": "All gate function names in the OUT_MONTHLY phase table use the deprecated gate.out.<descriptor> pattern (e.g. gate.out.ingestion_complete, gate.out.matching_complete). Canonical form is engine.gate_<descriptor>.",
+      "suggested_fix": "Rename all gate.out.<descriptor> references to engine.gate_<descriptor> throughout the file."
+    },
+    {
+      "id": 9,
+      "severity": "HIGH",
+      "check": "GATE_NAMING",
+      "file": "Docs/sub/reference/in_monthly_phase_sequence.md",
+      "line": 36,
+      "description": "All gate function names in the IN_MONTHLY phase table use the deprecated gate.in.<descriptor> pattern (e.g. gate.in.ingestion_complete, gate.in.income_matching_complete). Canonical form is engine.gate_<descriptor>.",
+      "suggested_fix": "Rename all gate.in.<descriptor> references to engine.gate_<descriptor> throughout the file."
+    },
+    {
+      "id": 10,
+      "severity": "MEDIUM",
+      "check": "GATE_NAMING",
+      "file": "Docs/sub/tools/tool_gate_function_signature.md",
+      "line": 138,
+      "description": "The registration example in the Cross-block contract section uses gate_name: 'gate.out.matching_complete', which is the deprecated 3-part pattern. The canonical registration form is 'engine.gate_matching_complete'.",
+      "suggested_fix": "Change the gate_name in the registration example to 'engine.gate_matching_complete' to reflect the current canonical naming."
+    },
+    {
+      "id": 11,
+      "severity": "MEDIUM",
+      "check": "GATE_NAMING",
+      "file": "Docs/sub/schemas/audit_log_quiescent_predicate_schema.md",
+      "line": 5,
+      "description": "The gate is identified as gate.finalization.audit_log_quiescent throughout the file, using the deprecated 3-part pattern. Canonical form is engine.gate_audit_log_quiescent.",
+      "suggested_fix": "Replace gate.finalization.audit_log_quiescent with engine.gate_audit_log_quiescent throughout the file."
+    },
+    {
+      "id": 12,
+      "severity": "MEDIUM",
+      "check": "GATE_NAMING",
+      "file": "Docs/sub/policies/lock_sequence_policies.md",
+      "line": 15,
+      "description": "Reference to gate.finalization.preconditions_satisfied uses the deprecated 3-part pattern. Canonical form is engine.gate_finalization_preconditions_satisfied.",
+      "suggested_fix": "Replace gate.finalization.preconditions_satisfied with engine.gate_finalization_preconditions_satisfied."
+    },
+    {
+      "id": 13,
+      "severity": "MEDIUM",
+      "check": "GATE_NAMING",
+      "file": "Docs/sub/policies/side_phase_routing_policy.md",
+      "line": 60,
+      "description": "Reference to gate.out.matching_complete uses the deprecated 3-part pattern. Canonical form is engine.gate_matching_complete.",
+      "suggested_fix": "Replace gate.out.matching_complete with engine.gate_matching_complete."
+    },
+    {
+      "id": 14,
+      "severity": "MEDIUM",
+      "check": "GATE_NAMING",
+      "file": "Docs/sub/schemas/allocation_invariant_schema.md",
+      "line": 203,
+      "description": "Cross-reference to gate.in.income_matching_complete uses the deprecated 3-part pattern. Canonical form is engine.gate_income_matching_complete.",
+      "suggested_fix": "Replace gate.in.income_matching_complete with engine.gate_income_matching_complete."
+    },
+    {
+      "id": 15,
+      "severity": "MEDIUM",
+      "check": "GATE_NAMING",
+      "file": "Docs/sub/runbooks/phase_renumbering_migration_runbook.md",
+      "line": 73,
+      "description": "Reference to gate.finalization.preconditions uses the deprecated 3-part pattern. Canonical form is engine.gate_finalization_preconditions (or engine.gate_finalization_preconditions_satisfied).",
+      "suggested_fix": "Replace gate.finalization.preconditions with engine.gate_finalization_preconditions_satisfied."
+    },
+    {
+      "id": 16,
+      "severity": "MEDIUM",
+      "check": "AUDIT_EVENT_ORPHAN",
+      "file": "Docs/sub/runbooks/live_integration_test_runbook.md",
+      "line": 74,
+      "description": "The event INTEGRATION_REPLAY_DRIFT_DETECTED is referenced as the test failure signal at line 74, but this event name is not present in audit_event_taxonomy.md. The taxonomy contains LIVE_TEST_DRIFT_DETECTED (listed at line 129 of the same file) for the same semantic.",
+      "suggested_fix": "Replace INTEGRATION_REPLAY_DRIFT_DETECTED with the canonical LIVE_TEST_DRIFT_DETECTED on line 74."
+    },
+    {
+      "id": 17,
+      "severity": "LOW",
+      "check": "AUDIT_EVENT_ORPHAN",
+      "file": "Docs/sub/tools/tool_hash_chain_append.md",
+      "line": 133,
+      "description": "The event EVENT_AUDIT_RECOVERED is referenced as the generic recovery event for non-finalization audit-append failures, but this event name is not present in audit_event_taxonomy.md. Only FINALIZATION_LOCK_AUDIT_RECOVERED is catalogued.",
+      "suggested_fix": "Either add EVENT_AUDIT_RECOVERED to audit_event_taxonomy.md under the WORKFLOW domain, or clarify that the generic recovery path reuses FINALIZATION_LOCK_AUDIT_RECOVERED with a domain override."
+    },
+    {
+      "id": 18,
+      "severity": "HIGH",
+      "check": "DUPLICATE_DDL",
+      "file": "Docs/sub/schemas/credit_note_cumulative_cap_schema.md",
+      "line": 27,
+      "description": "CREATE TYPE credit_note_status_enum is defined here as ('ISSUED', 'VOIDED') but the canonical definition in credit_note_schema.md is ('DRAFT', 'ISSUED', 'VOIDED'). The DRAFT value is missing in the cumulative_cap schema, creating an inconsistent enum that would fail at migration time.",
+      "suggested_fix": "Remove the duplicate CREATE TYPE credit_note_status_enum from credit_note_cumulative_cap_schema.md and add a cross-reference to credit_note_schema.md for the authoritative enum definition."
+    },
+    {
+      "id": 19,
+      "severity": "HIGH",
+      "check": "DUPLICATE_DDL",
+      "file": "Docs/sub/schemas/credit_note_cumulative_cap_schema.md",
+      "line": 32,
+      "description": "CREATE TABLE credit_notes is partially redefined here with a different column set (e.g. amount_eur_cents as bigint vs amount_eur as numeric(15,2) in credit_note_schema.md; missing voided_at / voided_by_user_id; missing status transitions). This creates a contradictory DDL specification for the same table.",
+      "suggested_fix": "Remove the CREATE TABLE credit_notes block from credit_note_cumulative_cap_schema.md; replace with a cross-reference to credit_note_schema.md and document only the cumulative-cap constraint as an additional CHECK or trigger."
+    },
+    {
+      "id": 20,
+      "severity": "MEDIUM",
+      "check": "DUPLICATE_DDL",
+      "file": "Docs/sub/schemas/deduplication_fingerprint_schema.md",
+      "line": 117,
+      "description": "CREATE TYPE dedup_status_enum is defined here as ('ACCEPTED', 'HARD_DUPLICATE', 'SOFT_DUPLICATE'), which is the conceptual 3-value form. The canonical operational definition in transactions_schema.md uses ('NEW', 'DUPLICATE_EXACT', 'DUPLICATE_POSSIBLE', 'NEEDS_REVIEW'). Two CREATE TYPE statements with the same name and different values will fail at migration time.",
+      "suggested_fix": "Remove or rename the dedup_status_enum definition in deduplication_fingerprint_schema.md; use a clearly named conceptual alias (e.g. dedup_policy_outcome) or provide only narrative documentation of the mapping."
+    },
+    {
+      "id": 21,
+      "severity": "LOW",
+      "check": "DUPLICATE_DDL",
+      "file": "Docs/sub/reference/workflow_state_enum.md",
+      "line": 16,
+      "description": "CREATE TYPE run_status_enum is defined here with the same 10 values as in workflow_run_schema.md. The reference doc is the canonical descriptive home for the enum but should not contain a redundant CREATE TYPE DDL that duplicates the schema file.",
+      "suggested_fix": "Remove the CREATE TYPE DDL block from workflow_state_enum.md and keep only the narrative enum table; add a note that the authoritative DDL lives in workflow_run_schema.md."
+    },
+    {
+      "id": 22,
+      "severity": "LOW",
+      "check": "FORWARD_REF_STALE",
+      "file": "Docs/sub/schemas/split_payment_relationship_schema.md",
+      "line": 178,
+      "description": "Cross-reference labels match_records_schema as a 'Layer 2 forward reference', but the file match_record_schema.md now exists in Docs/sub/schemas/.",
+      "suggested_fix": "Remove the '(Block 04 Phase 03 — Layer 2 forward reference)' qualifier and update the reference to point to the existing match_record_schema.md."
+    },
+    {
+      "id": 23,
+      "severity": "LOW",
+      "check": "FORWARD_REF_STALE",
+      "file": "Docs/sub/schemas/out_adjustment_type_definition.md",
+      "line": 206,
+      "description": "Cross-reference labels adjustment_record_schema as a '(forward reference)', but the file adjustment_record_schema.md now exists in Docs/sub/schemas/.",
+      "suggested_fix": "Remove the '(forward reference)' qualifier from the adjustment_record_schema cross-reference."
+    },
+    {
+      "id": 24,
+      "severity": "LOW",
+      "check": "FORWARD_REF_STALE",
+      "file": "Docs/sub/schemas/in_adjustment_type_definition.md",
+      "line": 190,
+      "description": "Cross-reference labels adjustment_record_schema as a '(forward reference)', but the file adjustment_record_schema.md now exists in Docs/sub/schemas/.",
+      "suggested_fix": "Remove the '(forward reference)' qualifier from the adjustment_record_schema cross-reference."
+    },
+    {
+      "id": 25,
+      "severity": "HIGH",
+      "check": "DATA_ZONE_DRIFT",
+      "file": "Docs/sub/policies/export_pipeline_policy.md",
+      "line": 60,
+      "description": "States that generated export files are retained for 30 days in the Processing zone. The canonical data_retention_policy mandates Export temp zone (bucket: export-temp) with a 24-hour TTL enforced by Supabase Storage lifecycle rules — not 30 days in the Processing zone.",
+      "suggested_fix": "Change line 60 to state that export files are staged in the export-temp bucket with a 24-hour TTL per data_retention_policy; remove the reference to Processing zone and 30-day retention for export files."
+    },
+    {
+      "id": 26,
+      "severity": "BLOCKING",
+      "check": "LINE_COUNT",
+      "file": "Docs/sub/reference/match_level_enum.md",
+      "line": null,
+      "description": "File has 87 lines, below the 140-line hard-fail threshold. Reference enum files must meet the minimum to ensure adequate documentation coverage.",
+      "suggested_fix": "Expand the file to at least 140 lines by adding: full narrative descriptions for each enum value, cross-references to all consumer schemas and tools, a change-history section, and operational notes."
+    },
+    {
+      "id": 27,
+      "severity": "BLOCKING",
+      "check": "LINE_COUNT",
+      "file": "Docs/sub/reference/severity_enum.md",
+      "line": null,
+      "description": "File has 93 lines, below the 140-line hard-fail threshold.",
+      "suggested_fix": "Expand the file to at least 140 lines by adding per-value usage guidance, cross-references, and examples of correct severity assignment across domains."
+    },
+    {
+      "id": 28,
+      "severity": "BLOCKING",
+      "check": "LINE_COUNT",
+      "file": "Docs/sub/policies/step_up_auth_for_workflow_approval_policy.md",
+      "line": null,
+      "description": "File has 101 lines, below the 140-line hard-fail threshold.",
+      "suggested_fix": "Expand the file to at least 140 lines by documenting the threshold matrix, edge cases, and cross-references to step_up_validity_window_policy and archive_step_up_policy."
+    },
+    {
+      "id": 29,
+      "severity": "BLOCKING",
+      "check": "LINE_COUNT",
+      "file": "Docs/sub/reference/issue_group_enum.md",
+      "line": null,
+      "description": "File has 101 lines, below the 140-line hard-fail threshold.",
+      "suggested_fix": "Expand the file to at least 140 lines by adding per-group routing rationale, examples of issue types in each group, and cross-references."
+    },
+    {
+      "id": 30,
+      "severity": "BLOCKING",
+      "check": "LINE_COUNT",
+      "file": "Docs/sub/reference/filter_rule_type_direction_table.md",
+      "line": null,
+      "description": "File has 106 lines, below the 140-line hard-fail threshold.",
+      "suggested_fix": "Expand the file to at least 140 lines by adding a rationale column, edge-case notes per rule type, and cross-references to out_phase_gate_policy and in_phase_gate_policy."
+    },
+    {
+      "id": 31,
+      "severity": "BLOCKING",
+      "check": "LINE_COUNT",
+      "file": "Docs/sub/reference/transaction_type_enum.md",
+      "line": null,
+      "description": "File has 108 lines, below the 140-line hard-fail threshold.",
+      "suggested_fix": "Expand the file to at least 140 lines with VAT treatment implications per type, OUT/IN workflow scope notes, and classification rule cross-references."
+    },
+    {
+      "id": 32,
+      "severity": "BLOCKING",
+      "check": "LINE_COUNT",
+      "file": "Docs/sub/reference/tool_ai_tier_metadata.md",
+      "line": null,
+      "description": "File has 113 lines, below the 140-line hard-fail threshold.",
+      "suggested_fix": "Expand the file to at least 140 lines by documenting escalation paths, cost-ceiling interactions, and per-tier latency budgets."
+    },
+    {
+      "id": 33,
+      "severity": "BLOCKING",
+      "check": "LINE_COUNT",
+      "file": "Docs/sub/policies/human_review_approval_staleness_policy.md",
+      "line": null,
+      "description": "File has 116 lines, below the 140-line hard-fail threshold.",
+      "suggested_fix": "Expand the file to at least 140 lines by adding staleness detection examples, cross-references to workflow_approval_schema, and edge-case handling for concurrent approvals."
+    },
+    {
+      "id": 34,
+      "severity": "BLOCKING",
+      "check": "LINE_COUNT",
+      "file": "Docs/sub/ui/severity_color_tokens.md",
+      "line": null,
+      "description": "File has 116 lines, below the 140-line hard-fail threshold.",
+      "suggested_fix": "Expand the file to at least 140 lines by adding dark-mode variants, accessibility contrast ratios, and cross-references to design_system_tokens.md."
+    },
+    {
+      "id": 35,
+      "severity": "BLOCKING",
+      "check": "LINE_COUNT",
+      "file": "Docs/sub/reference/vies_record_format.md",
+      "line": null,
+      "description": "File has 119 lines, below the 140-line hard-fail threshold.",
+      "suggested_fix": "Expand the file to at least 140 lines by documenting VIES response field semantics, error codes, and cross-references to vies_record_schema.md and vies_submission_tracking_schema.md."
+    },
+    {
+      "id": 36,
+      "severity": "BLOCKING",
+      "check": "LINE_COUNT",
+      "file": "Docs/sub/policies/redaction_at_write_policy.md",
+      "line": null,
+      "description": "File has 120 lines, below the 140-line hard-fail threshold.",
+      "suggested_fix": "Expand the file to at least 140 lines by adding enforcement examples, gateway-bypass detection cross-references, and failure modes."
+    },
+    {
+      "id": 37,
+      "severity": "BLOCKING",
+      "check": "LINE_COUNT",
+      "file": "Docs/sub/policies/filter_rerun_semantics_policy.md",
+      "line": null,
+      "description": "File has 121 lines, below the 140-line hard-fail threshold.",
+      "suggested_fix": "Expand the file to at least 140 lines by adding examples of filter re-run triggers, idempotency guarantees, and cross-references to out_phase_gate_policy."
+    },
+    {
+      "id": 38,
+      "severity": "BLOCKING",
+      "check": "LINE_COUNT",
+      "file": "Docs/sub/policies/out_adjustment_policies.md",
+      "line": null,
+      "description": "File has 124 lines, below the 140-line hard-fail threshold.",
+      "suggested_fix": "Expand the file to at least 140 lines by documenting the adjustment lifecycle, cross-references to out_adjustment_type_definition.md, and concurrency rules."
+    },
+    {
+      "id": 39,
+      "severity": "BLOCKING",
+      "check": "LINE_COUNT",
+      "file": "Docs/sub/policies/side_phase_routing_policy.md",
+      "line": null,
+      "description": "File has 124 lines, below the 140-line hard-fail threshold.",
+      "suggested_fix": "Expand the file to at least 140 lines by adding side-phase re-entry rules, timeout handling, and cross-references to gate_function_library_schema."
+    },
+    {
+      "id": 40,
+      "severity": "BLOCKING",
+      "check": "LINE_COUNT",
+      "file": "Docs/sub/reference/vat_treatment_enum.md",
+      "line": null,
+      "description": "File has 124 lines, below the 140-line hard-fail threshold.",
+      "suggested_fix": "Expand the file to at least 140 lines by adding per-treatment Cyprus VAT law citations, VIES eligibility notes, and cross-references to ledger_entry_schema."
+    },
+    {
+      "id": 41,
+      "severity": "BLOCKING",
+      "check": "LINE_COUNT",
+      "file": "Docs/sub/integrations/fx_conversion_source_integration.md",
+      "line": null,
+      "description": "File has 125 lines, below the 140-line hard-fail threshold.",
+      "suggested_fix": "Expand the file to at least 140 lines by documenting fallback chain, ECB rate cache TTL, and cross-references to ecb_rate_schema."
+    },
+    {
+      "id": 42,
+      "severity": "BLOCKING",
+      "check": "LINE_COUNT",
+      "file": "Docs/sub/policies/gateway_bypass_detection_policy.md",
+      "line": null,
+      "description": "File has 125 lines, below the 140-line hard-fail threshold.",
+      "suggested_fix": "Expand the file to at least 140 lines by adding detection examples, false-positive handling, and cross-references to redaction_policies.md."
+    },
+    {
+      "id": 43,
+      "severity": "BLOCKING",
+      "check": "LINE_COUNT",
+      "file": "Docs/sub/integrations/adjustment_archive_handoff_integration.md",
+      "line": null,
+      "description": "File has 126 lines, below the 140-line hard-fail threshold.",
+      "suggested_fix": "Expand the file to at least 140 lines by documenting the handoff contract, failure modes, and cross-references to adjustment_finalization_precondition_schema."
+    },
+    {
+      "id": 44,
+      "severity": "BLOCKING",
+      "check": "LINE_COUNT",
+      "file": "Docs/sub/policies/per_business_toggle_short_circuit_policy.md",
+      "line": null,
+      "description": "File has 127 lines, below the 140-line hard-fail threshold.",
+      "suggested_fix": "Expand the file to at least 140 lines by adding toggle override audit events, rollback semantics, and cross-references to workflow_run_schema."
+    },
+    {
+      "id": 45,
+      "severity": "BLOCKING",
+      "check": "LINE_COUNT",
+      "file": "Docs/sub/reference/resolution_action_enum.md",
+      "line": null,
+      "description": "File has 128 lines, below the 140-line hard-fail threshold.",
+      "suggested_fix": "Expand the file to at least 140 lines by adding per-action mobile rejection notes and cross-references to resolution_action_payload_schema."
+    },
+    {
+      "id": 46,
+      "severity": "BLOCKING",
+      "check": "LINE_COUNT",
+      "file": "Docs/sub/schemas/review_issues_status_enum_migration.md",
+      "line": null,
+      "description": "File has 129 lines, below the 140-line hard-fail threshold.",
+      "suggested_fix": "Expand the file to at least 140 lines by adding rollback steps, zero-downtime migration notes, and cross-references to review_issues_schema."
+    },
+    {
+      "id": 47,
+      "severity": "BLOCKING",
+      "check": "LINE_COUNT",
+      "file": "Docs/sub/integrations/event_subscription_pipeline_integration.md",
+      "line": null,
+      "description": "File has 131 lines, below the 140-line hard-fail threshold.",
+      "suggested_fix": "Expand the file to at least 140 lines by documenting the subscription registration API, event ordering guarantees, and dead-letter handling."
+    },
+    {
+      "id": 48,
+      "severity": "BLOCKING",
+      "check": "LINE_COUNT",
+      "file": "Docs/sub/policies/prompt_management_policies.md",
+      "line": null,
+      "description": "File has 131 lines, below the 140-line hard-fail threshold.",
+      "suggested_fix": "Expand the file to at least 140 lines by adding prompt versioning rules, deprecation procedures, and cross-references to ai_gateway_schema."
+    },
+    {
+      "id": 49,
+      "severity": "BLOCKING",
+      "check": "LINE_COUNT",
+      "file": "Docs/sub/policies/invoice_pdf_policies.md",
+      "line": null,
+      "description": "File has 134 lines, below the 140-line hard-fail threshold.",
+      "suggested_fix": "Expand the file to at least 140 lines by adding PDF re-render edge cases, supersession rules, and cross-references to invoice_pdf_schema."
+    },
+    {
+      "id": 50,
+      "severity": "BLOCKING",
+      "check": "LINE_COUNT",
+      "file": "Docs/sub/policies/transaction_tag_policy.md",
+      "line": null,
+      "description": "File has 134 lines, below the 140-line hard-fail threshold.",
+      "suggested_fix": "Expand the file to at least 140 lines by adding tag conflict resolution rules, cross-references to tag_taxonomy_version_schema, and mobile rejection notes."
+    },
+    {
+      "id": 51,
+      "severity": "BLOCKING",
+      "check": "LINE_COUNT",
+      "file": "Docs/sub/integrations/archive_hash_anchor_integration.md",
+      "line": null,
+      "description": "File has 135 lines, below the 140-line hard-fail threshold.",
+      "suggested_fix": "Expand the file to at least 140 lines by adding anchor failure handling, retry semantics, and cross-references to rfc3161_timestamp_policy."
+    },
+    {
+      "id": 52,
+      "severity": "BLOCKING",
+      "check": "LINE_COUNT",
+      "file": "Docs/sub/integrations/archive_promotion_completed_event_integration.md",
+      "line": null,
+      "description": "File has 135 lines, below the 140-line hard-fail threshold.",
+      "suggested_fix": "Expand the file to at least 140 lines by adding consumer registration details, event replay semantics, and cross-references to archive_schema."
+    },
+    {
+      "id": 53,
+      "severity": "BLOCKING",
+      "check": "LINE_COUNT",
+      "file": "Docs/sub/reference/match_signal_weights.md",
+      "line": null,
+      "description": "File has 135 lines, below the 140-line hard-fail threshold.",
+      "suggested_fix": "Expand the file to at least 140 lines by adding weight validation rules (must sum to 1.00), per-signal examples, and cross-references to match_scoring_weights_policy."
+    },
+    {
+      "id": 54,
+      "severity": "BLOCKING",
+      "check": "LINE_COUNT",
+      "file": "Docs/sub/schemas/document_line_items_schema.md",
+      "line": null,
+      "description": "File has 137 lines, below the 140-line hard-fail threshold.",
+      "suggested_fix": "Expand the file to at least 140 lines by adding line-item validation rules, cross-references to invoice_line_item_schema, and examples."
+    },
+    {
+      "id": 55,
+      "severity": "BLOCKING",
+      "check": "LINE_COUNT",
+      "file": "Docs/sub/policies/redaction_policies.md",
+      "line": null,
+      "description": "File has 138 lines, below the 140-line hard-fail threshold.",
+      "suggested_fix": "Expand the file to at least 140 lines by adding enforcement examples and cross-references to redaction_field_map and redaction_at_write_policy."
+    },
+    {
+      "id": 56,
+      "severity": "BLOCKING",
+      "check": "LINE_COUNT",
+      "file": "Docs/sub/policies/shared_phase_coordination_policy.md",
+      "line": null,
+      "description": "File has 138 lines, below the 140-line hard-fail threshold.",
+      "suggested_fix": "Expand the file to at least 140 lines by adding coordination failure modes and cross-references to workflow_phase_states_schema."
+    },
+    {
+      "id": 57,
+      "severity": "BLOCKING",
+      "check": "LINE_COUNT",
+      "file": "Docs/sub/reference/permission_matrix.md",
+      "line": null,
+      "description": "File has 138 lines, below the 140-line hard-fail threshold.",
+      "suggested_fix": "Expand the file to at least 140 lines by adding per-role rationale footnotes and cross-references to rls_policy_template."
+    },
+    {
+      "id": 58,
+      "severity": "BLOCKING",
+      "check": "LINE_COUNT",
+      "file": "Docs/sub/schemas/match_signal_evidence_schema.md",
+      "line": null,
+      "description": "File has 138 lines, below the 140-line hard-fail threshold.",
+      "suggested_fix": "Expand the file to at least 140 lines by adding evidence weight validation rules and cross-references to match_record_schema."
+    },
+    {
+      "id": 59,
+      "severity": "BLOCKING",
+      "check": "LINE_COUNT",
+      "file": "Docs/sub/policies/data_retention_policy.md",
+      "line": null,
+      "description": "File has 139 lines, below the 140-line hard-fail threshold.",
+      "suggested_fix": "Expand the file to at least 140 lines by adding one more line to any section (e.g., an additional cross-reference or a note on GDPR interactions with the retention zones)."
+    },
+    {
+      "id": 60,
+      "severity": "BLOCKING",
+      "check": "LINE_COUNT",
+      "file": "Docs/sub/policies/recurring_invoice_policy.md",
+      "line": null,
+      "description": "File has 139 lines, below the 140-line hard-fail threshold.",
+      "suggested_fix": "Expand the file to at least 140 lines by adding a note on recurring invoice cancellation audit events or a cross-reference to invoice_sequence_schema."
+    }
+  ],
+  "summary": {
+    "BLOCKING": 35,
+    "HIGH": 11,
+    "MEDIUM": 11,
+    "LOW": 3,
+    "total": 60
+  }
+}

@@ -1,0 +1,5 @@
+-- B16·P02 fix-up: dashboard_route_drill_down's per-business lookup selected
+-- `business_id` from business_entities, but business_entities.id IS the
+-- business_id (the column is named `id`). Replace with `SELECT organization_id`
+-- and assign the existing v_biz_id loop variable.
+-- (Full body applied via apply_migration b16p02_router_business_lookup_fix.)

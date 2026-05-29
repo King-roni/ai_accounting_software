@@ -1,0 +1,7 @@
+{
+  "case_name": "04-edge-single-word-abbreviation",
+  "input": {"raw": "Acme."},
+  "expected_output": {"n": "Acme."},
+  "must_contain_assertions": ["Acme."],
+  "is_adversarial_anchor": false
+}

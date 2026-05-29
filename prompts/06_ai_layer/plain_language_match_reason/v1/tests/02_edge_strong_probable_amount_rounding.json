@@ -1,0 +1,16 @@
+{
+  "case_name": "02-edge-strong-probable-amount-rounding",
+  "input": {
+    "match_level": "STRONG_PROBABLE",
+    "transaction_summary": {"amount": 199.99, "currency": "EUR", "date": "2026-03-10", "counterparty_label": "CloudCorp"},
+    "document_summary": {"document_label": "Receipt-CC-031026", "amount": 200.00, "currency": "EUR", "date": "2026-03-10", "reference": "CC-031026"},
+    "score_breakdown": {"amount_match": 0.995, "date_distance_days": 0, "name_similarity": 1.0},
+    "language": "en"
+  },
+  "expected_output": {
+    "description": "Receipt-CC-031026 from CloudCorp shows €200.00 against a €199.99 transaction on the same date (10 March 2026); the one-cent gap is most likely a rounding difference.",
+    "language": "en"
+  },
+  "must_contain_assertions": ["CloudCorp", "€200.00", "€199.99"],
+  "is_adversarial_anchor": false
+}

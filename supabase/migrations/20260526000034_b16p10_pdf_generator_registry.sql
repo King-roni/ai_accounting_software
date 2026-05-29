@@ -1,0 +1,8 @@
+-- B16·P10 — PDF Generator Registry
+-- 1 enum (pdf_output_format_enum: PDF_A_2A / TAGGED_PDF_1_7) + 1 table
+-- (pdf_generator_registry) + 13 seed rows + register_pdf_generator helper +
+-- pdf_generators_for_export lookup + PDF_GENERATOR_REGISTERED audit on
+-- registration. Real generator implementations live in the application layer
+-- (Node/TS with pdfkit or react-pdf); this is the canonical lookup so
+-- P09's dispatcher can route by export_kind.
+-- (Full body applied via apply_migration b16p10_pdf_generator_registry.)

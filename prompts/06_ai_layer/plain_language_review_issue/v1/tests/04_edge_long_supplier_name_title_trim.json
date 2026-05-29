@@ -1,0 +1,20 @@
+{
+  "case_name": "04-edge-long-supplier-name-title-trim",
+  "input": {
+    "issue_type": "OUT_EXPENSE_NO_INVOICE",
+    "context": {
+      "supplier_name": "International Cyprus Tourism Authority Consulting Services Pavilion Ltd",
+      "amount": 78.50,
+      "currency": "EUR",
+      "transaction_date": "2026-05-03"
+    },
+    "language": "en"
+  },
+  "expected_output": {
+    "title": "Missing invoice for €78.50 to International Cyprus Tourism Authority",
+    "description": "We could not find an invoice for the €78.50 payment to International Cyprus Tourism Authority Consulting Services Pavilion Ltd on 3 May 2026. Upload the invoice to continue.",
+    "language": "en"
+  },
+  "must_contain_assertions": ["€78.50", "Upload the invoice"],
+  "is_adversarial_anchor": false
+}

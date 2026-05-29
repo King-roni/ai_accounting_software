@@ -1,0 +1,20 @@
+{
+  "case_name": "03-edge-currency-locale-eur",
+  "input": {
+    "issue_type": "IN_RECEIPT_NO_DOCUMENT",
+    "context": {
+      "supplier_name": "Pep Marketing",
+      "amount": 12345.67,
+      "currency": "EUR",
+      "transaction_date": "2026-02-08"
+    },
+    "language": "en"
+  },
+  "expected_output": {
+    "title": "Missing client invoice for €12,345.67 received from Pep Marketing",
+    "description": "We received €12,345.67 from Pep Marketing on 8 February 2026 but cannot find the matching invoice you issued. Generate or upload the client invoice to close this out.",
+    "language": "en"
+  },
+  "must_contain_assertions": ["€12,345.67", "Pep Marketing"],
+  "is_adversarial_anchor": false
+}

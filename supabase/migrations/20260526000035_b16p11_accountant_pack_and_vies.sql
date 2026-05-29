@@ -1,0 +1,7 @@
+-- B16·P11 — Accountant Pack & VIES Regulator XML
+-- Per-business accountant_pack_config table + 3 RPCs (config update with
+-- BUSINESS_SETTINGS_EDIT gate, pre-generation validation with FINALIZED +
+-- tamper checks, completion marker wrapping mark_export_completed) +
+-- 10 new audit actions across ACCOUNTANT_PACK + VIES domains.
+-- Real ZIP/XML composition lives in the application layer.
+-- (Full body applied via apply_migration b16p11_accountant_pack_and_vies.)
