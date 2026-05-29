@@ -10,6 +10,7 @@ import {
   periodLabel, runStatusBadge,
   type ApprovalRow, type PhaseDefRow, type PhaseStateRow, type RunRow,
 } from "./run-helpers";
+import { FinalizationChecklist } from "./FinalizationChecklist";
 
 type Decision = { decision?: string; reason_code?: string; reason?: string } | null;
 function denied(d: Decision): string | null {
@@ -124,6 +125,8 @@ function Body({ runId, onClose, onChanged }: { runId: string; onClose: () => voi
           })}
         </ol>
       </div>
+
+      <FinalizationChecklist runId={run.id} runStatus={run.status} side={side} organizationId={run.organization_id} businessId={run.business_id} onChanged={refresh} />
 
       <div>
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">Approvals</p>

@@ -2,10 +2,11 @@
 import { useMemo, useState } from "react";
 import useSWR from "swr";
 import { ArrowDownLeft, ArrowUpRight, Building2, CalendarPlus, ChevronRight } from "lucide-react";
-import { Badge, Button, Card, CardBody, Drawer, EmptyState, ErrorState, Input, Select, Skeleton, Textarea, useToast } from "@/components/ui";
+import { Badge, Button, Card, CardBody, Drawer, EmptyState, ErrorState, Input, Select, Skeleton, Tabs, Textarea, useToast } from "@/components/ui";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useShell } from "@/components/shell/ShellContext";
 import { RunDetailDrawer } from "@/components/runs/RunDetailDrawer";
+import { ArchivePanel } from "@/components/runs/ArchivePanel";
 import { RUN_COLUMNS, periodLabel, runStatusBadge, type RunRow } from "@/components/runs/run-helpers";
 
 interface PeriodGroup { key: string; periodStart: string; out: RunRow | null; in: RunRow | null }
@@ -15,6 +16,7 @@ export default function PeriodsPage() {
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [startOpen, setStartOpen] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [tab, setTab] = useState("periods");
 
   const key = currentBusiness ? ["runs", currentBusiness.id] : null;
   const { data, error, isLoading, mutate } = useSWR<RunRow[]>(key, async () => {
@@ -49,26 +51,39 @@ export default function PeriodsPage() {
         <EmptyState icon={Building2} heading="Select a business" body="Choose a business to see its monthly workflow runs." />
       ) : isMultiBusiness ? (
         <EmptyState icon={Building2} heading="Pick a single business" body="Workflow runs are per-business. Switch from “All businesses” to a specific one." />
-      ) : error ? (
-        <ErrorState description={error.message} onRetry={() => mutate()} />
-      ) : isLoading ? (
-        <div className="flex flex-col gap-3">{[0, 1].map((i) => <Card key={i}><CardBody className="pt-5"><Skeleton height={64} /></CardBody></Card>)}</div>
-      ) : groups.length === 0 ? (
-        <EmptyState icon={CalendarPlus} heading="No periods run yet" body="Start a monthly period to run the outgoing (expenses) and incoming (income) workflows." action={<Button leadingIcon={CalendarPlus} onClick={() => setStartOpen(true)}>Start a period</Button>} />
       ) : (
-        <div className="flex flex-col gap-3">
-          {groups.map((g) => (
-            <Card key={g.key}>
-              <CardBody className="flex flex-col gap-3 pt-5">
-                <h2 className="text-lg font-semibold text-text-primary">{periodLabel(g.periodStart)}</h2>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <RunRowItem icon={ArrowUpRight} title="Outgoing (expenses)" run={g.out} onOpen={setDetailId} />
-                  <RunRowItem icon={ArrowDownLeft} title="Incoming (income)" run={g.in} onOpen={setDetailId} />
-                </div>
-              </CardBody>
-            </Card>
-          ))}
-        </div>
+        <Tabs
+          value={tab}
+          onValueChange={setTab}
+          tabs={[
+            {
+              id: "periods", label: "Periods", content: (
+                error ? (
+                  <ErrorState description={error.message} onRetry={() => mutate()} />
+                ) : isLoading ? (
+                  <div className="flex flex-col gap-3">{[0, 1].map((i) => <Card key={i}><CardBody className="pt-5"><Skeleton height={64} /></CardBody></Card>)}</div>
+                ) : groups.length === 0 ? (
+                  <EmptyState icon={CalendarPlus} heading="No periods run yet" body="Start a monthly period to run the outgoing (expenses) and incoming (income) workflows." action={<Button leadingIcon={CalendarPlus} onClick={() => setStartOpen(true)}>Start a period</Button>} />
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    {groups.map((g) => (
+                      <Card key={g.key}>
+                        <CardBody className="flex flex-col gap-3 pt-5">
+                          <h2 className="text-lg font-semibold text-text-primary">{periodLabel(g.periodStart)}</h2>
+                          <div className="grid gap-2 sm:grid-cols-2">
+                            <RunRowItem icon={ArrowUpRight} title="Outgoing (expenses)" run={g.out} onOpen={setDetailId} />
+                            <RunRowItem icon={ArrowDownLeft} title="Incoming (income)" run={g.in} onOpen={setDetailId} />
+                          </div>
+                        </CardBody>
+                      </Card>
+                    ))}
+                  </div>
+                )
+              ),
+            },
+            { id: "archive", label: "Archive", content: <ArchivePanel /> },
+          ]}
+        />
       )}
 
       <StartPeriodDrawer open={startOpen} onClose={() => setStartOpen(false)} onStarted={() => mutate()} />
