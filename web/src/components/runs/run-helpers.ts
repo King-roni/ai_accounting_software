@@ -51,6 +51,19 @@ export function runStatusBadge(s: string): { variant: BadgeVariant; label: strin
   return RUN_STATUS_BADGE[s] ?? { variant: "status-neutral", label: s };
 }
 
+/** Phase progress measured against REQUIRED (non-optional) phases only — the
+ *  denominator a run can actually reach 100% on. Shared by the Periods list and
+ *  the run drawer so the two surfaces never show different totals for one run. */
+export function phaseProgress(
+  defs: { phase_name: string; optional: boolean }[],
+  states: { phase_name: string; status: string }[],
+): { completed: number; total: number; pct: number } {
+  const required = new Set(defs.filter((d) => !d.optional).map((d) => d.phase_name));
+  const completed = states.filter((s) => s.status === "COMPLETED" && required.has(s.phase_name)).length;
+  const total = required.size;
+  return { completed, total, pct: total ? Math.round((completed / total) * 100) : 0 };
+}
+
 export interface PhaseDefRow { phase_order: number; phase_name: string; optional: boolean; description: string | null }
 export interface PhaseStateRow { phase_name: string; phase_order: number; status: string; gate_decision: string | null; error_summary: string | null; started_at: string | null; completed_at: string | null }
 export interface ApprovalRow { id: string; approved_by: string; approved_at: string; approval_method: string; approval_note: string | null; revoked_at: string | null }

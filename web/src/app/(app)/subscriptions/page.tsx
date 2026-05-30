@@ -118,7 +118,7 @@ export default function SubscriptionsPage() {
             <Stat label="Recurring vendors" value={stats.count} sub={tags.length ? `${tags.length} categor${tags.length === 1 ? "y" : "ies"}` : "tracked + detected"} />
             <Stat label="Est. monthly" value={formatMoney(stats.monthly, "EUR")} sub="normalised per month" tone />
             <Stat label="Annualised" value={formatMoney(stats.annual, "EUR")} sub="projected yearly" />
-            <Stat label="Spend to date" value={formatMoney(stats.spendToDate, "EUR")} sub="across all charges" />
+            <Stat label="Recorded spend" value={formatMoney(stats.spendToDate, "EUR")} sub="across imported charges" />
           </div>
 
           <div className="flex flex-wrap items-end gap-3">
@@ -177,7 +177,7 @@ function VendorDetail({ v }: { v: Vendor }) {
     { k: "Next charge", val: v.nextCharge ? `${v.nextCharge} (est.)` : "—" },
     { k: "Monthly equivalent", val: v.monthlyEquivalent ? formatMoney(v.monthlyEquivalent, v.currency) : "—" },
     { k: "Annualised", val: v.monthlyEquivalent ? formatMoney(v.monthlyEquivalent * 12, v.currency) : "—" },
-    { k: "Spend to date", val: formatMoney(v.total, v.currency) },
+    { k: "Recorded spend", val: formatMoney(v.total, v.currency) },
     { k: "First seen", val: v.firstSeen ?? "—" },
     { k: "Charges observed", val: String(v.occurrences) },
     ...(v.tracked ? [{ k: "Confirmations", val: `${v.confirmations} match${v.confirmations === 1 ? "" : "es"}` }] : []),

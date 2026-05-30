@@ -8,7 +8,7 @@ import { useShell } from "@/components/shell/ShellContext";
 import { useIsMobile } from "@/components/shell/use-is-mobile";
 import { RunDetailDrawer } from "@/components/runs/RunDetailDrawer";
 import { ArchivePanel } from "@/components/runs/ArchivePanel";
-import { RUN_COLUMNS, periodLabel, runStatusBadge, type RunRow } from "@/components/runs/run-helpers";
+import { RUN_COLUMNS, periodLabel, phaseProgress, runStatusBadge, type RunRow } from "@/components/runs/run-helpers";
 
 interface PeriodGroup { key: string; periodStart: string; out: RunRow | null; in: RunRow | null }
 
@@ -96,9 +96,14 @@ export default function PeriodsPage() {
 
 function RunRowItem({ side, title, descriptor, run, onOpen }: { side: "OUT" | "IN"; title: string; descriptor: string; run: RunRow | null; onOpen: (id: string) => void }) {
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
-  const { data: prog } = useSWR(run ? ["run-progress", run.id] : null, async () => {
-    const { data } = await supabase.rpc("get_run_progress", { p_run_id: run!.id });
-    return data as { phases_completed?: number; total_phases?: number } | null;
+  // Compute progress against required phases — identical math to the run drawer
+  // (phaseProgress) so the same run never shows two different totals.
+  const { data: prog } = useSWR(run ? ["run-phase-progress", run.id, run.workflow_type] : null, async () => {
+    const [defsRes, statesRes] = await Promise.all([
+      supabase.from("workflow_phase_definitions").select("phase_name, optional").eq("workflow_type", run!.workflow_type),
+      supabase.from("workflow_phase_states").select("phase_name, status").eq("workflow_run_id", run!.id),
+    ]);
+    return phaseProgress(defsRes.data ?? [], statesRes.data ?? []);
   });
 
   const tag = (
@@ -117,9 +122,9 @@ function RunRowItem({ side, title, descriptor, run, onOpen }: { side: "OUT" | "I
   );
 
   const b = runStatusBadge(run.status);
-  const done = prog?.phases_completed ?? 0;
-  const total = prog?.total_phases ?? (side === "OUT" ? 11 : 8);
-  const pct = total ? Math.round((done / total) * 100) : 0;
+  const done = prog?.completed ?? 0;
+  const total = prog?.total ?? 0;
+  const pct = prog?.pct ?? 0;
 
   return (
     <button type="button" onClick={() => onOpen(run.id)} className="flex items-center gap-3 rounded-lg border border-border-subtle bg-surface-default p-3 text-left transition-colors hover:border-border-default hover:bg-bg-raised">
@@ -130,7 +135,7 @@ function RunRowItem({ side, title, descriptor, run, onOpen }: { side: "OUT" | "I
       </div>
       <div className="hidden w-28 shrink-0 sm:block">
         <div className="h-1.5 overflow-hidden rounded-full bg-border-subtle"><span className="block h-full rounded-full bg-action-primary transition-[width]" style={{ width: `${pct}%` }} /></div>
-        <p className="mt-1 text-right font-mono text-[10.5px] text-text-muted">{done}/{total} phases</p>
+        <p className="mt-1 text-right font-mono text-[10.5px] text-text-muted">{prog ? `${done}/${total} phases` : "…"}</p>
       </div>
       <Badge variant={b.variant} size="sm">{b.label}</Badge>
       <ChevronRight size={16} className="shrink-0 text-text-muted" aria-hidden="true" />

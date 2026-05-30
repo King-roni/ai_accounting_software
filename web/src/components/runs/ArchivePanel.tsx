@@ -26,9 +26,16 @@ export function ArchivePanel() {
     const { data: d, error } = await supabase.rpc("verify_archive_package", { p_archive_package_id: p.id, p_actor_user_id: user.id, p_context: {} });
     setBusyId(null);
     if (error) { toast({ variant: "error", title: "Verification failed", description: error.message }); return; }
-    const res = d as { decision?: string; verified?: boolean; status?: string; reason?: string } | null;
-    const ok = res?.verified === true || res?.decision === "ALLOW" || res?.status === "VERIFIED";
-    toast({ variant: ok ? "success" : "warning", title: ok ? "Archive integrity verified" : "Verification reported an issue", description: res?.reason ?? res?.status });
+    // verify_archive_package returns decision PASSED (anchor matches) / FAILED
+    // (tamper → opens a blocking issue) / ERROR (e.g. PACKAGE_NOT_FOUND).
+    const res = d as { decision?: string; reason?: string } | null;
+    if (res?.decision === "PASSED") {
+      toast({ variant: "success", title: "Archive integrity verified", description: "Recomputed file hashes match the sealed anchor." });
+    } else if (res?.decision === "FAILED") {
+      toast({ variant: "error", title: "Tamper detected", description: "Recomputed inventory doesn’t match the sealed hash — a blocking review issue was opened." });
+    } else {
+      toast({ variant: "error", title: "Verification error", description: res?.reason ?? res?.decision ?? "Unknown error" });
+    }
     mutate();
   }
 

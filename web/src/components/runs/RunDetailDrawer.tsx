@@ -7,7 +7,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useShell } from "@/components/shell/ShellContext";
 import {
   GATE_LABEL, PHASE_STATUS_META, RUN_COLUMNS, WORKFLOW_SIDE, WORKFLOW_TYPE_LABEL,
-  periodLabel, runStatusBadge,
+  periodLabel, phaseProgress, runStatusBadge,
   type ApprovalRow, type PhaseDefRow, type PhaseStateRow, type RunRow,
 } from "./run-helpers";
 import { FinalizationChecklist } from "./FinalizationChecklist";
@@ -61,8 +61,7 @@ function Body({ runId, onClose, onChanged }: { runId: string; onClose: () => voi
   const side = WORKFLOW_SIDE[run.workflow_type];
   const b = runStatusBadge(run.status);
   const stateByName = new Map((states ?? []).map((s) => [s.phase_name, s]));
-  const completed = (states ?? []).filter((s) => s.status === "COMPLETED").length;
-  const total = (defs ?? []).filter((d) => !d.optional).length;
+  const { completed, total } = phaseProgress(defs ?? [], states ?? []);
   const canApprove = ["AWAITING_APPROVAL", "REVIEW_HOLD"].includes(run.status);
   const canClearHold = run.status === "REVIEW_HOLD";
   const canRemind = side === "OUT" && ["RUNNING", "REVIEW_HOLD", "AWAITING_APPROVAL", "PAUSED"].includes(run.status);
