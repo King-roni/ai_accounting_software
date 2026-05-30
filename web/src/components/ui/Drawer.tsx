@@ -39,7 +39,7 @@ export function Drawer({ open, onClose, title, children, footer, width = 480, cl
         aria-labelledby={`${base}-title`}
         tabIndex={-1}
         style={{ zIndex: Z_INDEX.modal, width: typeof width === "number" ? `${width}px` : width }}
-        className={cn("fixed inset-y-0 right-0 flex max-w-[100vw] flex-col bg-bg-overlay shadow-3 outline-none", className)}
+        className={cn("fixed inset-y-0 right-0 flex max-w-[100vw] flex-col border-l border-border-default bg-bg-overlay shadow-4 outline-none", className)}
       >
         <div className="flex items-center justify-between gap-3 border-b border-border-subtle p-5">
           <h2 id={`${base}-title`} className="text-lg font-semibold text-text-primary">{title}</h2>
@@ -53,7 +53,7 @@ export function Drawer({ open, onClose, title, children, footer, width = 480, cl
           </button>
         </div>
         <div className="flex-1 overflow-y-auto p-5 text-sm text-text-secondary">{children}</div>
-        {footer && <div className="flex items-center justify-end gap-2 border-t border-border-subtle p-4">{footer}</div>}
+        {footer && <div className="flex items-center justify-end gap-2 border-t border-border-subtle bg-bg-raised p-4">{footer}</div>}
       </div>
     </div>,
     document.body,

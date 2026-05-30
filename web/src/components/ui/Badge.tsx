@@ -56,7 +56,7 @@ export function Badge({ variant, size = "md", children, className }: BadgeProps)
         const { token: t, text } = cfg as { token: string; text: string };
         return {
           color: `var(${text})`,
-          borderColor: `color-mix(in srgb, var(${t}) 35%, transparent)`,
+          borderColor: `color-mix(in srgb, var(${text}) 22%, transparent)`,
           background: `color-mix(in srgb, var(${t}) 12%, transparent)`,
         };
       })();
@@ -65,7 +65,7 @@ export function Badge({ variant, size = "md", children, className }: BadgeProps)
 
   return (
     <span
-      className={cn("inline-flex items-center rounded-full border font-medium align-middle", sz.box, className)}
+      className={cn("inline-flex items-center rounded-md border font-medium align-middle", sz.box, className)}
       style={style}
       data-component="badge"
     >

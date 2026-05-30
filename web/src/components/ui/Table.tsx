@@ -91,10 +91,10 @@ export function Table<T>({
     c.numeric || c.align === "right" ? "text-right" : c.align === "center" ? "text-center" : "text-left";
 
   return (
-    <div className={cn("overflow-auto rounded-md border border-border-subtle", className)}>
+    <div className={cn("overflow-auto rounded-xl border border-border-subtle bg-surface-default", className)}>
       <table className="w-full border-collapse text-sm">
         <thead className="sticky top-0 z-[1] bg-bg-raised">
-          <tr className="border-b border-border-subtle">
+          <tr className="border-b border-border-default">
             {selectable && (
               <th scope="col" className="w-10 px-3">
                 <input
@@ -115,7 +115,7 @@ export function Table<T>({
                   scope="col"
                   aria-sort={ariaSort}
                   style={{ width: c.width }}
-                  className={cn("px-3 py-2 font-semibold text-text-secondary", alignCls(c))}
+                  className={cn("px-3.5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.05em] text-text-muted", alignCls(c))}
                 >
                   {c.sortable ? (
                     <button

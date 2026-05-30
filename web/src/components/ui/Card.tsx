@@ -35,7 +35,7 @@ export function Card({ accent = "default", interactive = false, className, child
       role="region"
       data-component="card"
       className={cn(
-        "rounded-md border border-border-subtle bg-surface-default shadow-1",
+        "rounded-xl border border-border-subtle bg-surface-default shadow-1",
         interactive && "cursor-pointer transition-shadow duration-150 hover:shadow-2",
         className,
       )}

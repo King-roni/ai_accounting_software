@@ -52,7 +52,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           aria-describedby={error || helperText ? msgId : undefined}
           aria-required={required || undefined}
           className={cn(
-            "h-10 w-full rounded-sm border bg-bg-base px-3 text-sm text-text-primary placeholder:text-text-muted",
+            "h-9 w-full rounded-lg border bg-bg-base px-3 text-sm text-text-primary placeholder:text-text-muted",
             "transition-colors duration-150 outline-none",
             "focus:border-border-focus focus:ring-2 focus:ring-[var(--color-border-focus)]/35",
             Leading && "pl-9",

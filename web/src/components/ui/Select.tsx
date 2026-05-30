@@ -43,7 +43,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
           aria-invalid={hasError || undefined}
           aria-describedby={error || helperText ? msgId : undefined}
           className={cn(
-            "h-10 w-full appearance-none rounded-sm border bg-bg-base pl-3 pr-9 text-sm text-text-primary",
+            "h-9 w-full appearance-none rounded-lg border bg-bg-base pl-3 pr-9 text-sm text-text-primary",
             "transition-colors duration-150 outline-none",
             "focus:border-border-focus focus:ring-2 focus:ring-[var(--color-border-focus)]/35",
             hasError ? "border-[var(--color-status-danger)] focus:ring-[var(--color-status-danger)]/35" : "border-border-default",

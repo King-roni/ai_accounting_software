@@ -8,16 +8,16 @@ export type ButtonSize = "sm" | "md" | "lg";
 
 const VARIANT: Record<ButtonVariant, string> = {
   primary: "bg-action-primary text-text-on-primary hover:bg-action-hover active:bg-action-active",
-  secondary: "bg-bg-base text-text-primary border border-border-default hover:bg-bg-raised",
-  tertiary: "bg-transparent text-text-primary hover:bg-bg-raised",
+  secondary: "bg-bg-base text-text-primary border border-border-default hover:bg-bg-raised hover:border-border-strong",
+  tertiary: "bg-transparent text-action-primary hover:bg-brand-50",
   danger: "bg-danger-600 text-white hover:bg-danger-700 active:bg-danger-800",
   ghost: "bg-transparent text-text-secondary hover:bg-bg-raised hover:text-text-primary",
 };
 
 const SIZE: Record<ButtonSize, string> = {
   sm: "h-8 px-3 text-sm",
-  md: "h-10 px-4 text-sm",
-  lg: "h-12 px-5 text-md",
+  md: "h-9 px-3.5 text-sm",
+  lg: "h-11 px-5 text-md",
 };
 
 const SPAN_GAP: Record<ButtonSize, string> = { sm: "gap-1.5", md: "gap-2", lg: "gap-2" };
@@ -66,7 +66,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       aria-disabled={isDisabled || undefined}
       aria-busy={loading || undefined}
       className={cn(
-        "relative inline-flex items-center justify-center rounded-md font-medium whitespace-nowrap select-none cursor-pointer",
+        "relative inline-flex items-center justify-center rounded-lg font-medium whitespace-nowrap select-none cursor-pointer",
         "transition-colors duration-150 ease-[var(--ease-standard)]",
         "active:scale-[0.98] motion-reduce:active:scale-100",
         "disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed",
