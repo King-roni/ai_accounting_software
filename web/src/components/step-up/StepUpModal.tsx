@@ -135,7 +135,7 @@ export default function StepUpModal(props: {
   if (factors !== null && factors.length === 0) {
     return (
       <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-        <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-zinc-900">
+        <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-action-primary">
           <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">
             MFA not enrolled
           </h2>
@@ -160,7 +160,7 @@ export default function StepUpModal(props: {
   return (
     <div role="dialog" aria-modal="true" aria-labelledby="step-up-title"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-md space-y-4 rounded-xl bg-white p-6 shadow-xl dark:bg-zinc-900">
+      <div className="w-full max-w-md space-y-4 rounded-xl bg-white p-6 shadow-xl dark:bg-action-primary">
         <div>
           <h2 id="step-up-title" className="text-lg font-medium text-zinc-900 dark:text-zinc-50">
             {headline.title}
@@ -211,7 +211,7 @@ export default function StepUpModal(props: {
             type="button"
             onClick={onCancel}
             disabled={busy}
-            className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+            className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-action-hover"
           >
             Cancel
           </button>
@@ -219,7 +219,7 @@ export default function StepUpModal(props: {
             type="button"
             onClick={submit}
             disabled={busy || code.length !== 6 || !factorId}
-            className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="rounded-md bg-action-primary px-3 py-1.5 text-sm font-medium text-text-on-primary hover:bg-action-hover disabled:opacity-50"
           >
             {busy ? "Verifying…" : "Verify"}
           </button>

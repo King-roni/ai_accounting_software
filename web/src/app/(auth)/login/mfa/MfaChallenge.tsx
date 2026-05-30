@@ -85,14 +85,14 @@ export default function MfaChallenge({
       <div className="flex gap-2 text-xs">
         <button
           type="button"
-          className={`rounded-full px-3 py-1 ${mode === "totp" ? "bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900" : "border border-zinc-300 text-zinc-700 dark:border-zinc-700 dark:text-zinc-300"}`}
+          className={`rounded-full px-3 py-1 ${mode === "totp" ? "bg-action-primary text-text-on-primary" : "border border-zinc-300 text-zinc-700 dark:border-zinc-700 dark:text-zinc-300"}`}
           onClick={() => setMode("totp")}
         >
           Authenticator code
         </button>
         <button
           type="button"
-          className={`rounded-full px-3 py-1 ${mode === "recovery" ? "bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900" : "border border-zinc-300 text-zinc-700 dark:border-zinc-700 dark:text-zinc-300"}`}
+          className={`rounded-full px-3 py-1 ${mode === "recovery" ? "bg-action-primary text-text-on-primary" : "border border-zinc-300 text-zinc-700 dark:border-zinc-700 dark:text-zinc-300"}`}
           onClick={() => setMode("recovery")}
         >
           Recovery code
@@ -137,7 +137,7 @@ export default function MfaChallenge({
             type="button"
             onClick={submitTotp}
             disabled={code.length !== 6 || busy}
-            className="w-full rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="w-full rounded-md bg-action-primary px-4 py-2 text-sm font-medium text-text-on-primary hover:bg-action-hover disabled:opacity-50"
           >
             {busy ? "Verifying…" : "Verify"}
           </button>
@@ -165,7 +165,7 @@ export default function MfaChallenge({
             type="button"
             onClick={submitRecovery}
             disabled={recovery.length < 11 || busy}
-            className="w-full rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="w-full rounded-md bg-action-primary px-4 py-2 text-sm font-medium text-text-on-primary hover:bg-action-hover disabled:opacity-50"
           >
             {busy ? "Verifying…" : "Use recovery code"}
           </button>

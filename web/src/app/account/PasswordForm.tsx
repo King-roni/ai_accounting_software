@@ -66,7 +66,7 @@ export default function PasswordForm() {
           type="button"
           onClick={submit}
           disabled={pending || newPassword.length < 12 || newPassword !== confirm}
-          className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900"
+          className="rounded-md bg-action-primary px-3 py-2 text-sm font-medium text-text-on-primary hover:bg-action-hover disabled:opacity-50"
         >
           {pending ? "Updating…" : "Update password"}
         </button>

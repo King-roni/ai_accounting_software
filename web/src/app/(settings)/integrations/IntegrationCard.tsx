@@ -138,7 +138,7 @@ export default function IntegrationCard(props: {
             type="button"
             onClick={connect}
             disabled={pending}
-            className="rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900"
+            className="rounded-md bg-action-primary px-3 py-1.5 text-xs font-medium text-text-on-primary hover:bg-action-hover disabled:opacity-50"
           >
             {pending ? "Working…" : "Connect"}
           </button>
@@ -148,7 +148,7 @@ export default function IntegrationCard(props: {
               type="button"
               onClick={refresh}
               disabled={pending}
-              className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+              className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-action-hover"
             >
               Refresh token
             </button>
@@ -193,7 +193,7 @@ export default function IntegrationCard(props: {
               type="button"
               onClick={saveMapping}
               disabled={pending || !folderId}
-              className="rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900"
+              className="rounded-md bg-action-primary px-3 py-1.5 text-xs font-medium text-text-on-primary hover:bg-action-hover disabled:opacity-50"
             >
               Save mapping
             </button>
