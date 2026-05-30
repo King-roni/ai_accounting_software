@@ -323,6 +323,19 @@
   --color-neutral-800: var(--color-neutral-800);
   --color-neutral-900: var(--color-neutral-900);
   --color-neutral-950: var(--color-neutral-950);
+  /* Alias Tailwind's default cool `zinc` to our warm-stone neutrals so the
+     pre-design-system B02 auth/account/team screens warm up coherently (R5.5c). */
+  --color-zinc-50: var(--color-neutral-50);
+  --color-zinc-100: var(--color-neutral-100);
+  --color-zinc-200: var(--color-neutral-200);
+  --color-zinc-300: var(--color-neutral-300);
+  --color-zinc-400: var(--color-neutral-400);
+  --color-zinc-500: var(--color-neutral-500);
+  --color-zinc-600: var(--color-neutral-600);
+  --color-zinc-700: var(--color-neutral-700);
+  --color-zinc-800: var(--color-neutral-800);
+  --color-zinc-900: var(--color-neutral-900);
+  --color-zinc-950: var(--color-neutral-950);
   --color-brand-50: var(--color-brand-50);
   --color-brand-100: var(--color-brand-100);
   --color-brand-200: var(--color-brand-200);
