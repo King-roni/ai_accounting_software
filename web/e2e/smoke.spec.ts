@@ -10,7 +10,7 @@ test.describe("shell & navigation", () => {
   test("dashboard renders cards", async ({ page }) => {
     await page.goto("/dashboard");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    await expect(page.getByText("View details").first()).toBeVisible();
+    await expect(page.getByText("Monthly Overview")).toBeVisible();
   });
 
   test("sidebar navigates to a domain screen", async ({ page }) => {
@@ -46,7 +46,7 @@ test.describe("domain screens (seeded data)", () => {
     await page.goto("/periods");
     await expect(page.getByRole("button", { name: "Start a period" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "May 2026" })).toBeVisible();
-    await page.getByRole("button", { name: "Outgoing (expenses) Created" }).first().click();
+    await page.getByRole("button", { name: /Outgoing — expenses/ }).first().click();
     await expect(page.getByRole("dialog")).toBeVisible();
     await expect(page.getByText("Finalization readiness")).toBeVisible();
   });

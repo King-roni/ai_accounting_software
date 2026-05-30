@@ -1,19 +1,37 @@
 "use client";
 import { useMemo } from "react";
 import useSWR from "swr";
-import { ArrowRight, Clock } from "lucide-react";
-import { Badge, Card, CardBody, Skeleton } from "@/components/ui";
+import {
+  ArrowDownLeft, ArrowUpRight, FileCheck2, GitCompareArrows, LayoutGrid,
+  ListChecks, Lock, PieChart, Receipt, Repeat, TrendingUp, Users,
+  type LucideIcon,
+} from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useShell } from "@/components/shell/ShellContext";
 import {
-  CHART_TYPE_LABEL, DATA_SOURCE_BADGE, categorySeries, isStubResult, summarizeRow, valueSeries,
+  categorySeries, isStubResult, summarizeRow, valueSeries,
   type CardDef, type DrillResult,
 } from "./dashboard-helpers";
 import { BarChart, DonutChart, Sparkline } from "./Charts";
 
+const CARD_ICON: Record<string, LucideIcon> = {
+  monthly_overview: TrendingUp,
+  income_overview: ArrowDownLeft,
+  expense_overview: ArrowUpRight,
+  vat_summary: Receipt,
+  subscription_recurring_totals: Repeat,
+  client_invoice_aging: Users,
+  evidence_collection_status: FileCheck2,
+  recent_finalizations: Lock,
+  tax_treatment_breakdown: PieChart,
+  unmatched_transactions: GitCompareArrows,
+  unresolved_review_items: ListChecks,
+};
+
 export function DashboardCard({ def, businessIds, onOpen }: { def: CardDef; businessIds: string[]; onOpen: (def: CardDef) => void }) {
   const { user } = useShell();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
+  const Icon = CARD_ICON[def.card_id] ?? LayoutGrid;
 
   const { data, isLoading } = useSWR<DrillResult | null>(
     businessIds.length ? ["card", def.card_id, businessIds.join(",")] : null,
@@ -28,72 +46,82 @@ export function DashboardCard({ def, businessIds, onOpen }: { def: CardDef; busi
 
   const rows = data?.rows ?? [];
   const stub = isStubResult(rows);
-  const ds = DATA_SOURCE_BADGE[def.data_source];
 
   return (
-    <Card interactive onClick={() => onOpen(def)} className="flex flex-col">
-      <CardBody className="flex flex-1 flex-col gap-3 pt-5">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <h3 className="truncate font-semibold text-text-primary">{def.display_name}</h3>
-            {def.description && <p className="line-clamp-1 text-xs text-text-muted">{def.description}</p>}
-          </div>
-          <Badge variant={ds.variant} size="sm">{ds.label}</Badge>
-        </div>
+    <button
+      type="button"
+      onClick={() => onOpen(def)}
+      className="group relative flex h-full w-full flex-col gap-3 rounded-xl border border-border-subtle bg-surface-default p-4 text-left shadow-1 transition-all duration-150 hover:-translate-y-px hover:border-border-default hover:shadow-2"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-text-muted">
+          <Icon size={14} strokeWidth={1.75} aria-hidden="true" />
+          {def.display_name}
+        </span>
+        <ArrowUpRight size={15} strokeWidth={1.75} aria-hidden="true" className="text-text-muted opacity-0 transition-opacity group-hover:opacity-100" />
+      </div>
 
-        <div className="flex-1">
-          {isLoading ? (
-            <div className="flex flex-col gap-2"><Skeleton height={28} className="w-16" /><Skeleton height={40} /></div>
-          ) : stub ? (
-            <div className="flex items-center gap-2 rounded-md bg-bg-raised px-3 py-4 text-xs text-text-muted">
-              <Clock size={14} aria-hidden="true" className="shrink-0" />
-              <span>Analytics for this card populate once the period’s data is aggregated.</span>
-            </div>
-          ) : (
-            <CardViz def={def} rows={rows} />
-          )}
-        </div>
-
-        <div className="mt-auto flex items-center gap-1 pt-1 text-xs font-medium text-action-primary">
-          View details <ArrowRight size={13} aria-hidden="true" />
-        </div>
-      </CardBody>
-    </Card>
+      {isLoading ? (
+        <div className="flex h-20 flex-col justify-center gap-2"><div className="h-7 w-20 rounded skel" /><div className="h-3 w-full rounded skel" /></div>
+      ) : stub ? (
+        <StubBody description={def.description} />
+      ) : (
+        <CardBody def={def} rows={rows} />
+      )}
+    </button>
   );
 }
 
-function CardViz({ def, rows }: { def: CardDef; rows: DrillResult["rows"] }) {
+function StubBody({ description }: { description: string | null }) {
+  return (
+    <>
+      <div className="relative h-20 overflow-hidden">
+        <div className="flex h-full items-end justify-between gap-1.5 px-1 opacity-60">
+          {[40, 62, 48, 72, 55, 80, 60].map((h, i) => (
+            <span key={i} className="flex-1 rounded-t-sm bg-border-default" style={{ height: `${h}%` }} />
+          ))}
+        </div>
+        <div className="absolute inset-0 grid place-items-center">
+          <span className="inline-flex items-center gap-2 rounded-full border border-border-default bg-surface-default px-3 py-1 text-[11px] font-semibold text-text-secondary shadow-1">
+            <span className="relative h-[7px] w-[7px] rounded-full bg-action-primary">
+              <span className="absolute -inset-1 animate-ping rounded-full border border-action-primary opacity-40" />
+            </span>
+            Awaiting data
+          </span>
+        </div>
+      </div>
+      {description && <p className="text-center text-[11px] text-text-muted">{description}</p>}
+    </>
+  );
+}
+
+function CardBody({ def, rows }: { def: CardDef; rows: DrillResult["rows"] }) {
   const count = rows.length;
   const cats = categorySeries(rows);
   const values = valueSeries(rows);
-
-  if (count === 0) return <p className="py-4 text-sm text-text-muted">Nothing to show.</p>;
+  if (count === 0) return <p className="py-3 text-sm text-text-muted">{def.description ?? "Nothing to show."}</p>;
 
   switch (def.chart_type) {
     case "BAR":
-      return cats.length ? <BarChart data={cats.slice(0, 6)} ariaLabel={`${def.display_name} by category`} />
-        : <Count count={count} type={def.chart_type} />;
+      return cats.length ? <BarChart data={cats.slice(0, 6)} ariaLabel={`${def.display_name} by category`} /> : <Hero count={count} underline />;
     case "DONUT":
-      return cats.length ? <DonutChart data={cats.slice(0, 6)} ariaLabel={`${def.display_name} distribution`} />
-        : <Count count={count} type={def.chart_type} />;
+      return cats.length ? <DonutChart data={cats.slice(0, 6)} ariaLabel={`${def.display_name} distribution`} /> : <Hero count={count} underline />;
     case "LINE":
-      return values.length >= 2 ? <Sparkline values={values} ariaLabel={`${def.display_name} trend`} />
-        : <Count count={count} type={def.chart_type} />;
+      return values.length >= 2 ? <Sparkline values={values} ariaLabel={`${def.display_name} trend`} /> : <Hero count={count} underline />;
     case "KPI_NUMBER":
-      return <Count count={count} type={def.chart_type} />;
+      return <Hero count={count} underline />;
     default:
-      // LIST / TABLE — a preview, with a trend sparkline when the rows carry amounts.
       return (
         <div className="flex flex-col gap-2">
-          <Count count={count} type={def.chart_type} />
+          <Hero count={count} />
           {values.length >= 2 && <Sparkline values={values} ariaLabel={`${def.display_name} amounts`} />}
-          <ul className="flex flex-col gap-1">
+          <ul className="flex flex-col gap-1 border-t border-border-subtle pt-2">
             {rows.slice(0, 3).map((r) => {
               const s = summarizeRow(r.payload);
               return (
                 <li key={r.id ?? s.primary} className="flex items-center justify-between gap-2 text-sm">
                   <span className="truncate text-text-secondary">{s.primary}</span>
-                  {s.secondary && <span className="shrink-0 tabular-nums text-text-muted">{s.secondary}</span>}
+                  {s.secondary && <span className="shrink-0 font-mono text-xs tabular-nums text-text-muted">{s.secondary}</span>}
                 </li>
               );
             })}
@@ -103,11 +131,15 @@ function CardViz({ def, rows }: { def: CardDef; rows: DrillResult["rows"] }) {
   }
 }
 
-function Count({ count, type }: { count: number; type: string }) {
+function Hero({ count, underline }: { count: number; underline?: boolean }) {
   return (
-    <div className="flex items-baseline gap-2">
-      <span className="text-3xl font-semibold tabular-nums text-text-primary">{count}{count === 8 ? "+" : ""}</span>
-      <span className="text-xs text-text-muted">{CHART_TYPE_LABEL[type]}</span>
+    <div className="flex flex-col gap-0.5">
+      <span
+        className="font-mono text-[32px] font-semibold leading-none tracking-tight tabular-nums text-text-primary"
+        style={underline ? { backgroundImage: "linear-gradient(var(--color-accent-bronze), var(--color-accent-bronze))", backgroundRepeat: "no-repeat", backgroundPosition: "0 100%", backgroundSize: "44px 2px", paddingBottom: "4px", width: "fit-content" } : undefined}
+      >
+        {count}{count === 8 ? "+" : ""}
+      </span>
     </div>
   );
 }

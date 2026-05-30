@@ -56,14 +56,19 @@ export default function DashboardPage() {
       ) : error ? (
         <ErrorState description={error.message} />
       ) : isLoading ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => <Card key={i}><CardBody className="pt-5"><Skeleton height={120} /></CardBody></Card>)}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => <Card key={i}><CardBody className="pt-5"><Skeleton height={110} /></CardBody></Card>)}
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {(cards ?? []).map((def) => (
-            <DashboardCard key={def.card_id} def={def} businessIds={businessIds} onOpen={setDrill} />
-          ))}
+        <div className="grid grid-cols-1 gap-4 [grid-auto-flow:row_dense] sm:grid-cols-2 xl:grid-cols-4">
+          {(cards ?? []).map((def) => {
+            const wide = def.card_id === "monthly_overview" || def.chart_type === "LIST" || def.chart_type === "TABLE";
+            return (
+              <div key={def.card_id} className={wide ? "sm:col-span-2" : ""}>
+                <DashboardCard def={def} businessIds={businessIds} onOpen={setDrill} />
+              </div>
+            );
+          })}
         </div>
       )}
 

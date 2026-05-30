@@ -1,7 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
 import useSWR from "swr";
-import { ArrowDownLeft, ArrowUpRight, Building2, CalendarPlus, ChevronRight } from "lucide-react";
+import { Building2, CalendarPlus, ChevronRight } from "lucide-react";
 import { Badge, Button, Card, CardBody, Drawer, EmptyState, ErrorState, Input, Select, Skeleton, Tabs, Textarea, useToast } from "@/components/ui";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useShell } from "@/components/shell/ShellContext";
@@ -72,9 +72,9 @@ export default function PeriodsPage() {
                       <Card key={g.key}>
                         <CardBody className="flex flex-col gap-3 pt-5">
                           <h2 className="text-lg font-semibold text-text-primary">{periodLabel(g.periodStart)}</h2>
-                          <div className="grid gap-2 sm:grid-cols-2">
-                            <RunRowItem icon={ArrowUpRight} title="Outgoing (expenses)" run={g.out} onOpen={setDetailId} />
-                            <RunRowItem icon={ArrowDownLeft} title="Incoming (income)" run={g.in} onOpen={setDetailId} />
+                          <div className="flex flex-col gap-2">
+                            <RunRowItem side="OUT" title="Outgoing — expenses" descriptor="Expenses & payables" run={g.out} onOpen={setDetailId} />
+                            <RunRowItem side="IN" title="Incoming — income" descriptor="Income & receivables" run={g.in} onOpen={setDetailId} />
                           </div>
                         </CardBody>
                       </Card>
@@ -94,20 +94,45 @@ export default function PeriodsPage() {
   );
 }
 
-function RunRowItem({ icon: Icon, title, run, onOpen }: { icon: typeof ArrowUpRight; title: string; run: RunRow | null; onOpen: (id: string) => void }) {
+function RunRowItem({ side, title, descriptor, run, onOpen }: { side: "OUT" | "IN"; title: string; descriptor: string; run: RunRow | null; onOpen: (id: string) => void }) {
+  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
+  const { data: prog } = useSWR(run ? ["run-progress", run.id] : null, async () => {
+    const { data } = await supabase.rpc("get_run_progress", { p_run_id: run!.id });
+    return data as { phases_completed?: number; total_phases?: number } | null;
+  });
+
+  const tag = (
+    <span
+      className="flex h-6 shrink-0 items-center rounded-md px-2 text-[11px] font-bold"
+      style={side === "OUT"
+        ? { background: "color-mix(in srgb, var(--color-status-danger) 12%, transparent)", color: "var(--color-status-danger-text)" }
+        : { background: "color-mix(in srgb, var(--color-status-success) 12%, transparent)", color: "var(--color-status-success-text)" }}
+    >{side}</span>
+  );
+
   if (!run) return (
-    <div className="flex items-center gap-3 rounded-md border border-dashed border-border-subtle p-3 text-text-muted">
-      <Icon size={18} aria-hidden="true" /><span className="text-sm">{title}: not created</span>
+    <div className="flex items-center gap-3 rounded-lg border border-dashed border-border-default p-3 text-text-muted">
+      {tag}<span className="text-sm">{title}: not created</span>
     </div>
   );
+
   const b = runStatusBadge(run.status);
+  const done = prog?.phases_completed ?? 0;
+  const total = prog?.total_phases ?? (side === "OUT" ? 11 : 8);
+  const pct = total ? Math.round((done / total) * 100) : 0;
+
   return (
-    <button type="button" onClick={() => onOpen(run.id)} className="flex items-center gap-3 rounded-md border border-border-subtle p-3 text-left hover:bg-bg-raised">
-      <Icon size={18} className="shrink-0 text-text-secondary" aria-hidden="true" />
+    <button type="button" onClick={() => onOpen(run.id)} className="flex items-center gap-3 rounded-lg border border-border-subtle bg-surface-default p-3 text-left transition-colors hover:border-border-default hover:bg-bg-raised">
+      {tag}
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-text-primary">{title}</p>
-        <Badge variant={b.variant} size="sm">{b.label}</Badge>
+        <p className="text-sm font-semibold text-text-primary">{title}</p>
+        <p className="mt-0.5 text-xs text-text-muted">{descriptor}</p>
       </div>
+      <div className="hidden w-28 shrink-0 sm:block">
+        <div className="h-1.5 overflow-hidden rounded-full bg-border-subtle"><span className="block h-full rounded-full bg-action-primary transition-[width]" style={{ width: `${pct}%` }} /></div>
+        <p className="mt-1 text-right font-mono text-[10.5px] text-text-muted">{done}/{total} phases</p>
+      </div>
+      <Badge variant={b.variant} size="sm">{b.label}</Badge>
       <ChevronRight size={16} className="shrink-0 text-text-muted" aria-hidden="true" />
     </button>
   );
