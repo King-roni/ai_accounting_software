@@ -63,7 +63,7 @@ export default function TransactionsPage() {
   const totalOut = rows.reduce((s, r) => (Number(r.amount) < 0 ? s + Number(r.amount) : s), 0);
 
   const columns: Column<TxnRow>[] = [
-    { id: "date", header: "Date", width: 110, sortable: true, sortValue: (r) => r.transaction_date, cell: (r) => <span className="tabular-nums text-text-secondary">{r.transaction_date}</span> },
+    { id: "date", header: "Date", width: 104, sortable: true, sortValue: (r) => r.transaction_date, cell: (r) => <span className="whitespace-nowrap font-mono text-xs tabular-nums text-text-secondary">{r.transaction_date}</span> },
     {
       id: "desc", header: "Description",
       cell: (r) => (

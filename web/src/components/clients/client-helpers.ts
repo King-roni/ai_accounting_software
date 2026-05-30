@@ -60,6 +60,25 @@ export function vatTreatmentLabel(t: string | null | undefined): string {
   return VAT_TREATMENT_LABEL[t] ?? t;
 }
 
+/** Compact label for tight table cells. */
+export const VAT_TREATMENT_SHORT: Record<string, string> = {
+  DOMESTIC_STANDARD: "Standard 19%",
+  DOMESTIC_REDUCED: "Reduced 9/5%",
+  DOMESTIC_ZERO: "Zero-rated",
+  DOMESTIC_CYPRUS_VAT: "Cyprus VAT",
+  EU_REVERSE_CHARGE: "Reverse charge",
+  IMPORT_OR_ACQUISITION: "Import",
+  NON_EU_SERVICE: "Non-EU",
+  OUTSIDE_SCOPE: "Outside scope",
+  EXEMPT: "Exempt",
+  NO_VAT: "No VAT",
+  UNKNOWN: "Unknown",
+};
+export function vatTreatmentShort(t: string | null | undefined): string {
+  if (!t) return "—";
+  return VAT_TREATMENT_SHORT[t] ?? VAT_TREATMENT_LABEL[t] ?? t;
+}
+
 /** Country flag emoji from an ISO 3166-1 alpha-2 code (regional indicators). */
 export function flagEmoji(code: string | null | undefined): string {
   if (!code || code.length !== 2) return "";
@@ -82,6 +101,6 @@ export function clientStatusBadge(c: ClientRow): ClientStatusBadge {
 export function vatFormatBadge(c: ClientRow): ClientStatusBadge | null {
   if (!c.vat_number) return null;
   return c.vat_number_format_valid
-    ? { variant: "status-success", label: "Valid format" }
-    : { variant: "severity-medium", label: "Check format" };
+    ? { variant: "status-success", label: "Valid" }
+    : { variant: "severity-medium", label: "Check" };
 }

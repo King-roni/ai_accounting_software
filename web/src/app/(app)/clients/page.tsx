@@ -9,7 +9,7 @@ import { useIsMobile } from "@/components/shell/use-is-mobile";
 import { useT } from "@/i18n/LocaleProvider";
 import { ClientFormDrawer } from "@/components/clients/ClientFormDrawer";
 import {
-  clientStatusBadge, flagEmoji, vatFormatBadge, vatTreatmentLabel, type ClientRow,
+  clientStatusBadge, flagEmoji, vatFormatBadge, vatTreatmentShort, type ClientRow,
 } from "@/components/clients/client-helpers";
 
 export default function ClientsPage() {
@@ -81,7 +81,7 @@ export default function ClientsPage() {
         ) : <span className="text-text-muted">—</span>;
       },
     },
-    { id: "vat_treatment", header: "Default VAT", cell: (c) => <span className="text-text-secondary">{vatTreatmentLabel(c.default_vat_treatment)}</span> },
+    { id: "vat_treatment", header: "Default VAT", cell: (c) => <span className="whitespace-nowrap text-text-secondary">{vatTreatmentShort(c.default_vat_treatment)}</span> },
     { id: "terms", header: "Terms", numeric: true, cell: (c) => <span>{c.default_payment_terms_days}d</span> },
     {
       id: "status", header: "Status",

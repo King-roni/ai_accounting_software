@@ -65,7 +65,7 @@ export function Badge({ variant, size = "md", children, className }: BadgeProps)
 
   return (
     <span
-      className={cn("inline-flex items-center rounded-md border font-medium align-middle", sz.box, className)}
+      className={cn("inline-flex items-center whitespace-nowrap rounded-md border font-medium align-middle", sz.box, className)}
       style={style}
       data-component="badge"
     >
