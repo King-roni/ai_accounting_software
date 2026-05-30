@@ -6,6 +6,7 @@ import { Badge, Button, EmptyState, ErrorState, Input, Table, useToast, type Col
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useShell } from "@/components/shell/ShellContext";
 import { useIsMobile } from "@/components/shell/use-is-mobile";
+import { useT } from "@/i18n/LocaleProvider";
 import { ClientFormDrawer } from "@/components/clients/ClientFormDrawer";
 import {
   clientStatusBadge, flagEmoji, vatFormatBadge, vatTreatmentLabel, type ClientRow,
@@ -14,6 +15,7 @@ import {
 export default function ClientsPage() {
   const { currentBusiness, isMultiBusiness, user } = useShell();
   const isMobile = useIsMobile();
+  const t = useT();
   const { toast } = useToast();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
 
@@ -102,7 +104,7 @@ export default function ClientsPage() {
     <div className="flex flex-col gap-5">
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold text-text-primary">Clients</h1>
+          <h1 className="text-2xl font-semibold text-text-primary">{t("clients.title")}</h1>
           <p className="text-sm text-text-secondary">
             {isMultiBusiness ? "All businesses" : currentBusiness?.display_name ?? "—"} · {(data ?? []).length} {showInactive ? "total" : "active"}
           </p>

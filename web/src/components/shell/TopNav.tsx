@@ -8,6 +8,7 @@ import {
 import { MenuItem, Popover } from "@/components/ui";
 import { formatPeriod, stepPeriod, useShell, type Period } from "./ShellContext";
 import { ThemeToggle } from "./ThemeToggle";
+import { LocaleToggle } from "./LocaleToggle";
 
 function BusinessSwitcher() {
   const { businesses, currentBusiness, isMultiBusiness, setCurrentBusinessId } = useShell();
@@ -166,6 +167,7 @@ export function TopNav() {
         >
           <Bell size={18} strokeWidth={1.5} aria-hidden="true" />
         </button>
+        <LocaleToggle />
         <ThemeToggle />
         <UserMenu />
       </div>

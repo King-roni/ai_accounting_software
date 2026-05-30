@@ -9,6 +9,7 @@ import { BottomNav } from "./BottomNav";
 import { CommandPalette } from "./CommandPalette";
 import { NotificationsDrawer } from "./NotificationsDrawer";
 import { MobileReadOnlyBanner } from "./MobileReadOnlyBanner";
+import { LocaleProvider } from "@/i18n/LocaleProvider";
 
 function ShellChrome({ children }: { children: ReactNode }) {
   const { sidebarCollapsed, setPaletteOpen } = useShell();
@@ -71,10 +72,12 @@ export function AppShell({
   children: ReactNode;
 }) {
   return (
-    <ShellProvider user={user} businesses={businesses} initialPeriod={initialPeriod}>
-      <ToastProvider>
-        <ShellChrome>{children}</ShellChrome>
-      </ToastProvider>
-    </ShellProvider>
+    <LocaleProvider userId={user.id}>
+      <ShellProvider user={user} businesses={businesses} initialPeriod={initialPeriod}>
+        <ToastProvider>
+          <ShellChrome>{children}</ShellChrome>
+        </ToastProvider>
+      </ShellProvider>
+    </LocaleProvider>
   );
 }

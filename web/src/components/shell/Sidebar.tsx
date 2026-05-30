@@ -5,6 +5,7 @@ import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { Z_INDEX } from "@/theme/tokens";
 import { cn } from "@/lib/cn";
 import { useShell } from "./ShellContext";
+import { useT } from "@/i18n/LocaleProvider";
 import { NAV_SECTIONS } from "./nav-config";
 
 function isActive(pathname: string, href: string) {
@@ -13,6 +14,7 @@ function isActive(pathname: string, href: string) {
 
 export function Sidebar() {
   const { sidebarCollapsed, toggleSidebar } = useShell();
+  const t = useT();
   const pathname = usePathname();
 
   return (
@@ -30,12 +32,13 @@ export function Sidebar() {
             {section.items.map((item) => {
               const active = isActive(pathname, item.href);
               const Icon = item.icon;
+              const label = t(item.i18nKey);
               return (
                 <li key={item.href}>
                   <Link
                     href={item.href}
                     aria-current={active ? "page" : undefined}
-                    title={sidebarCollapsed ? item.label : undefined}
+                    title={sidebarCollapsed ? label : undefined}
                     className={cn(
                       "relative flex h-9 items-center gap-3 rounded-md px-3 text-sm transition-colors",
                       sidebarCollapsed && "justify-center px-0",
@@ -46,7 +49,7 @@ export function Sidebar() {
                   >
                     {active && <span aria-hidden="true" className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r bg-action-primary" />}
                     <Icon size={20} strokeWidth={1.5} aria-hidden="true" className="shrink-0" />
-                    {!sidebarCollapsed && <span className="truncate">{item.label}</span>}
+                    {!sidebarCollapsed && <span className="truncate">{label}</span>}
                   </Link>
                 </li>
               );
