@@ -5,6 +5,7 @@ import { Building2, Plus, Receipt, Search } from "lucide-react";
 import { Badge, Button, EmptyState, ErrorState, Input, Table, Tabs, type Column } from "@/components/ui";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useShell } from "@/components/shell/ShellContext";
+import { useIsMobile } from "@/components/shell/use-is-mobile";
 import { formatMoney } from "@/components/transactions/transaction-helpers";
 import { InvoiceCreateDrawer } from "@/components/invoices/InvoiceCreateDrawer";
 import { InvoiceDetailDrawer } from "@/components/invoices/InvoiceDetailDrawer";
@@ -21,6 +22,7 @@ const STATUS_FILTERS: { id: string; label: string; match: (s: string) => boolean
 
 export default function InvoicesPage() {
   const { currentBusiness, isMultiBusiness } = useShell();
+  const isMobile = useIsMobile();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
 
   const [tab, setTab] = useState("invoices");
@@ -73,7 +75,7 @@ export default function InvoicesPage() {
           </button>
         ))}
         <Input containerClassName="ml-auto min-w-56" leadingIcon={Search} placeholder="Search number or client" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search invoices" />
-        <Button leadingIcon={Plus} onClick={() => setCreateOpen(true)}>New invoice</Button>
+        {!isMobile && <Button leadingIcon={Plus} onClick={() => setCreateOpen(true)}>New invoice</Button>}
       </div>
       {error ? (
         <ErrorState description={error.message} onRetry={() => mutate()} />

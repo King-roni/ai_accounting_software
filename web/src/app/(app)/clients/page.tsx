@@ -5,6 +5,7 @@ import { Building2, Contact, Plus, Search, UserX } from "lucide-react";
 import { Badge, Button, EmptyState, ErrorState, Input, Table, useToast, type Column } from "@/components/ui";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useShell } from "@/components/shell/ShellContext";
+import { useIsMobile } from "@/components/shell/use-is-mobile";
 import { ClientFormDrawer } from "@/components/clients/ClientFormDrawer";
 import {
   clientStatusBadge, flagEmoji, vatFormatBadge, vatTreatmentLabel, type ClientRow,
@@ -12,6 +13,7 @@ import {
 
 export default function ClientsPage() {
   const { currentBusiness, isMultiBusiness, user } = useShell();
+  const isMobile = useIsMobile();
   const { toast } = useToast();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
 
@@ -105,7 +107,7 @@ export default function ClientsPage() {
             {isMultiBusiness ? "All businesses" : currentBusiness?.display_name ?? "—"} · {(data ?? []).length} {showInactive ? "total" : "active"}
           </p>
         </div>
-        {currentBusiness && !isMultiBusiness && (
+        {currentBusiness && !isMultiBusiness && !isMobile && (
           <Button leadingIcon={Plus} onClick={() => { setEditing(null); setFormOpen(true); }}>New client</Button>
         )}
       </header>

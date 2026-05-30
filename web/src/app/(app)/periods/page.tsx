@@ -5,6 +5,7 @@ import { ArrowDownLeft, ArrowUpRight, Building2, CalendarPlus, ChevronRight } fr
 import { Badge, Button, Card, CardBody, Drawer, EmptyState, ErrorState, Input, Select, Skeleton, Tabs, Textarea, useToast } from "@/components/ui";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useShell } from "@/components/shell/ShellContext";
+import { useIsMobile } from "@/components/shell/use-is-mobile";
 import { RunDetailDrawer } from "@/components/runs/RunDetailDrawer";
 import { ArchivePanel } from "@/components/runs/ArchivePanel";
 import { RUN_COLUMNS, periodLabel, runStatusBadge, type RunRow } from "@/components/runs/run-helpers";
@@ -13,6 +14,7 @@ interface PeriodGroup { key: string; periodStart: string; out: RunRow | null; in
 
 export default function PeriodsPage() {
   const { currentBusiness, isMultiBusiness } = useShell();
+  const isMobile = useIsMobile();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [startOpen, setStartOpen] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
@@ -44,7 +46,7 @@ export default function PeriodsPage() {
           <h1 className="text-2xl font-semibold text-text-primary">Periods</h1>
           <p className="text-sm text-text-secondary">{isMultiBusiness ? "All businesses" : currentBusiness?.display_name ?? "—"} · {groups.length} period{groups.length === 1 ? "" : "s"}</p>
         </div>
-        {currentBusiness && !isMultiBusiness && <Button leadingIcon={CalendarPlus} onClick={() => setStartOpen(true)}>Start a period</Button>}
+        {currentBusiness && !isMultiBusiness && !isMobile && <Button leadingIcon={CalendarPlus} onClick={() => setStartOpen(true)}>Start a period</Button>}
       </header>
 
       {!currentBusiness ? (

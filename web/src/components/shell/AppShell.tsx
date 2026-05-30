@@ -8,6 +8,7 @@ import { Sidebar } from "./Sidebar";
 import { BottomNav } from "./BottomNav";
 import { CommandPalette } from "./CommandPalette";
 import { NotificationsDrawer } from "./NotificationsDrawer";
+import { MobileReadOnlyBanner } from "./MobileReadOnlyBanner";
 
 function ShellChrome({ children }: { children: ReactNode }) {
   const { sidebarCollapsed, setPaletteOpen } = useShell();
@@ -41,7 +42,10 @@ function ShellChrome({ children }: { children: ReactNode }) {
           sidebarCollapsed ? "md:pl-14" : "md:pl-60",
         )}
       >
-        <div className="mx-auto max-w-[1440px] px-4 py-6 md:px-8">{children}</div>
+        <div className="mx-auto max-w-[1440px] px-4 py-6 md:px-8">
+          <MobileReadOnlyBanner />
+          {children}
+        </div>
       </main>
       <BottomNav />
       <CommandPalette />
