@@ -28,6 +28,47 @@ export interface DrillResult {
   accessible_business_ids?: string[];
 }
 
+/** Explicit dashboard layout (matches the TimeFuserBooks mockup order + spans),
+ *  overriding the DB default_position. */
+export const CARD_ORDER: string[] = [
+  "monthly_overview",
+  "evidence_collection_status",
+  "vat_summary",
+  "income_overview",
+  "expense_overview",
+  "unresolved_review_items",
+  "client_invoice_aging",
+  "subscription_recurring_totals",
+  "unmatched_transactions",
+  "recent_finalizations",
+  "tax_treatment_breakdown",
+];
+export const CARD_SPAN: Record<string, number> = {
+  monthly_overview: 2,
+  unresolved_review_items: 2,
+  client_invoice_aging: 2,
+  subscription_recurring_totals: 2,
+};
+/** Faint-chart variant for cards whose backend metric isn't computed yet (stub). */
+export const STUB_VARIANT: Record<string, "donut" | "bars" | "line" | "ring" | "aging"> = {
+  vat_summary: "donut",
+  tax_treatment_breakdown: "donut",
+  income_overview: "bars",
+  expense_overview: "bars",
+  subscription_recurring_totals: "line",
+  evidence_collection_status: "ring",
+  client_invoice_aging: "aging",
+};
+export const STUB_LABEL: Record<string, string> = {
+  vat_summary: "Lights up when the VAT engine is connected",
+  income_overview: "Weekly inflow · target view",
+  expense_overview: "Weekly outflow · target view",
+  subscription_recurring_totals: "MRR trend — lights up when recurring invoices run",
+  tax_treatment_breakdown: "VAT treatment mix · target view",
+  evidence_collection_status: "Evidence match rate · target view",
+  client_invoice_aging: "Receivables aging · target view",
+};
+
 export const CHART_TYPE_LABEL: Record<string, string> = {
   KPI_NUMBER: "KPI", BAR: "Bar", DONUT: "Donut", LINE: "Trend", LIST: "List", TABLE: "Table",
 };

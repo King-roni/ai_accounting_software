@@ -7,7 +7,7 @@ import { formatPeriod, useShell } from "@/components/shell/ShellContext";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { DashboardCard } from "@/components/dashboard/DashboardCard";
 import { DrillDownDrawer } from "@/components/dashboard/DrillDownDrawer";
-import type { CardDef } from "@/components/dashboard/dashboard-helpers";
+import { CARD_ORDER, CARD_SPAN, type CardDef } from "@/components/dashboard/dashboard-helpers";
 
 export default function DashboardPage() {
   const { currentBusiness, businesses, isMultiBusiness, period, user } = useShell();
@@ -61,14 +61,16 @@ export default function DashboardPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 [grid-auto-flow:row_dense] sm:grid-cols-2 xl:grid-cols-4">
-          {(cards ?? []).map((def) => {
-            const wide = def.card_id === "monthly_overview" || def.chart_type === "LIST" || def.chart_type === "TABLE";
-            return (
-              <div key={def.card_id} className={wide ? "sm:col-span-2" : ""}>
+          {[...(cards ?? [])]
+            .sort((a, b) => {
+              const ia = CARD_ORDER.indexOf(a.card_id), ib = CARD_ORDER.indexOf(b.card_id);
+              return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+            })
+            .map((def) => (
+              <div key={def.card_id} className={(CARD_SPAN[def.card_id] ?? 1) === 2 ? "sm:col-span-2" : ""}>
                 <DashboardCard def={def} businessIds={businessIds} onOpen={setDrill} />
               </div>
-            );
-          })}
+            ))}
         </div>
       )}
 
