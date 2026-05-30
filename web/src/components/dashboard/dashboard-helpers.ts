@@ -73,6 +73,25 @@ export const CHART_TYPE_LABEL: Record<string, string> = {
   KPI_NUMBER: "KPI", BAR: "Bar", DONUT: "Donut", LINE: "Trend", LIST: "List", TABLE: "Table",
 };
 
+/** A transaction is "without a confirmed match" while it sits in these states.
+ *  The generic operational drill-down RPC does NOT filter on match_status, so
+ *  the unmatched card/drawer query `transactions` directly with this filter. */
+export const UNMATCHED_STATUSES = ["UNMATCHED", "MATCHED_PROPOSED"] as const;
+export const UNMATCHED_COLUMNS =
+  "id, transaction_date, amount, currency, counterparty_name, normalized_description, raw_description_masked";
+export interface UnmatchedTxn {
+  id: string;
+  transaction_date: string;
+  amount: number;
+  currency: string;
+  counterparty_name: string | null;
+  normalized_description: string | null;
+  raw_description_masked: string | null;
+}
+export function unmatchedLabel(r: UnmatchedTxn): string {
+  return r.counterparty_name ?? r.normalized_description ?? r.raw_description_masked ?? "Transaction";
+}
+
 export const DATA_SOURCE_BADGE: Record<string, { variant: BadgeVariant; label: string }> = {
   OPERATIONAL: { variant: "status-info", label: "Live" },
   ANALYTICS: { variant: "status-neutral", label: "Analytics" },

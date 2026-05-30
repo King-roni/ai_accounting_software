@@ -5,7 +5,11 @@ import { Badge, Drawer, EmptyState, Skeleton } from "@/components/ui";
 import { Inbox } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useShell } from "@/components/shell/ShellContext";
-import { CHART_TYPE_LABEL, DATA_SOURCE_BADGE, isStubResult, summarizeRow, type CardDef, type DrillResult } from "./dashboard-helpers";
+import { periodRange } from "@/components/transactions/transaction-helpers";
+import {
+  CHART_TYPE_LABEL, DATA_SOURCE_BADGE, isStubResult, summarizeRow, STUB_LABEL, STUB_VARIANT,
+  UNMATCHED_COLUMNS, UNMATCHED_STATUSES, type CardDef, type DrillResult, type UnmatchedTxn,
+} from "./dashboard-helpers";
 
 export function DrillDownDrawer({ def, businessIds, open, onClose }: { def: CardDef | null; businessIds: string[]; open: boolean; onClose: () => void }) {
   return (
@@ -16,15 +20,40 @@ export function DrillDownDrawer({ def, businessIds, open, onClose }: { def: Card
 }
 
 function Body({ def, businessIds }: { def: CardDef; businessIds: string[] }) {
-  const { user } = useShell();
+  const { user, period } = useShell();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
-  const { data, isLoading, error } = useSWR<DrillResult | null>(["drill", def.card_id, businessIds.join(",")], async () => {
-    const { data, error } = await supabase.rpc("dashboard_route_drill_down", {
-      p_card_id: def.card_id, p_business_ids: businessIds, p_actor_user_id: user.id, p_filters: {}, p_page_size: 50, p_context: {},
+  // Cards whose backend metric isn't aggregated yet (their faces show "Awaiting
+  // data"). The generic operational drill-down would return raw transactions for
+  // these — misleading — so we mirror the face and don't fetch.
+  const isStubCard = def.card_id in STUB_VARIANT;
+  const isUnmatched = def.card_id === "unmatched_transactions";
+
+  const { data, isLoading, error } = useSWR<DrillResult | null>(
+    isStubCard ? null : ["drill", def.card_id, businessIds.join(","), period.year, period.month],
+    async () => {
+      // Unmatched: query transactions directly with the match_status filter so
+      // the drawer agrees with the card count (the RPC doesn't filter).
+      if (isUnmatched) {
+        const { start, end } = periodRange(period);
+        const { data, error } = await supabase
+          .from("transactions").select(UNMATCHED_COLUMNS)
+          .in("business_id", businessIds)
+          .in("match_status", UNMATCHED_STATUSES as unknown as string[])
+          .gte("transaction_date", start).lte("transaction_date", end)
+          .order("transaction_date", { ascending: false }).limit(50);
+        if (error) throw new Error(error.message);
+        const rows = ((data ?? []) as unknown as UnmatchedTxn[]).map((t) => ({
+          id: t.id, source: "transactions", business_id: "",
+          payload: { counterparty_name: t.counterparty_name, description: t.normalized_description ?? t.raw_description_masked, amount: t.amount, currency: t.currency, transaction_date: t.transaction_date },
+        }));
+        return { rows, card_id: def.card_id, decision: "ALLOW", data_source: def.data_source } as DrillResult;
+      }
+      const { data, error } = await supabase.rpc("dashboard_route_drill_down", {
+        p_card_id: def.card_id, p_business_ids: businessIds, p_actor_user_id: user.id, p_filters: {}, p_page_size: 50, p_context: {},
+      });
+      if (error) throw new Error(error.message);
+      return data as DrillResult;
     });
-    if (error) throw new Error(error.message);
-    return data as DrillResult;
-  });
   const rows = data?.rows ?? [];
   const ds = DATA_SOURCE_BADGE[def.data_source];
 
@@ -36,7 +65,9 @@ function Body({ def, businessIds }: { def: CardDef; businessIds: string[] }) {
         {def.description && <span className="text-sm text-text-secondary">{def.description}</span>}
       </div>
 
-      {isLoading ? (
+      {isStubCard ? (
+        <EmptyState icon={Inbox} heading="Awaiting aggregated data" body={STUB_LABEL[def.card_id] ?? "This card lights up once the analytics engine aggregates the period’s data."} />
+      ) : isLoading ? (
         <div className="flex flex-col gap-2">{[0, 1, 2, 3, 4].map((i) => <Skeleton key={i} height={20} />)}</div>
       ) : error ? (
         <p className="text-sm" style={{ color: "var(--color-status-danger)" }}>{error.message}</p>

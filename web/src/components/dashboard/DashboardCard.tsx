@@ -8,7 +8,10 @@ import {
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useShell } from "@/components/shell/ShellContext";
 import { formatMoney, periodRange } from "@/components/transactions/transaction-helpers";
-import { STUB_LABEL, STUB_VARIANT, summarizeRow, type CardDef, type DrillResult } from "./dashboard-helpers";
+import {
+  STUB_LABEL, STUB_VARIANT, UNMATCHED_COLUMNS, UNMATCHED_STATUSES, unmatchedLabel,
+  type CardDef, type UnmatchedTxn,
+} from "./dashboard-helpers";
 
 const CARD_ICON: Record<string, LucideIcon> = {
   monthly_overview: TrendingUp, income_overview: ArrowDownLeft, expense_overview: ArrowUpRight,
@@ -124,28 +127,34 @@ function ReviewsCard({ def, businessIds, onOpen }: { def: CardDef; businessIds: 
   );
 }
 
-/* ── 9 · Unmatched transactions (REAL: drill-down rows) ──────────────────── */
+/* ── 9 · Unmatched transactions (REAL: transactions filtered by match_status) ─
+   The generic operational drill-down returns ALL transactions unfiltered, so we
+   query `transactions` directly for the states that mean "no confirmed match",
+   scoped to the selected period — the count now reflects the real backlog. */
 function UnmatchedCard({ def, businessIds, onOpen }: { def: CardDef; businessIds: string[]; onOpen: (d: CardDef) => void }) {
-  const { user } = useShell();
+  const { period } = useShell();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
-  const { data } = useSWR(["card", def.card_id, businessIds.join(",")], async () => {
-    const { data } = await supabase.rpc("dashboard_route_drill_down", { p_card_id: def.card_id, p_business_ids: businessIds, p_actor_user_id: user.id, p_filters: {}, p_page_size: 8, p_context: {} });
-    return data as DrillResult;
+  const { data } = useSWR(["dash-unmatched", businessIds.join(","), period.year, period.month], async () => {
+    const { start, end } = periodRange(period);
+    const { data } = await supabase
+      .from("transactions").select(UNMATCHED_COLUMNS)
+      .in("business_id", businessIds)
+      .in("match_status", UNMATCHED_STATUSES as unknown as string[])
+      .gte("transaction_date", start).lte("transaction_date", end)
+      .order("transaction_date", { ascending: false });
+    return (data ?? []) as unknown as UnmatchedTxn[];
   });
-  const rows = data?.rows ?? [];
+  const rows = data ?? [];
   return (
     <Shell def={def} onOpen={onOpen}>
       <Hero value={String(rows.length)} sub="transactions without a confirmed match" />
       <ul className="mt-1 flex flex-col">
-        {rows.slice(0, 3).map((r) => {
-          const s = summarizeRow(r.payload);
-          return (
-            <li key={r.id ?? s.primary} className="flex items-center justify-between gap-2 border-t border-border-subtle py-2 text-sm first:border-t-0">
-              <span className="truncate text-text-secondary">{s.primary}</span>
-              {s.secondary && <span className="shrink-0 font-mono text-xs tabular-nums text-text-muted">{s.secondary}</span>}
-            </li>
-          );
-        })}
+        {rows.slice(0, 3).map((r) => (
+          <li key={r.id} className="flex items-center justify-between gap-2 border-t border-border-subtle py-2 text-sm first:border-t-0">
+            <span className="truncate text-text-secondary">{unmatchedLabel(r)}</span>
+            <span className="shrink-0 font-mono text-xs tabular-nums text-text-muted">{formatMoney(r.amount, r.currency)}</span>
+          </li>
+        ))}
       </ul>
     </Shell>
   );

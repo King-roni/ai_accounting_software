@@ -13,6 +13,22 @@ test.describe("shell & navigation", () => {
     await expect(page.getByText("Monthly Overview")).toBeVisible();
   });
 
+  test("dashboard metrics are backed by real data, not stub fills", async ({ page }) => {
+    await page.goto("/dashboard");
+    // P0: unmatched count is filtered by match_status (seeded: 6 UNMATCHED).
+    const unmatched = page.getByRole("button").filter({ hasText: /Unmatched Transactions/i });
+    await expect(unmatched.getByText("transactions without a confirmed match")).toBeVisible();
+    // P1: a known-stub card's drill-down shows "Awaiting", not raw transactions.
+    await page.getByRole("button").filter({ hasText: /Client Invoice Aging/i }).first().click();
+    const drawer = page.getByRole("dialog");
+    await expect(drawer.getByText("Awaiting aggregated data")).toBeVisible();
+    await page.keyboard.press("Escape");
+    // Unmatched drill-down lists real filtered transactions (count agrees w/ card).
+    await unmatched.first().click();
+    await expect(drawer.getByText(/record/)).toBeVisible();
+    await expect(drawer.getByText("Awaiting aggregated data")).toHaveCount(0);
+  });
+
   test("sidebar navigates to a domain screen", async ({ page }) => {
     await page.goto("/dashboard");
     await page.getByRole("link", { name: "Clients" }).click();
