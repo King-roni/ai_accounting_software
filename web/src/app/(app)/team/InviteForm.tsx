@@ -55,12 +55,12 @@ export default function InviteForm(props: {
         placeholder="member@example.com"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        className="rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+        className="h-9 rounded-lg border border-border-default bg-bg-base px-3 text-sm text-text-primary outline-none focus:border-border-focus focus:ring-2 focus:ring-[var(--color-border-focus)]/35"
       />
       <select
         value={businessId}
         onChange={(e) => setBusinessId(e.target.value)}
-        className="rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+        className="h-9 rounded-lg border border-border-default bg-bg-base px-3 text-sm text-text-primary outline-none focus:border-border-focus focus:ring-2 focus:ring-[var(--color-border-focus)]/35"
       >
         {props.businesses.map((b) => (
           <option key={b.id} value={b.id}>
@@ -71,7 +71,7 @@ export default function InviteForm(props: {
       <select
         value={role}
         onChange={(e) => setRole(e.target.value as (typeof ROLE_OPTIONS)[number])}
-        className="rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+        className="h-9 rounded-lg border border-border-default bg-bg-base px-3 text-sm text-text-primary outline-none focus:border-border-focus focus:ring-2 focus:ring-[var(--color-border-focus)]/35"
       >
         {ROLE_OPTIONS.map((r) => (
           <option key={r} value={r}>
@@ -88,7 +88,7 @@ export default function InviteForm(props: {
         {pending ? "Sending…" : "Invite"}
       </button>
       {status && (
-        <p className="sm:col-span-4 text-xs text-zinc-600 dark:text-zinc-400">{status}</p>
+        <p className="sm:col-span-4 text-xs text-text-secondary">{status}</p>
       )}
     </div>
   );

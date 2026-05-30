@@ -1,0 +1,462 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   Design System — R1.1 (impl of B16·P03 MASTER + design_system_tokens +
+   severity_color_tokens + z_index reference).
+
+   Architecture (per design_system_tokens sub-doc):
+     - Raw ramps  (--color-{neutral,brand,success,warning,danger,info}-50..950)
+       theme-invariant; the implementation layer.
+     - Semantic tokens (--color-text-*, --color-bg-*, --color-action-*, etc.)
+       theme-switching; the surface components consume. NEVER raw hex in
+       components — always var(--token).
+     - Severity quartets (--severity-{blocking,high,medium,low}-{bg,border,text,
+       icon}) — separate family from status, paired ALWAYS with an icon.
+
+   Theme switching: an inline no-flash script (layout.tsx) sets
+   [data-theme="light"|"dark"] on <html> from localStorage ∥ system preference
+   before first paint. Light = :root defaults; dark = [data-theme="dark"].
+   ========================================================================== */
+
+/* ---- Raw ramps (theme-invariant) ----------------------------------------- */
+:root {
+  --color-neutral-50:  #f8fafc;
+  --color-neutral-100: #f1f5f9;
+  --color-neutral-200: #e2e8f0;
+  --color-neutral-300: #cbd5e1;
+  --color-neutral-400: #94a3b8;
+  --color-neutral-500: #64748b;
+  --color-neutral-600: #475569;
+  --color-neutral-700: #334155;
+  --color-neutral-800: #1e293b;
+  --color-neutral-900: #0f172a;
+  --color-neutral-950: #020617;
+
+  --color-brand-50:  #eff6ff;
+  --color-brand-100: #dbeafe;
+  --color-brand-200: #bfdbfe;
+  --color-brand-300: #93c5fd;
+  --color-brand-400: #60a5fa;
+  --color-brand-500: #3b82f6;
+  --color-brand-600: #2563eb;
+  --color-brand-700: #1d4ed8;
+  --color-brand-800: #1e40af;
+  --color-brand-900: #1e3a8a;
+  --color-brand-950: #172554;
+
+  --color-success-50:  #f0fdf4;
+  --color-success-100: #dcfce7;
+  --color-success-300: #86efac;
+  --color-success-500: #22c55e;
+  --color-success-600: #16a34a;
+  --color-success-700: #15803d;
+  --color-success-900: #14532d;
+
+  --color-warning-50:  #fffbeb;
+  --color-warning-100: #fef3c7;
+  --color-warning-300: #fcd34d;
+  --color-warning-400: #fbbf24;
+  --color-warning-500: #f59e0b;
+  --color-warning-600: #d97706;
+  --color-warning-700: #b45309;
+  --color-warning-900: #78350f;
+
+  --color-danger-50:  #fef2f2;
+  --color-danger-100: #fee2e2;
+  --color-danger-300: #fca5a5;
+  --color-danger-400: #f87171;
+  --color-danger-500: #ef4444;
+  --color-danger-600: #dc2626;
+  --color-danger-700: #b91c1c;
+  --color-danger-800: #991b1b;
+  --color-danger-900: #7f1d1d;
+  --color-danger-950: #450a0a;
+
+  --color-info-50:  #f0f9ff;
+  --color-info-100: #e0f2fe;
+  --color-info-300: #7dd3fc;
+  --color-info-400: #38bdf8;
+  --color-info-500: #0ea5e9;
+  --color-info-600: #0284c7;
+  --color-info-700: #0369a1;
+  --color-info-900: #0c4a6e;
+  --color-info-950: #082f49;
+
+  /* orange ramp — used only by severity-high (distinct from warning-amber) */
+  --color-orange-50:  #fff7ed;
+  --color-orange-100: #ffedd5;
+  --color-orange-300: #fdba74;
+  --color-orange-400: #fb923c;
+  --color-orange-600: #ea580c;
+  --color-orange-700: #c2410c;
+  --color-orange-950: #431407;
+
+  /* ---- Spacing (4px base) ---- */
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+  --space-32: 128px;
+
+  /* ---- Radii ---- */
+  --radius-none: 0;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-full: 9999px;
+
+  /* ---- Type scale (size + line-height) ---- */
+  --text-xs: 12px;        --leading-xs: 16px;
+  --text-sm: 14px;        --leading-sm: 20px;
+  --text-md: 16px;        --leading-md: 24px;
+  --text-lg: 18px;        --leading-lg: 28px;
+  --text-xl: 20px;        --leading-xl: 28px;
+  --text-2xl: 24px;       --leading-2xl: 32px;
+  --text-3xl: 30px;       --leading-3xl: 36px;
+  --text-display: 48px;   --leading-display: 56px;
+
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.05em;
+
+  /* ---- Fonts (families injected via next/font in layout.tsx) ---- */
+  --font-ui: var(--font-inter), "Inter", system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-inter), "Inter Display", "Inter", system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", ui-monospace, "SF Mono", monospace;
+
+  /* ---- Motion ---- */
+  --motion-instant: 0ms;
+  --motion-fast: 100ms;
+  --motion-medium: 200ms;
+  --motion-slow: 300ms;
+  --easing-linear: linear;
+  --easing-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --easing-decelerate: cubic-bezier(0, 0, 0.2, 1);
+  --easing-accelerate: cubic-bezier(0.4, 0, 1, 1);
+
+  /* ---- Breakpoints (reference; Tailwind screens mapped in @theme) ---- */
+  --bp-sm: 640px;
+  --bp-md: 768px;
+  --bp-lg: 1024px;
+  --bp-xl: 1280px;
+  --bp-2xl: 1536px;
+
+  /* ---- Z-index (z_index_canonical_reference) ---- */
+  --z-base: 0;
+  --z-sticky: 100;
+  --z-dropdown: 200;
+  --z-tooltip: 300;
+  --z-slide-over: 400;
+  --z-modal-backdrop: 500;
+  --z-modal: 600;
+  --z-toast: 700;
+  --z-step-up-modal: 800;
+  --z-debug-bar: 900;
+}
+
+/* ---- Semantic tokens: LIGHT (the consumed surface) ----------------------- */
+:root {
+  --color-text-primary: var(--color-neutral-900);
+  /* secondary/muted darkened one step for WCAG AA (4.5:1) on raised surfaces (R3). */
+  --color-text-secondary: var(--color-neutral-700);
+  --color-text-muted: var(--color-neutral-600);
+  --color-text-on-primary: #ffffff;
+  --color-text-link: var(--color-brand-600);
+
+  --color-bg-base: #ffffff;
+  --color-bg-raised: var(--color-neutral-50);
+  --color-bg-overlay: #ffffff;
+  --color-bg-canvas: var(--color-neutral-100);
+  --color-surface-default: var(--color-neutral-50);
+
+  --color-border-subtle: var(--color-neutral-200);
+  --color-border-default: var(--color-neutral-300);
+  --color-border-strong: var(--color-neutral-400);
+  --color-border-focus: var(--color-brand-500);
+
+  --color-action-primary: var(--color-brand-600);
+  --color-action-hover: var(--color-brand-700);
+  --color-action-active: var(--color-brand-800);
+  --color-action-disabled: var(--color-neutral-300);
+
+  --color-status-success: var(--color-success-600);
+  /* Darker "-text" status shades for coloured text / badge labels on light
+     surfaces, so they clear WCAG AA (4.5:1). Base tokens stay for fills/icons. */
+  --color-status-success-text: var(--color-success-900);
+  --color-status-danger-text: var(--color-danger-700);
+  --color-status-info-text: var(--color-brand-700);
+  --color-status-warning: var(--color-warning-600);
+  --color-status-danger: var(--color-danger-600);
+  --color-status-info: var(--color-brand-600);
+
+  /* severity quartets — light */
+  --severity-blocking-bg: var(--color-danger-50);
+  --severity-blocking-border: var(--color-danger-300);
+  --severity-blocking-text: var(--color-danger-800);
+  --severity-blocking-icon: var(--color-danger-700);
+  --severity-high-bg: var(--color-orange-50);
+  --severity-high-border: var(--color-orange-300);
+  --severity-high-text: var(--color-orange-700);
+  --severity-high-icon: var(--color-orange-600);
+  --severity-medium-bg: var(--color-warning-50);
+  --severity-medium-border: var(--color-warning-300);
+  --severity-medium-text: var(--color-warning-700);
+  --severity-medium-icon: var(--color-warning-600);
+  --severity-low-bg: var(--color-info-50);
+  --severity-low-border: var(--color-info-300);
+  --severity-low-text: var(--color-info-700);
+  --severity-low-icon: var(--color-info-600);
+
+  /* elevation — light: Stripe-style multi-layer subtle shadow */
+  --shadow-0: none;
+  --shadow-1: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06);
+  --shadow-2: 0 1px 3px rgba(15, 23, 42, 0.06), 0 2px 4px rgba(15, 23, 42, 0.05);
+  --shadow-3: 0 4px 6px rgba(15, 23, 42, 0.05), 0 2px 4px rgba(15, 23, 42, 0.06);
+  --shadow-4: 0 8px 24px rgba(15, 23, 42, 0.08), 0 4px 8px rgba(15, 23, 42, 0.05);
+  --shadow-5: 0 12px 32px rgba(15, 23, 42, 0.12), 0 6px 12px rgba(15, 23, 42, 0.06);
+
+  color-scheme: light;
+}
+
+/* ---- Semantic tokens: DARK ----------------------------------------------- */
+[data-theme="dark"] {
+  --color-text-primary: var(--color-neutral-50);
+  --color-text-secondary: var(--color-neutral-400);
+  --color-text-muted: var(--color-neutral-500);
+  --color-text-on-primary: #ffffff;
+  --color-text-link: var(--color-brand-400);
+
+  --color-bg-base: #0b0f17;
+  --color-bg-raised: #11151e;
+  --color-bg-overlay: #1a2030;
+  --color-bg-canvas: #0b0f17;
+  --color-surface-default: #11151e;
+
+  --color-border-subtle: #1f2937;
+  --color-border-default: #334155;
+  --color-border-strong: #475569;
+  --color-border-focus: var(--color-brand-500);
+
+  --color-action-primary: var(--color-brand-500);
+  --color-action-hover: var(--color-brand-400);
+  --color-action-active: var(--color-brand-300);
+  --color-action-disabled: var(--color-neutral-700);
+
+  --color-status-success: var(--color-success-500);
+  /* On dark, coloured text already clears AA — reuse the standard tokens. */
+  --color-status-success-text: var(--color-success-500);
+  --color-status-danger-text: var(--color-status-danger);
+  --color-status-info-text: var(--color-status-info);
+  --color-status-warning: var(--color-warning-400);
+  --color-status-danger: var(--color-danger-500);
+  --color-status-info: var(--color-brand-500);
+
+  /* severity quartets — dark: desaturated bg, bright border/icon, off-white text */
+  --severity-blocking-bg: var(--color-danger-950);
+  --severity-blocking-border: var(--color-danger-400);
+  --severity-blocking-text: var(--color-danger-100);
+  --severity-blocking-icon: var(--color-danger-400);
+  --severity-high-bg: var(--color-orange-950);
+  --severity-high-border: var(--color-orange-400);
+  --severity-high-text: var(--color-orange-100);
+  --severity-high-icon: var(--color-orange-400);
+  --severity-medium-bg: #451a03;
+  --severity-medium-border: var(--color-warning-400);
+  --severity-medium-text: var(--color-warning-100);
+  --severity-medium-icon: var(--color-warning-400);
+  --severity-low-bg: var(--color-info-950);
+  --severity-low-border: var(--color-info-400);
+  --severity-low-text: var(--color-info-100);
+  --severity-low-icon: var(--color-info-400);
+
+  /* elevation — dark: border emphasis + deeper rgba (no warm cast) */
+  --shadow-0: none;
+  --shadow-1: 0 0 0 1px rgba(148, 163, 184, 0.08);
+  --shadow-2: 0 1px 3px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(148, 163, 184, 0.08);
+  --shadow-3: 0 4px 12px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(148, 163, 184, 0.1);
+  --shadow-4: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(148, 163, 184, 0.1);
+  --shadow-5: 0 12px 32px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(148, 163, 184, 0.12);
+
+  color-scheme: dark;
+}
+
+/* ==========================================================================
+   Tailwind 4 theme mapping — utilities resolve to the runtime-switching vars
+   (inline keyword) so dark mode flips without regenerating utilities.
+   ========================================================================== */
+@theme inline {
+  /* raw ramps → bg-neutral-500, text-brand-600, etc. */
+  --color-neutral-50: var(--color-neutral-50);
+  --color-neutral-100: var(--color-neutral-100);
+  --color-neutral-200: var(--color-neutral-200);
+  --color-neutral-300: var(--color-neutral-300);
+  --color-neutral-400: var(--color-neutral-400);
+  --color-neutral-500: var(--color-neutral-500);
+  --color-neutral-600: var(--color-neutral-600);
+  --color-neutral-700: var(--color-neutral-700);
+  --color-neutral-800: var(--color-neutral-800);
+  --color-neutral-900: var(--color-neutral-900);
+  --color-neutral-950: var(--color-neutral-950);
+  --color-brand-50: var(--color-brand-50);
+  --color-brand-100: var(--color-brand-100);
+  --color-brand-200: var(--color-brand-200);
+  --color-brand-300: var(--color-brand-300);
+  --color-brand-400: var(--color-brand-400);
+  --color-brand-500: var(--color-brand-500);
+  --color-brand-600: var(--color-brand-600);
+  --color-brand-700: var(--color-brand-700);
+  --color-brand-800: var(--color-brand-800);
+  --color-brand-900: var(--color-brand-900);
+  --color-success-500: var(--color-success-500);
+  --color-success-600: var(--color-success-600);
+  --color-success-700: var(--color-success-700);
+  --color-warning-500: var(--color-warning-500);
+  --color-warning-600: var(--color-warning-600);
+  --color-danger-500: var(--color-danger-500);
+  --color-danger-600: var(--color-danger-600);
+  --color-info-600: var(--color-info-600);
+
+  /* semantic colors → bg-bg-base, text-text-primary, border-border-subtle, etc. */
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-muted: var(--color-text-muted);
+  --color-text-on-primary: var(--color-text-on-primary);
+  --color-text-link: var(--color-text-link);
+  --color-bg-base: var(--color-bg-base);
+  --color-bg-raised: var(--color-bg-raised);
+  --color-bg-overlay: var(--color-bg-overlay);
+  --color-bg-canvas: var(--color-bg-canvas);
+  --color-surface-default: var(--color-surface-default);
+  --color-border-subtle: var(--color-border-subtle);
+  --color-border-default: var(--color-border-default);
+  --color-border-strong: var(--color-border-strong);
+  --color-border-focus: var(--color-border-focus);
+  --color-action-primary: var(--color-action-primary);
+  --color-action-hover: var(--color-action-hover);
+  --color-action-active: var(--color-action-active);
+  --color-action-disabled: var(--color-action-disabled);
+  --color-status-success: var(--color-status-success);
+  --color-status-warning: var(--color-status-warning);
+  --color-status-danger: var(--color-status-danger);
+  --color-status-info: var(--color-status-info);
+
+  /* fonts */
+  --font-ui: var(--font-ui);
+  --font-display: var(--font-display);
+  --font-mono: var(--font-mono);
+  --font-sans: var(--font-ui);
+
+  /* radii → rounded-sm/md/lg/xl/full */
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+
+  /* type scale → text-xs..text-3xl, text-display (with line-heights) */
+  --text-xs: var(--text-xs);            --text-xs--line-height: var(--leading-xs);
+  --text-sm: var(--text-sm);            --text-sm--line-height: var(--leading-sm);
+  --text-md: var(--text-md);            --text-md--line-height: var(--leading-md);
+  --text-lg: var(--text-lg);            --text-lg--line-height: var(--leading-lg);
+  --text-xl: var(--text-xl);            --text-xl--line-height: var(--leading-xl);
+  --text-2xl: var(--text-2xl);          --text-2xl--line-height: var(--leading-2xl);
+  --text-3xl: var(--text-3xl);          --text-3xl--line-height: var(--leading-3xl);
+  --text-display: var(--text-display);  --text-display--line-height: var(--leading-display);
+
+  /* elevation → shadow-1..shadow-5 */
+  --shadow-1: var(--shadow-1);
+  --shadow-2: var(--shadow-2);
+  --shadow-3: var(--shadow-3);
+  --shadow-4: var(--shadow-4);
+  --shadow-5: var(--shadow-5);
+
+  /* motion easings → ease-standard, ease-decelerate, etc. */
+  --ease-standard: var(--easing-standard);
+  --ease-decelerate: var(--easing-decelerate);
+  --ease-accelerate: var(--easing-accelerate);
+
+  /* screens */
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+}
+
+/* ==========================================================================
+   Base element styles
+   ========================================================================== */
+/* Base element styles live in @layer base so component-level Tailwind utilities
+   (e.g. text-text-on-primary on an <a>) reliably override them — unlayered rules
+   otherwise win over @layer utilities in the cascade. */
+@layer base {
+  * {
+    border-color: var(--color-border-subtle);
+  }
+
+  html {
+    font-family: var(--font-ui);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background: var(--color-bg-canvas);
+    color: var(--color-text-primary);
+    font-size: var(--text-md);
+    line-height: var(--leading-md);
+  }
+
+  /* Numeric: tabular figures default for currency/dates/IDs/counts */
+  .tabular-nums,
+  [data-numeric] {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+
+  /* Headings use the display family + tighter tracking */
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    letter-spacing: var(--tracking-tight);
+    line-height: var(--leading-2xl);
+    color: var(--color-text-primary);
+  }
+
+  a {
+    color: var(--color-text-link);
+  }
+}
+
+/* Focus-visible ring — non-negotiable (anti-pattern: never remove). */
+:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Reduced motion: collapse all durations. Token system handles it — components
+   never branch on reduced-motion. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-medium: 0ms;
+    --motion-slow: 0ms;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

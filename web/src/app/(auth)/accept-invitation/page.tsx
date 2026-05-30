@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { acceptInvitation } from "@/app/(team)/team/actions";
+import { acceptInvitation } from "@/app/(app)/team/actions";
 
 const REASON_COPY: Record<string, string> = {
   NOT_AUTHENTICATED: "Please sign in to accept the invitation.",
