@@ -55,7 +55,9 @@ export function Table<T>({
   className,
 }: TableProps<T>) {
   const [sort, setSort] = useState<SortState>(null);
-  const rowH = density === "compact" ? "h-8" : "h-12";
+  // Vertical padding (not a fixed row height) so multi-line cells + avatars are
+  // never clipped; the row sizes to its content.
+  const cellY = density === "compact" ? "py-2" : "py-3";
 
   const sorted = useMemo(() => {
     if (!sort) return data;
@@ -137,10 +139,10 @@ export function Table<T>({
         <tbody>
           {loading ? (
             Array.from({ length: 6 }).map((_, i) => (
-              <tr key={i} className={cn("border-b border-border-subtle", rowH)}>
-                {selectable && <td className="px-3" />}
+              <tr key={i} className="border-b border-border-subtle">
+                {selectable && <td className={cn("px-3.5", cellY)} />}
                 {columns.map((c) => (
-                  <td key={c.id} className="px-3">
+                  <td key={c.id} className={cn("px-3.5", cellY)}>
                     <Skeleton height={12} className="w-3/4" />
                   </td>
                 ))}
@@ -163,13 +165,12 @@ export function Table<T>({
                   onClick={onRowClick ? () => onRowClick(row) : undefined}
                   className={cn(
                     "border-b border-border-subtle last:border-0",
-                    rowH,
                     onRowClick && "cursor-pointer",
                     "hover:bg-bg-raised data-[selected]:bg-[color-mix(in_srgb,var(--color-action-primary)_8%,transparent)]",
                   )}
                 >
                   {selectable && (
-                    <td className="px-3" onClick={(e) => e.stopPropagation()}>
+                    <td className={cn("px-3.5", cellY)} onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         aria-label="Select row"
@@ -180,7 +181,7 @@ export function Table<T>({
                     </td>
                   )}
                   {columns.map((c) => (
-                    <td key={c.id} className={cn("px-3 text-text-primary", alignCls(c), c.numeric && "tabular-nums")}>
+                    <td key={c.id} className={cn("px-3.5 align-middle text-text-primary", cellY, alignCls(c), c.numeric && "tabular-nums")}>
                       {c.cell(row)}
                     </td>
                   ))}
