@@ -17,8 +17,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Cyprus Bookkeeping",
-  description: "Cyprus-focused private bookkeeping SaaS.",
+  title: "TimeFuserBooks",
+  description: "TimeFuserBooks — Cyprus bookkeeping automation.",
 };
 
 // No-flash theme: set [data-theme] from localStorage ∥ system preference before

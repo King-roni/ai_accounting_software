@@ -1,24 +1,28 @@
 "use client";
-import { Languages } from "lucide-react";
 import { useLocale } from "@/i18n/LocaleProvider";
-import { LOCALES, LOCALE_LABEL, type Locale } from "@/i18n/messages";
+import { LOCALES } from "@/i18n/messages";
 
-/** Compact language switcher for the top nav. Native <select> for a11y. */
+const SHORT: Record<string, string> = { en: "EN", el: "ΕΛ" };
+
+/** Compact segmented language switcher for the top nav. */
 export function LocaleToggle() {
   const { locale, setLocale, t } = useLocale();
   return (
-    <div className="relative flex items-center">
-      <Languages size={16} strokeWidth={1.5} aria-hidden="true" className="pointer-events-none absolute left-2 text-text-muted" />
-      <select
-        aria-label={t("common.language")}
-        value={locale}
-        onChange={(e) => setLocale(e.target.value as Locale)}
-        className="h-8 cursor-pointer appearance-none rounded-md border border-border-default bg-bg-base pl-7 pr-2 text-xs text-text-primary outline-none focus:border-border-focus focus:ring-2 focus:ring-[var(--color-border-focus)]/35"
-      >
-        {LOCALES.map((l) => (
-          <option key={l} value={l}>{LOCALE_LABEL[l]}</option>
-        ))}
-      </select>
+    <div role="group" aria-label={t("common.language")} className="hidden h-[34px] items-center overflow-hidden rounded-lg border border-border-default sm:inline-flex">
+      {LOCALES.map((l) => {
+        const on = l === locale;
+        return (
+          <button
+            key={l}
+            type="button"
+            aria-pressed={on}
+            onClick={() => setLocale(l)}
+            className={`h-full cursor-pointer px-2.5 text-[12px] font-semibold transition-colors ${on ? "bg-brand-50 text-action-primary" : "text-text-muted hover:text-text-primary"}`}
+          >
+            {SHORT[l] ?? l.toUpperCase()}
+          </button>
+        );
+      })}
     </div>
   );
 }

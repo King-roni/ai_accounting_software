@@ -40,7 +40,7 @@ function ShellChrome({ children }: { children: ReactNode }) {
         tabIndex={-1}
         className={cn(
           "pb-16 pt-14 outline-none transition-[padding] duration-200 md:pb-0 motion-reduce:transition-none",
-          sidebarCollapsed ? "md:pl-14" : "md:pl-60",
+          sidebarCollapsed ? "md:pl-[60px]" : "md:pl-[232px]",
         )}
       >
         <div className="mx-auto max-w-[1440px] px-4 py-6 md:px-8">

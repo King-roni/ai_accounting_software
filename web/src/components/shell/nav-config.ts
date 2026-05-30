@@ -11,6 +11,8 @@ export interface NavItem {
   i18nKey: MessageKey;
   href: string;
   icon: LucideIcon;
+  /** Key into useNavCounts() for a live badge (e.g. open-reviews backlog). */
+  countKey?: string;
   /** Permission surface required to see this item (hide-don't-show). Wired when
    *  the permission resolver lands; until then all items render. */
   permission?: string;
@@ -32,7 +34,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "Documents", i18nKey: "nav.documents", href: "/documents", icon: Files },
       { label: "Matching", i18nKey: "nav.matching", href: "/matching", icon: GitCompareArrows },
       { label: "Ledger", i18nKey: "nav.ledger", href: "/ledger", icon: BookText },
-      { label: "Reviews", i18nKey: "nav.reviews", href: "/reviews", icon: ListChecks },
+      { label: "Reviews", i18nKey: "nav.reviews", href: "/reviews", icon: ListChecks, countKey: "reviews" },
       { label: "Periods", i18nKey: "nav.periods", href: "/periods", icon: CalendarDays },
       { label: "Reports", i18nKey: "nav.reports", href: "/reports", icon: BarChart3 },
       { label: "Subscriptions", i18nKey: "nav.subscriptions", href: "/subscriptions", icon: Repeat },

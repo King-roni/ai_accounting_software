@@ -12,11 +12,11 @@ test("language toggle localizes the sidebar nav", async ({ page }) => {
   await expect(nav.getByRole("link", { name: "Clients" })).toBeVisible();
 
   // Switch to Greek.
-  await page.getByLabel("Language").selectOption("el");
+  await page.getByRole("button", { name: "ΕΛ", exact: true }).click();
   await expect(nav.getByRole("link", { name: "Πελάτες" })).toBeVisible();
   await expect(nav.getByRole("link", { name: "Clients" })).toHaveCount(0);
 
   // Switch back to English.
-  await page.getByLabel("Γλώσσα").selectOption("en");
+  await page.getByRole("button", { name: "EN", exact: true }).click();
   await expect(nav.getByRole("link", { name: "Clients" })).toBeVisible();
 });
