@@ -64,6 +64,7 @@ test.describe("domain screens (seeded data)", () => {
     { name: "matching", path: "/matching" },
     { name: "ledger", path: "/ledger" },
     { name: "reviews", path: "/reviews" },
+    { name: "subscriptions", path: "/subscriptions" },
   ]) {
     test(`${name} renders without error`, async ({ page }) => {
       await page.goto(path);
@@ -71,4 +72,15 @@ test.describe("domain screens (seeded data)", () => {
       await expect(page.getByText("Something went wrong")).toHaveCount(0);
     });
   }
+
+  test("subscriptions surfaces recurring vendor spend (seeded data)", async ({ page }) => {
+    await page.goto("/subscriptions");
+    await expect(page.getByRole("heading", { name: "Subscriptions" })).toBeVisible();
+    // Seeded ACTIVE vendor-memory + the demo OUT ledger → a tracked recurring vendor.
+    await expect(page.getByText("Amazon Web Services")).toBeVisible();
+    await expect(page.getByText("Est. monthly")).toBeVisible();
+    await page.getByText("Amazon Web Services").click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await expect(page.getByRole("dialog").getByText("Recurring amount")).toBeVisible();
+  });
 });

@@ -11,6 +11,7 @@ const PAGES: { name: string; path: string }[] = [
   { name: "invoices", path: "/invoices" },
   { name: "periods", path: "/periods" },
   { name: "reports", path: "/reports" },
+  { name: "subscriptions", path: "/subscriptions" },
   { name: "transactions", path: "/transactions" },
   { name: "ledger", path: "/ledger" },
   { name: "reviews", path: "/reviews" },
