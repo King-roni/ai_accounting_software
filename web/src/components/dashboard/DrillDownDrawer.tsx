@@ -5,7 +5,7 @@ import { Badge, Drawer, EmptyState, Skeleton } from "@/components/ui";
 import { Inbox } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useShell } from "@/components/shell/ShellContext";
-import { CHART_TYPE_LABEL, DATA_SOURCE_BADGE, summarizeRow, type CardDef, type DrillResult } from "./dashboard-helpers";
+import { CHART_TYPE_LABEL, DATA_SOURCE_BADGE, isStubResult, summarizeRow, type CardDef, type DrillResult } from "./dashboard-helpers";
 
 export function DrillDownDrawer({ def, businessIds, open, onClose }: { def: CardDef | null; businessIds: string[]; open: boolean; onClose: () => void }) {
   return (
@@ -40,6 +40,8 @@ function Body({ def, businessIds }: { def: CardDef; businessIds: string[] }) {
         <div className="flex flex-col gap-2">{[0, 1, 2, 3, 4].map((i) => <Skeleton key={i} height={20} />)}</div>
       ) : error ? (
         <p className="text-sm" style={{ color: "var(--color-status-danger)" }}>{error.message}</p>
+      ) : isStubResult(rows) ? (
+        <EmptyState icon={Inbox} heading="Awaiting aggregated data" body="This analytics card will list records once the period’s data is aggregated." />
       ) : rows.length === 0 ? (
         <EmptyState icon={Inbox} heading="Nothing here" body="This card has no records for the current selection." />
       ) : (

@@ -38,6 +38,51 @@ export const DATA_SOURCE_BADGE: Record<string, { variant: BadgeVariant; label: s
   ARCHIVE: { variant: "status-success", label: "Archive" },
 };
 
+/** True when the card's rows are backend analytics stubs (real MVs not built yet). */
+export function isStubResult(rows: DrillRow[]): boolean {
+  return rows.length > 0 && rows.every((r) => r.id == null || typeof r.payload?.stage === "string");
+}
+
+function rowValue(p: Record<string, unknown>): number | null {
+  for (const k of ["amount", "total_amount", "total", "outstanding_amount", "value", "count"]) {
+    if (typeof p[k] === "number") return p[k] as number;
+  }
+  return null;
+}
+function rowDate(p: Record<string, unknown>): string | null {
+  for (const k of ["transaction_date", "issue_date", "period_start", "created_at"]) {
+    if (typeof p[k] === "string") return p[k] as string;
+  }
+  return null;
+}
+function rowCategory(p: Record<string, unknown>): string {
+  for (const k of ["category", "vat_treatment", "transaction_type", "direction", "severity", "status"]) {
+    if (typeof p[k] === "string") return p[k] as string;
+  }
+  return "Other";
+}
+
+/** Numeric series from rows for sparkline (chronological |value|). */
+export function valueSeries(rows: DrillRow[]): number[] {
+  return rows
+    .map((r) => ({ d: rowDate(r.payload), v: rowValue(r.payload) }))
+    .filter((x): x is { d: string | null; v: number } => x.v != null)
+    .sort((a, b) => (a.d ?? "").localeCompare(b.d ?? ""))
+    .map((x) => Math.abs(x.v));
+}
+
+/** Category-bucketed series for bar/donut (summed |value| per category). */
+export function categorySeries(rows: DrillRow[]): { label: string; value: number }[] {
+  const m = new Map<string, number>();
+  for (const r of rows) {
+    const v = rowValue(r.payload);
+    if (v == null) continue;
+    const k = rowCategory(r.payload);
+    m.set(k, (m.get(k) ?? 0) + Math.abs(v));
+  }
+  return [...m.entries()].map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value);
+}
+
 /** A one-line human summary of a drill-down row's payload (shape varies per card). */
 export function summarizeRow(p: Record<string, unknown>): { primary: string; secondary?: string } {
   const str = (k: string) => (typeof p[k] === "string" ? (p[k] as string) : undefined);
