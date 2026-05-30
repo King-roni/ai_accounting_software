@@ -40,7 +40,7 @@ function Side({ label, title, sub, amount, tone }: { label: string; title: strin
       <div className="text-xs font-medium uppercase tracking-wide text-text-muted">{label}</div>
       <div className="mt-0.5 truncate text-sm font-medium text-text-primary">{title}</div>
       {sub && <div className="truncate text-xs text-text-muted">{sub}</div>}
-      <div className="mt-1 font-mono text-sm tabular-nums" style={{ color: tone === "out" ? "var(--color-status-danger)" : tone === "in" ? "var(--color-status-success)" : undefined }}>{amount}</div>
+      <div className="mt-1 font-mono text-sm tabular-nums" style={{ color: tone === "out" ? "var(--color-status-danger-text)" : tone === "in" ? "var(--color-status-success-text)" : undefined }}>{amount}</div>
     </div>
   );
 }

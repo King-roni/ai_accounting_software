@@ -13,7 +13,7 @@ import { TransactionDetailDrawer } from "@/components/transactions/TransactionDe
 import { UploadStatementDrawer } from "@/components/transactions/UploadStatementDrawer";
 
 function Stat({ label, value, tone }: { label: string; value: string | number; tone?: "in" | "out" }) {
-  const color = tone === "in" ? "var(--color-status-success)" : tone === "out" ? "var(--color-status-danger)" : undefined;
+  const color = tone === "in" ? "var(--color-status-success-text)" : tone === "out" ? "var(--color-status-danger-text)" : undefined;
   return (
     <div className="rounded-md border border-border-subtle bg-surface-default px-4 py-3">
       <div className="text-xs font-medium uppercase tracking-wide text-text-muted">{label}</div>
@@ -75,7 +75,7 @@ export default function TransactionsPage() {
     },
     {
       id: "amount", header: "Amount", numeric: true, width: 140, sortable: true, sortValue: (r) => Number(r.amount),
-      cell: (r) => <span style={{ color: Number(r.amount) < 0 ? "var(--color-status-danger)" : "var(--color-status-success)" }}>{formatMoney(Number(r.amount), r.currency)}</span>,
+      cell: (r) => <span style={{ color: Number(r.amount) < 0 ? "var(--color-status-danger-text)" : "var(--color-status-success-text)" }}>{formatMoney(Number(r.amount), r.currency)}</span>,
     },
     {
       id: "class", header: "Classification", width: 150,

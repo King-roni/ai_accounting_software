@@ -14,10 +14,12 @@ const SEVERITY: Record<string, { icon: LucideIcon; prefix: string }> = {
   "severity-low": { icon: Info, prefix: "--severity-low" },
 };
 
-const STATUS: Record<string, { icon: LucideIcon; token: string }> = {
-  "status-success": { icon: CheckCircle2, token: "--color-status-success" },
-  "status-info": { icon: Info, token: "--color-status-info" },
-  "status-neutral": { icon: Circle, token: "--color-text-muted" },
+// `token` drives the tinted fill/border; `text` is a darker shade for the label
+// so it clears WCAG AA against that light tint.
+const STATUS: Record<string, { icon: LucideIcon; token: string; text: string }> = {
+  "status-success": { icon: CheckCircle2, token: "--color-status-success", text: "--color-status-success-text" },
+  "status-info": { icon: Info, token: "--color-status-info", text: "--color-status-info-text" },
+  "status-neutral": { icon: Circle, token: "--color-text-muted", text: "--color-text-muted" },
 };
 
 const SIZE: Record<BadgeSize, { box: string; icon: number }> = {
@@ -51,9 +53,9 @@ export function Badge({ variant, size = "md", children, className }: BadgeProps)
         color: `var(${(cfg as { prefix: string }).prefix}-text)`,
       }
     : (() => {
-        const t = (cfg as { token: string }).token;
+        const { token: t, text } = cfg as { token: string; text: string };
         return {
-          color: `var(${t})`,
+          color: `var(${text})`,
           borderColor: `color-mix(in srgb, var(${t}) 35%, transparent)`,
           background: `color-mix(in srgb, var(${t}) 12%, transparent)`,
         };

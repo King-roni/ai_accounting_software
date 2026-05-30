@@ -167,8 +167,9 @@
 /* ---- Semantic tokens: LIGHT (the consumed surface) ----------------------- */
 :root {
   --color-text-primary: var(--color-neutral-900);
-  --color-text-secondary: var(--color-neutral-600);
-  --color-text-muted: var(--color-neutral-500);
+  /* secondary/muted darkened one step for WCAG AA (4.5:1) on raised surfaces (R3). */
+  --color-text-secondary: var(--color-neutral-700);
+  --color-text-muted: var(--color-neutral-600);
   --color-text-on-primary: #ffffff;
   --color-text-link: var(--color-brand-600);
 
@@ -189,6 +190,11 @@
   --color-action-disabled: var(--color-neutral-300);
 
   --color-status-success: var(--color-success-600);
+  /* Darker "-text" status shades for coloured text / badge labels on light
+     surfaces, so they clear WCAG AA (4.5:1). Base tokens stay for fills/icons. */
+  --color-status-success-text: var(--color-success-900);
+  --color-status-danger-text: var(--color-danger-700);
+  --color-status-info-text: var(--color-brand-700);
   --color-status-warning: var(--color-warning-600);
   --color-status-danger: var(--color-danger-600);
   --color-status-info: var(--color-brand-600);
@@ -247,6 +253,10 @@
   --color-action-disabled: var(--color-neutral-700);
 
   --color-status-success: var(--color-success-500);
+  /* On dark, coloured text already clears AA — reuse the standard tokens. */
+  --color-status-success-text: var(--color-success-500);
+  --color-status-danger-text: var(--color-status-danger);
+  --color-status-info-text: var(--color-status-info);
   --color-status-warning: var(--color-warning-400);
   --color-status-danger: var(--color-danger-500);
   --color-status-info: var(--color-brand-500);

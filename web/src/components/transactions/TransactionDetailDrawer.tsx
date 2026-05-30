@@ -19,7 +19,7 @@ export function TransactionDetailDrawer({ row, open, onClose }: { row: TxnRow | 
           <Row label="Amount">
             <span
               className="font-mono font-medium tabular-nums"
-              style={{ color: row.amount < 0 ? "var(--color-status-danger)" : "var(--color-status-success)" }}
+              style={{ color: row.amount < 0 ? "var(--color-status-danger-text)" : "var(--color-status-success-text)" }}
             >
               {formatMoney(row.amount, row.currency)}
             </span>

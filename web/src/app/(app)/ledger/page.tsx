@@ -10,7 +10,7 @@ import { LedgerDetailDrawer } from "@/components/ledger/LedgerDetailDrawer";
 import { periodRange } from "@/components/transactions/transaction-helpers";
 
 function Stat({ label, value, tone, hint }: { label: string; value: string; tone?: "in" | "out"; hint?: string }) {
-  const color = tone === "in" ? "var(--color-status-success)" : tone === "out" ? "var(--color-status-danger)" : undefined;
+  const color = tone === "in" ? "var(--color-status-success-text)" : tone === "out" ? "var(--color-status-danger-text)" : undefined;
   return (
     <div className="rounded-md border border-border-subtle bg-surface-default px-4 py-3">
       <div className="text-xs font-medium uppercase tracking-wide text-text-muted">{label}</div>
