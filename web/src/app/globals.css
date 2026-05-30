@@ -20,76 +20,82 @@
 
 /* ---- Raw ramps (theme-invariant) ----------------------------------------- */
 :root {
-  --color-neutral-50:  #f8fafc;
-  --color-neutral-100: #f1f5f9;
-  --color-neutral-200: #e2e8f0;
-  --color-neutral-300: #cbd5e1;
-  --color-neutral-400: #94a3b8;
-  --color-neutral-500: #64748b;
-  --color-neutral-600: #475569;
-  --color-neutral-700: #334155;
-  --color-neutral-800: #1e293b;
-  --color-neutral-900: #0f172a;
-  --color-neutral-950: #020617;
+  /* Warm stone (TimeFuserBooks "Quiet-Luxury Light"). */
+  --color-neutral-50:  #faf8f4;
+  --color-neutral-100: #f6f4ef;
+  --color-neutral-200: #ece8e1;
+  --color-neutral-300: #e2ddd3;
+  --color-neutral-400: #cfc8bb;
+  --color-neutral-500: #a39c8d;
+  --color-neutral-600: #645b4f;
+  --color-neutral-700: #57534c;
+  --color-neutral-800: #36312a;
+  --color-neutral-900: #1c1a17;
+  --color-neutral-950: #110f0c;
 
-  --color-brand-50:  #eff6ff;
-  --color-brand-100: #dbeafe;
-  --color-brand-200: #bfdbfe;
-  --color-brand-300: #93c5fd;
-  --color-brand-400: #60a5fa;
-  --color-brand-500: #3b82f6;
-  --color-brand-600: #2563eb;
-  --color-brand-700: #1d4ed8;
-  --color-brand-800: #1e40af;
-  --color-brand-900: #1e3a8a;
-  --color-brand-950: #172554;
+  /* Deep ink blue — structural brand. */
+  --color-brand-50:  #eef2f7;
+  --color-brand-100: #dce5f0;
+  --color-brand-200: #c0d2e4;
+  --color-brand-300: #9bb5d2;
+  --color-brand-400: #6e97c7;
+  --color-brand-500: #4a6f9c;
+  --color-brand-600: #2e4f75;
+  --color-brand-700: #243f5e;
+  --color-brand-800: #1c3149;
+  --color-brand-900: #152538;
+  --color-brand-950: #0e1825;
 
-  --color-success-50:  #f0fdf4;
-  --color-success-100: #dcfce7;
-  --color-success-300: #86efac;
-  --color-success-500: #22c55e;
-  --color-success-600: #16a34a;
-  --color-success-700: #15803d;
-  --color-success-900: #14532d;
+  /* Income green. */
+  --color-success-50:  #e8f2eb;
+  --color-success-100: #d4e8da;
+  --color-success-300: #bfe0cc;
+  --color-success-500: #3e9b66;
+  --color-success-600: #2e8154;
+  --color-success-700: #1f6b43;
+  --color-success-900: #14492e;
 
-  --color-warning-50:  #fffbeb;
-  --color-warning-100: #fef3c7;
-  --color-warning-300: #fcd34d;
-  --color-warning-400: #fbbf24;
-  --color-warning-500: #f59e0b;
-  --color-warning-600: #d97706;
-  --color-warning-700: #b45309;
-  --color-warning-900: #78350f;
+  /* Bronze amber. */
+  --color-warning-50:  #fbf1df;
+  --color-warning-100: #f6e4c4;
+  --color-warning-300: #e8c893;
+  --color-warning-400: #d8a85a;
+  --color-warning-500: #b07a28;
+  --color-warning-600: #9a6a22;
+  --color-warning-700: #8a5b1a;
+  --color-warning-900: #5c3d11;
 
-  --color-danger-50:  #fef2f2;
-  --color-danger-100: #fee2e2;
-  --color-danger-300: #fca5a5;
-  --color-danger-400: #f87171;
-  --color-danger-500: #ef4444;
-  --color-danger-600: #dc2626;
-  --color-danger-700: #b91c1c;
-  --color-danger-800: #991b1b;
-  --color-danger-900: #7f1d1d;
-  --color-danger-950: #450a0a;
+  /* Expense red (warm terracotta-red). */
+  --color-danger-50:  #f7eae7;
+  --color-danger-100: #f0d8d2;
+  --color-danger-300: #e6c5be;
+  --color-danger-400: #d08a7e;
+  --color-danger-500: #c75545;
+  --color-danger-600: #b0463a;
+  --color-danger-700: #a33a2e;
+  --color-danger-800: #872f25;
+  --color-danger-900: #6e261e;
+  --color-danger-950: #3a130f;
 
-  --color-info-50:  #f0f9ff;
-  --color-info-100: #e0f2fe;
-  --color-info-300: #7dd3fc;
-  --color-info-400: #38bdf8;
-  --color-info-500: #0ea5e9;
-  --color-info-600: #0284c7;
-  --color-info-700: #0369a1;
-  --color-info-900: #0c4a6e;
-  --color-info-950: #082f49;
+  /* Steel/ink (info == structural blue family in this palette). */
+  --color-info-50:  #eaf0f6;
+  --color-info-100: #d6e2ee;
+  --color-info-300: #a9c0d9;
+  --color-info-400: #7799bc;
+  --color-info-500: #4f7299;
+  --color-info-600: #2e4f75;
+  --color-info-700: #243f5e;
+  --color-info-900: #152538;
+  --color-info-950: #0e1825;
 
-  /* orange ramp — used only by severity-high (distinct from warning-amber) */
-  --color-orange-50:  #fff7ed;
-  --color-orange-100: #ffedd5;
-  --color-orange-300: #fdba74;
-  --color-orange-400: #fb923c;
-  --color-orange-600: #ea580c;
-  --color-orange-700: #c2410c;
-  --color-orange-950: #431407;
+  /* terracotta ramp — used only by severity-high (distinct from warning-amber) */
+  --color-orange-50:  #fbede3;
+  --color-orange-100: #f6d9c4;
+  --color-orange-300: #eab088;
+  --color-orange-400: #dc8a57;
+  --color-orange-600: #b85c2e;
+  --color-orange-700: #97481f;
+  --color-orange-950: #3a1a0c;
 
   /* ---- Spacing (4px base) ---- */
   --space-0: 0;
@@ -190,14 +196,19 @@
   --color-action-disabled: var(--color-neutral-300);
 
   --color-status-success: var(--color-success-600);
-  /* Darker "-text" status shades for coloured text / badge labels on light
-     surfaces, so they clear WCAG AA (4.5:1). Base tokens stay for fills/icons. */
-  --color-status-success-text: var(--color-success-900);
+  /* "-text" status shades for coloured text / badge labels on light surfaces
+     (income/expense semantics), AA-checked against their tints. */
+  --color-status-success-text: var(--color-success-700);
   --color-status-danger-text: var(--color-danger-700);
   --color-status-info-text: var(--color-brand-700);
   --color-status-warning: var(--color-warning-600);
   --color-status-danger: var(--color-danger-600);
   --color-status-info: var(--color-brand-600);
+
+  /* Bronze — the signature luxe accent (period underline, seals, hero flourishes). */
+  --color-accent-bronze: #9a7b4f;
+  --color-accent-bronze-strong: #7e6238;
+  --color-accent-bronze-tint: #f3eee4;
 
   /* severity quartets — light */
   --severity-blocking-bg: var(--color-danger-50);
@@ -217,49 +228,54 @@
   --severity-low-text: var(--color-info-700);
   --severity-low-icon: var(--color-info-600);
 
-  /* elevation — light: Stripe-style multi-layer subtle shadow */
+  /* elevation — light: warm-tinted, low spread (TimeFuserBooks) */
   --shadow-0: none;
-  --shadow-1: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06);
-  --shadow-2: 0 1px 3px rgba(15, 23, 42, 0.06), 0 2px 4px rgba(15, 23, 42, 0.05);
-  --shadow-3: 0 4px 6px rgba(15, 23, 42, 0.05), 0 2px 4px rgba(15, 23, 42, 0.06);
-  --shadow-4: 0 8px 24px rgba(15, 23, 42, 0.08), 0 4px 8px rgba(15, 23, 42, 0.05);
-  --shadow-5: 0 12px 32px rgba(15, 23, 42, 0.12), 0 6px 12px rgba(15, 23, 42, 0.06);
+  --shadow-1: 0 1px 2px rgba(28, 26, 23, 0.05);
+  --shadow-2: 0 2px 8px rgba(28, 26, 23, 0.06), 0 1px 2px rgba(28, 26, 23, 0.04);
+  --shadow-3: 0 4px 12px rgba(28, 26, 23, 0.08), 0 1px 3px rgba(28, 26, 23, 0.05);
+  --shadow-4: 0 8px 24px rgba(28, 26, 23, 0.10), 0 3px 8px rgba(28, 26, 23, 0.06);
+  --shadow-5: 0 12px 32px rgba(28, 26, 23, 0.12), 0 6px 12px rgba(28, 26, 23, 0.07);
 
   color-scheme: light;
 }
 
 /* ---- Semantic tokens: DARK ----------------------------------------------- */
 [data-theme="dark"] {
-  --color-text-primary: var(--color-neutral-50);
-  --color-text-secondary: var(--color-neutral-400);
-  --color-text-muted: var(--color-neutral-500);
-  --color-text-on-primary: #ffffff;
-  --color-text-link: var(--color-brand-400);
+  /* Warm dark (TimeFuserBooks). */
+  --color-text-primary: #f2eee6;
+  --color-text-secondary: #b8b1a4;
+  --color-text-muted: #847d70;
+  --color-text-on-primary: #14202e;
+  --color-text-link: #6e97c7;
 
-  --color-bg-base: #0b0f17;
-  --color-bg-raised: #11151e;
-  --color-bg-overlay: #1a2030;
-  --color-bg-canvas: #0b0f17;
-  --color-surface-default: #11151e;
+  --color-bg-base: #1a1814;
+  --color-bg-raised: #1f1c17;
+  --color-bg-overlay: #2a2620;
+  --color-bg-canvas: #1a1814;
+  --color-surface-default: #221f1a;
 
-  --color-border-subtle: #1f2937;
-  --color-border-default: #334155;
-  --color-border-strong: #475569;
-  --color-border-focus: var(--color-brand-500);
+  --color-border-subtle: #2f2a23;
+  --color-border-default: #3a352d;
+  --color-border-strong: #4a443a;
+  --color-border-focus: #6e97c7;
 
-  --color-action-primary: var(--color-brand-500);
-  --color-action-hover: var(--color-brand-400);
-  --color-action-active: var(--color-brand-300);
-  --color-action-disabled: var(--color-neutral-700);
+  --color-action-primary: #6e97c7;
+  --color-action-hover: #82a6d0;
+  --color-action-active: #5b86b8;
+  --color-action-disabled: #3a352d;
 
-  --color-status-success: var(--color-success-500);
-  /* On dark, coloured text already clears AA — reuse the standard tokens. */
-  --color-status-success-text: var(--color-success-500);
-  --color-status-danger-text: var(--color-status-danger);
-  --color-status-info-text: var(--color-status-info);
-  --color-status-warning: var(--color-warning-400);
-  --color-status-danger: var(--color-danger-500);
-  --color-status-info: var(--color-brand-500);
+  --color-status-success: #6bcb92;
+  /* On dark, coloured text reads on dark surfaces — bright tints clear AA. */
+  --color-status-success-text: #6bcb92;
+  --color-status-danger-text: #e08a7c;
+  --color-status-info-text: #8fb2da;
+  --color-status-warning: #e0b873;
+  --color-status-danger: #e08a7c;
+  --color-status-info: #8fb2da;
+
+  --color-accent-bronze: #c9a86e;
+  --color-accent-bronze-strong: #d8bc86;
+  --color-accent-bronze-tint: #2e2820;
 
   /* severity quartets — dark: desaturated bg, bright border/icon, off-white text */
   --severity-blocking-bg: var(--color-danger-950);
@@ -349,6 +365,13 @@
   --color-status-warning: var(--color-status-warning);
   --color-status-danger: var(--color-status-danger);
   --color-status-info: var(--color-status-info);
+  --color-status-success-text: var(--color-status-success-text);
+  --color-status-danger-text: var(--color-status-danger-text);
+  --color-status-info-text: var(--color-status-info-text);
+  /* bronze accent → text-accent-bronze, bg-accent-bronze-tint, etc. */
+  --color-accent-bronze: var(--color-accent-bronze);
+  --color-accent-bronze-strong: var(--color-accent-bronze-strong);
+  --color-accent-bronze-tint: var(--color-accent-bronze-tint);
 
   /* fonts */
   --font-ui: var(--font-ui);
@@ -412,8 +435,9 @@
   body {
     background: var(--color-bg-canvas);
     color: var(--color-text-primary);
-    font-size: var(--text-md);
-    line-height: var(--leading-md);
+    font-size: var(--text-sm);
+    line-height: var(--leading-sm);
+    font-weight: 450;
   }
 
   /* Numeric: tabular figures default for currency/dates/IDs/counts */
