@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TimeFuserBooks — Transactions</title>
+<link rel="stylesheet" href="styles/tokens.css">
+<link rel="stylesheet" href="styles/shell.css">
+<style>
+  /* stat tiles */
+  .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; max-width: 720px; margin-bottom: 20px; }
+  .stat { background: var(--surface); border: 1px solid var(--border-subtle); border-radius: var(--r-card); box-shadow: var(--elev-1); padding: 14px 16px; }
+  .stat .l { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); font-weight: 600; display: flex; align-items: center; gap: 7px; }
+  .stat .l svg { width: 13px; height: 13px; }
+  .stat .v { font-family: var(--font-mono); font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 6px; }
+
+  /* filter bar */
+  .filters { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+  .filters .field { height: 38px; }
+  .filters .grow { flex: 1; min-width: 220px; max-width: 340px; }
+  .filters .right { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+
+  /* table card */
+  .tbl-card { background: var(--surface); border: 1px solid var(--border-subtle); border-radius: var(--r-card); box-shadow: var(--elev-1); overflow: hidden; }
+  .tbl-scroll { overflow-x: auto; }
+  table.tx { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 760px; }
+  table.tx thead th { text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); padding: 11px 16px; border-bottom: 1px solid var(--border-default); background: var(--surface-sunken); white-space: nowrap; position: sticky; top: 0; }
+  table.tx thead th.sortable { cursor: pointer; user-select: none; }
+  table.tx thead th.sortable:hover { color: var(--text-secondary); }
+  table.tx thead th .sa { display: inline-flex; vertical-align: middle; margin-left: 4px; opacity: .35; }
+  table.tx thead th.sorted .sa { opacity: 1; color: var(--brand); }
+  table.tx thead th .sa svg { width: 13px; height: 13px; }
+  table.tx tbody td { padding: 13px 16px; border-bottom: 1px solid var(--border-subtle); vertical-align: middle; }
+  table.tx tbody tr { cursor: pointer; transition: background .1s; }
+  table.tx tbody tr:hover { background: var(--surface-sunken); }
+  table.tx tbody tr:last-child td { border-bottom: none; }
+  table.tx.compact tbody td { padding: 7px 16px; }
+  .tx-date { font-family: var(--font-mono); color: var(--text-secondary); white-space: nowrap; }
+  .tx-desc { font-weight: 500; }
+  .tx-cp { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+  .tx-amt { font-family: var(--font-mono); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 500; }
+  .col-amt { text-align: right; }
+
+  .empty { padding: 60px 20px; text-align: center; color: var(--text-muted); }
+  .empty svg { width: 36px; height: 36px; opacity: .5; margin-bottom: 10px; }
+  .empty .et { font-weight: 600; color: var(--text-secondary); font-size: 15px; }
+
+  /* skeleton rows */
+  .sk-row td { padding: 14px 16px; border-bottom: 1px solid var(--border-subtle); }
+
+  /* detail drawer */
+  .dd-amt { font-family: var(--font-mono); font-size: 28px; font-weight: 600; letter-spacing: -.01em; }
+  .status-quad { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin: 4px 0 22px; }
+  .sq { background: var(--surface-sunken); border: 1px solid var(--border-subtle); border-radius: 9px; padding: 10px 12px; }
+  .sq .sl { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); font-weight: 600; margin-bottom: 7px; }
+  .dl-sec { margin-bottom: 22px; }
+  .dl-sec h4 { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-secondary); margin: 0 0 12px; }
+  .kv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px 18px; }
+  .kv-grid .k { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; font-weight: 600; }
+  .kv-grid .vv { font-size: 13.5px; margin-top: 2px; }
+  .kv-grid .vv.mono { font-family: var(--font-mono); }
+  .tags { display: flex; flex-wrap: wrap; gap: 7px; }
+  .tag-chip { font-size: 11.5px; padding: 3px 9px; border-radius: 6px; border: 1px solid var(--border-default); background: var(--surface-sunken); color: var(--text-secondary); display: inline-flex; align-items: center; gap: 5px; }
+  .tag-chip.sys { color: var(--brand); background: var(--brand-tint); border-color: color-mix(in srgb, var(--brand) 20%, transparent); }
+  .tag-chip svg { width: 11px; height: 11px; }
+  .stmt { background: var(--surface-sunken); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 13px 15px; font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary); line-height: 1.7; }
+  .stmt .raw { color: var(--text-primary); }
+</style>
+</head>
+<body>
+<main class="main" id="main">
+  <div class="main-inner">
+
+    <div class="page-head">
+      <div data-screen-label="Transactions">
+        <div class="ttl">Transactions</div>
+        <div class="sub">Demo Trading Ltd · May 2026</div>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-primary" id="uploadBtn"><span data-i="upload"></span>Upload statement</button>
+      </div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat"><div class="l"><span data-i="receipt"></span>Transactions</div><div class="v" id="statCount">96</div></div>
+      <div class="stat"><div class="l"><span data-i="check"></span>Money in</div><div class="v amt-income">+€64,210.00</div></div>
+      <div class="stat"><div class="l"><span data-i="minus"></span>Money out</div><div class="v amt-expense">−€45,670.00</div></div>
+    </div>
+
+    <div class="filters">
+      <div class="field grow">
+        <span data-i="search"></span>
+        <input id="search" placeholder="Search description or counterparty">
+      </div>
+      <div class="field">
+        <select id="fDir"><option value="">All directions</option><option value="IN">Money in</option><option value="OUT">Money out</option><option value="BOTH">Both</option></select>
+        <span data-i="chevD"></span>
+      </div>
+      <div class="field">
+        <select id="fClass"><option value="">All classifications</option><option>Income</option><option>Expense</option><option>Transfer</option><option>FX</option><option>Bank fee</option><option>Payroll</option><option>Tax</option><option>Unknown</option></select>
+        <span data-i="chevD"></span>
+      </div>
+      <div class="right">
+        <div class="seg" id="density" role="group" aria-label="Density">
+          <button class="on" data-d="comfortable">Comfortable</button>
+          <button data-d="compact">Compact</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="tbl-card">
+      <div class="tbl-scroll">
+        <table class="tx" id="txTable">
+          <thead>
+            <tr>
+              <th class="sortable sorted" data-sort="date" style="width:130px;">Date <span class="sa" data-i="chevD"></span></th>
+              <th>Description</th>
+              <th class="sortable col-amt" data-sort="amount" style="width:160px;">Amount <span class="sa" data-i="chevD"></span></th>
+              <th style="width:190px;">Classification</th>
+            </tr>
+          </thead>
+          <tbody id="txBody"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="emptyState" style="display:none;">
+        <div data-i="search"></div>
+        <div class="et">No transactions match your filters</div>
+        <div style="margin-top:4px;">Try clearing the search or changing the direction filter.</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- detail drawer -->
+<div class="scrim" id="scrim" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <div class="drawer-top">
+    <div id="ddHead"></div>
+    <button class="x-btn" onclick="closeDrawer()" data-i="x"></button>
+  </div>
+  <div class="drawer-body" id="ddBody"></div>
+  <div class="drawer-foot">
+    <button class="btn btn-secondary" onclick="closeDrawer()">Close</button>
+    <button class="btn btn-primary" id="ddPrimary">Confirm classification</button>
+  </div>
+</aside>
+
+<script src="shared/shell.js"></script>
+<script>
+  CB.renderShell({ active: 'transactions' });
+  const icon = CB.icon;
+  document.querySelectorAll('[data-i]').forEach(el => { el.innerHTML = icon(el.getAttribute('data-i')); });
+
+  // ---- transaction type -> [friendly label, badge tone] ----
+  const TYPE = {
+    OUT_EXPENSE:['Expense','neutral'], IN_INCOME:['Income','success'], INTERNAL_TRANSFER:['Transfer','info'],
+    FX_EXCHANGE:['FX exchange','info'], BANK_FEE:['Bank fee','neutral'], REFUND_IN:['Refund in','success'],
+    REFUND_OUT:['Refund out','neutral'], CHARGEBACK:['Chargeback','danger'], LOAN_OR_SHAREHOLDER_MOVEMENT:['Shareholder','info'],
+    PAYROLL_OR_TEAM_PAYMENT:['Payroll','info'], TAX_PAYMENT:['Tax payment','info'], UNKNOWN:['Unknown','warning'],
+  };
+  const CLASS_ST = { PENDING:['Pending','neutral'], NEEDS_CONFIRMATION:['Needs confirmation','warning'], CONFIRMED:['Confirmed','success'], FAILED:['Failed','danger'] };
+  const DEDUP_ST = { NEW:['New','neutral'], DUPLICATE_EXACT:['Exact duplicate','danger'], DUPLICATE_PROBABLE:['Probable duplicate','warning'], NEEDS_REVIEW:['Needs review','warning'] };
+  const MATCH_ST = { MATCHED:['Matched','success'], UNMATCHED:['Unmatched','neutral'], PARTIAL:['Partial','warning'], NEEDS_REVIEW:['Needs review','warning'] };
+  const REVIEW_ST = { NONE:['None','neutral'], CLEARED:['Cleared','success'], FLAGGED:['Flagged','warning'], BLOCKING:['Blocking','danger'] };
+
+  // ---- demo data ----
+  const TX = [
+    {date:'2026-05-28',desc:'Stripe payout',cp:'Stripe Payments Europe',amt:4210.00,dir:'IN',type:'IN_INCOME',ref:'STRP-0528',cls:'CONFIRMED',dedup:'NEW',match:'MATCHED',review:'NONE',tags:['system:stripe','revenue'],raw:'SEPA CREDIT STRIPE PAYMENTS UK LTD'},
+    {date:'2026-05-27',desc:'AWS EMEA invoice',cp:'Amazon Web Services',amt:-213.77,dir:'OUT',type:'OUT_EXPENSE',ref:'AWS-EU-44192',cls:'NEEDS_CONFIRMATION',dedup:'NEW',match:'PARTIAL',review:'FLAGGED',tags:['cloud','vat:reverse-charge'],raw:'CARD PURCHASE AMAZON WEB SERVICES LUX'},
+    {date:'2026-05-26',desc:'Cyta Telecom',cp:'Cyta',amt:-78.40,dir:'OUT',type:'OUT_EXPENSE',ref:'CYTA-0526',cls:'CONFIRMED',dedup:'NEW',match:'UNMATCHED',review:'NONE',tags:['utilities'],raw:'DIRECT DEBIT CYTA TELECOM'},
+    {date:'2026-05-24',desc:'Payroll · May salaries',cp:'Demo Trading payroll',amt:-12800.00,dir:'OUT',type:'PAYROLL_OR_TEAM_PAYMENT',ref:'PAY-2026-05',cls:'CONFIRMED',dedup:'NEW',match:'MATCHED',review:'NONE',tags:['payroll','system:bankfeed'],raw:'BULK PAYMENT PAYROLL MAY 2026'},
+    {date:'2026-05-22',desc:'Cash deposit',cp:'—',amt:2000.00,dir:'IN',type:'UNKNOWN',ref:'DEP-0522',cls:'NEEDS_CONFIRMATION',dedup:'NEEDS_REVIEW',match:'UNMATCHED',review:'FLAGGED',tags:['needs-context'],raw:'CASH DEPOSIT ATM NICOSIA'},
+    {date:'2026-05-21',desc:'Client invoice INV-0142',cp:'Lefkara Retail Ltd',amt:5940.00,dir:'IN',type:'IN_INCOME',ref:'INV-0142',cls:'CONFIRMED',dedup:'NEW',match:'MATCHED',review:'CLEARED',tags:['revenue','vat:19'],raw:'SEPA CREDIT LEFKARA RETAIL LTD INV0142'},
+    {date:'2026-05-19',desc:'Wise FX settlement',cp:'Wise',amt:-312.00,dir:'OUT',type:'FX_EXCHANGE',ref:'WISE-FX-771',cls:'CONFIRMED',dedup:'NEW',match:'UNMATCHED',review:'NONE',tags:['fx'],raw:'CARD PURCHASE WISE FX EUR/USD'},
+    {date:'2026-05-18',desc:'Office rent · May',cp:'Nicosia Holdings',amt:-1200.00,dir:'OUT',type:'OUT_EXPENSE',ref:'RENT-05',cls:'CONFIRMED',dedup:'NEW',match:'MATCHED',review:'BLOCKING',tags:['rent','review:large'],raw:'STANDING ORDER NICOSIA HOLDINGS RENT'},
+    {date:'2026-05-16',desc:'Supplier payment',cp:'Aphrodite Supplies',amt:-890.00,dir:'OUT',type:'OUT_EXPENSE',ref:'SUP-0890',cls:'NEEDS_CONFIRMATION',dedup:'DUPLICATE_PROBABLE',match:'NEEDS_REVIEW',review:'FLAGGED',tags:['supplier'],raw:'SEPA DEBIT APHRODITE SUPPLIES LTD'},
+    {date:'2026-05-15',desc:'Office supplies',cp:'Public',amt:-146.20,dir:'OUT',type:'OUT_EXPENSE',ref:'PUB-0515',cls:'CONFIRMED',dedup:'NEW',match:'UNMATCHED',review:'NONE',tags:['supplies','vat:19'],raw:'CARD PURCHASE PUBLIC NICOSIA'},
+    {date:'2026-05-13',desc:'VAT payment Q1',cp:'Cyprus Tax Dept',amt:-3420.00,dir:'OUT',type:'TAX_PAYMENT',ref:'VAT-Q1-26',cls:'CONFIRMED',dedup:'NEW',match:'MATCHED',review:'NONE',tags:['tax','vat'],raw:'SEPA DEBIT TAX DEPARTMENT VAT Q1'},
+    {date:'2026-05-12',desc:'Consulting fee',cp:'—',amt:1500.00,dir:'IN',type:'IN_INCOME',ref:'CONS-0512',cls:'PENDING',dedup:'NEEDS_REVIEW',match:'UNMATCHED',review:'NONE',tags:['revenue'],raw:'SEPA CREDIT REF CONSULTING'},
+    {date:'2026-05-09',desc:'Bank charge',cp:'Bank of Cyprus',amt:-18.00,dir:'OUT',type:'BANK_FEE',ref:'FEE-0509',cls:'CONFIRMED',dedup:'NEW',match:'MATCHED',review:'NONE',tags:['system:bankfeed'],raw:'ACCOUNT MAINTENANCE FEE'},
+    {date:'2026-05-07',desc:'Shareholder loan',cp:'A. Kyriacou',amt:10000.00,dir:'IN',type:'LOAN_OR_SHAREHOLDER_MOVEMENT',ref:'SHL-0507',cls:'NEEDS_CONFIRMATION',dedup:'NEW',match:'UNMATCHED',review:'FLAGGED',tags:['shareholder','review:large'],raw:'SEPA CREDIT A KYRIACOU'},
+    {date:'2026-05-05',desc:'Supplier refund',cp:'Amazon',amt:61.80,dir:'IN',type:'REFUND_IN',ref:'RFD-0505',cls:'CONFIRMED',dedup:'NEW',match:'MATCHED',review:'NONE',tags:['refund'],raw:'CARD REFUND AMAZON EU'},
+    {date:'2026-05-03',desc:'Duplicate charge',cp:'Aphrodite Supplies',amt:-890.00,dir:'OUT',type:'OUT_EXPENSE',ref:'SUP-0890',cls:'FAILED',dedup:'DUPLICATE_EXACT',match:'UNMATCHED',review:'FLAGGED',tags:['supplier','duplicate'],raw:'SEPA DEBIT APHRODITE SUPPLIES LTD'},
+  ];
+
+  const fmt = a => (a < 0 ? '−' : '+') + '€' + Math.abs(a).toLocaleString('en-IE',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const badge = (tone,label) => `<span class="badge badge-${tone}">${label}</span>`;
+
+  let sortKey = 'date', sortDir = -1, current = [...TX];
+
+  function classBadge(t) {
+    const [label, tone] = TYPE[t.type];
+    // surface unconfirmed/failed classification through the tone
+    if (t.cls === 'NEEDS_CONFIRMATION' || t.cls === 'PENDING') return badge('warning', label);
+    if (t.cls === 'FAILED') return badge('danger', label);
+    return badge(tone, label);
+  }
+
+  function rowHTML(t, i) {
+    return `<tr data-i="${i}">
+      <td class="tx-date">${t.date}</td>
+      <td><div class="tx-desc">${t.desc}</div>${t.cp !== '—' ? `<div class="tx-cp">${t.cp}</div>` : ''}</td>
+      <td class="tx-amt ${t.amt < 0 ? 'amt-expense' : 'amt-income'}">${fmt(t.amt)}</td>
+      <td>${classBadge(t)}</td>
+    </tr>`;
+  }
+
+  function apply() {
+    const q = document.getElementById('search').value.toLowerCase().trim();
+    const dir = document.getElementById('fDir').value;
+    const cls = document.getElementById('fClass').value;
+    current = TX.filter(t => {
+      if (q && !(t.desc.toLowerCase().includes(q) || t.cp.toLowerCase().includes(q))) return false;
+      if (dir && t.dir !== dir) return false;
+      if (cls && TYPE[t.type][0] !== cls) return false;
+      return true;
+    });
+    current.sort((a, b) => {
+      let r = sortKey === 'amount' ? a.amt - b.amt : a.date.localeCompare(b.date);
+      return r * sortDir;
+    });
+    const body = document.getElementById('txBody');
+    body.innerHTML = current.map((t) => rowHTML(t, TX.indexOf(t))).join('');
+    document.getElementById('emptyState').style.display = current.length ? 'none' : 'block';
+    document.getElementById('txTable').style.display = current.length ? '' : 'none';
+    body.querySelectorAll('tr').forEach(tr => tr.addEventListener('click', () => openDrawer(+tr.dataset.i)));
+  }
+
+  // sorting
+  document.querySelectorAll('th.sortable').forEach(th => th.addEventListener('click', () => {
+    const k = th.dataset.sort;
+    if (sortKey === k) sortDir *= -1; else { sortKey = k; sortDir = k === 'amount' ? -1 : -1; }
+    document.querySelectorAll('th.sortable').forEach(x => { x.classList.remove('sorted'); x.querySelector('.sa').style.transform = ''; });
+    th.classList.add('sorted');
+    th.querySelector('.sa').style.transform = sortDir === 1 ? 'rotate(180deg)' : '';
+    apply();
+  }));
+
+  // filters
+  ['search','fDir','fClass'].forEach(id => document.getElementById(id).addEventListener('input', apply));
+
+  // density
+  document.querySelectorAll('#density button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('#density button').forEach(x => x.classList.remove('on')); b.classList.add('on');
+    document.getElementById('txTable').classList.toggle('compact', b.dataset.d === 'compact');
+  }));
+
+  // ---- drawer ----
+  function openDrawer(i) {
+    const t = TX[i];
+    document.getElementById('ddHead').innerHTML = `
+      <div class="t-meta" style="margin-bottom:5px;">${t.cp === '—' ? 'No counterparty' : t.cp}</div>
+      <div class="dd-amt ${t.amt < 0 ? 'amt-expense' : 'amt-income'}">${fmt(t.amt)}</div>
+      <div class="t-meta mono" style="margin-top:4px;">${t.date} · ${t.dir} · EUR</div>`;
+    const sq = (label, map, val) => `<div class="sq"><div class="sl">${label}</div>${badge(map[val][1], map[val][0])}</div>`;
+    document.getElementById('ddBody').innerHTML = `
+      <div class="status-quad">
+        ${sq('Classification', CLASS_ST, t.cls)}
+        ${sq('Deduplication', DEDUP_ST, t.dedup)}
+        ${sq('Match', MATCH_ST, t.match)}
+        ${sq('Review', REVIEW_ST, t.review)}
+      </div>
+      <div class="dl-sec">
+        <h4>Details</h4>
+        <div class="kv-grid">
+          <div><div class="k">Type</div><div class="vv">${TYPE[t.type][0]} <span class="t-meta mono">· ${t.type}</span></div></div>
+          <div><div class="k">Direction</div><div class="vv">${t.dir}</div></div>
+          <div><div class="k">Reference</div><div class="vv mono">${t.ref}</div></div>
+          <div><div class="k">Currency</div><div class="vv mono">EUR</div></div>
+        </div>
+      </div>
+      <div class="dl-sec">
+        <h4>Tags</h4>
+        <div class="tags">${t.tags.map(tag => {
+          const sys = tag.startsWith('system:');
+          return `<span class="tag-chip ${sys ? 'sys' : ''}">${sys ? icon('settings') : ''}${tag.replace('system:','')}</span>`;
+        }).join('')}</div>
+      </div>
+      <div class="dl-sec">
+        <h4>Statement line context</h4>
+        <div class="stmt"><div class="raw">${t.raw}</div>ref ${t.ref} · value date ${t.date} · imported via bank feed</div>
+      </div>`;
+    // primary action depends on classification state
+    const prim = document.getElementById('ddPrimary');
+    if (t.cls === 'CONFIRMED') { prim.textContent = 'Re-classify'; prim.className = 'btn btn-secondary'; }
+    else { prim.textContent = 'Confirm classification'; prim.className = 'btn btn-primary'; }
+    document.getElementById('scrim').classList.add('open');
+    document.getElementById('drawer').classList.add('open');
+  }
+  function closeDrawer() {
+    document.getElementById('scrim').classList.remove('open');
+    document.getElementById('drawer').classList.remove('open');
+  }
+  window.closeDrawer = closeDrawer;
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+
+  // ---- initial load with skeleton ----
+  function skeleton() {
+    const body = document.getElementById('txBody');
+    body.innerHTML = Array.from({length:8}).map(() => `
+      <tr class="sk-row">
+        <td><div class="skel" style="height:13px;width:80px;"></div></td>
+        <td><div class="skel" style="height:13px;width:62%;margin-bottom:6px;"></div><div class="skel" style="height:11px;width:40%;"></div></td>
+        <td><div class="skel" style="height:13px;width:70px;margin-left:auto;"></div></td>
+        <td><div class="skel" style="height:18px;width:90px;border-radius:6px;"></div></td>
+      </tr>`).join('');
+  }
+  skeleton();
+  setTimeout(apply, 650);
+
+  document.getElementById('uploadBtn').addEventListener('click', () => { skeleton(); setTimeout(apply, 700); });
+</script>
+</body>
+</html>

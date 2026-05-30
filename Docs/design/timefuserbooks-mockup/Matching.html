@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TimeFuserBooks — Matching</title>
+<link rel="stylesheet" href="styles/tokens.css">
+<link rel="stylesheet" href="styles/shell.css">
+<style>
+  .m-wrap { max-width: 880px; }
+  .m-tools { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+  .m-tools .field { height: 38px; }
+
+  .m-stack { display: flex; flex-direction: column; gap: 16px; }
+  .match-card { background: var(--surface); border: 1px solid var(--border-subtle); border-radius: var(--r-card); box-shadow: var(--elev-1); overflow: hidden; transition: opacity .3s, transform .3s; }
+  .match-card.resolved { opacity: 0; transform: scale(.98); height: 0; margin: -8px 0; padding: 0; border: 0; pointer-events: none; }
+
+  .mc-head { display: flex; align-items: center; gap: 10px; padding: 13px 18px; border-bottom: 1px solid var(--border-subtle); }
+  .conf-badge { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 600; padding: 4px 11px; border-radius: 999px; }
+  .conf-strong { background: var(--income-tint); color: var(--income-text); border: 1px solid var(--income-border); }
+  .conf-possible { background: var(--badge-warning-bg); color: var(--badge-warning-text); border: 1px solid color-mix(in srgb, var(--badge-warning-text) 26%, transparent); }
+  .conf-weak { background: var(--expense-tint); color: var(--expense-text); border: 1px solid var(--expense-border); }
+  .conf-badge svg { width: 14px; height: 14px; }
+  .mc-pct { font-family: var(--font-mono); font-weight: 700; font-size: 15px; }
+  .mc-head .mh-meta { margin-left: auto; font-size: 12px; color: var(--text-muted); }
+
+  /* two-pane body */
+  .mc-panes { display: grid; grid-template-columns: 1fr 56px 1fr; align-items: stretch; }
+  .pane { padding: 16px 18px; }
+  .pane.doc { border-left: 1px solid var(--border-subtle); }
+  .pane-label { font-size: 10px; text-transform: uppercase; letter-spacing: .07em; color: var(--text-muted); font-weight: 700; display: flex; align-items: center; gap: 6px; margin-bottom: 12px; }
+  .pane-label svg { width: 13px; height: 13px; }
+  .pane-amt { font-family: var(--font-mono); font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .pane-cp { font-size: 14px; font-weight: 600; margin-top: 8px; }
+  .pane-rows { margin-top: 10px; display: flex; flex-direction: column; gap: 5px; }
+  .pane-rows .pr { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; }
+  .pane-rows .pr .pk { color: var(--text-muted); }
+  .pane-rows .pr .pvv { font-family: var(--font-mono); color: var(--text-secondary); white-space: nowrap; }
+  .pane-cp { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .doc-thumb { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--brand); background: var(--brand-tint); border-radius: 6px; padding: 3px 8px; margin-top: 10px; }
+  .doc-thumb svg { width: 12px; height: 12px; }
+
+  .mc-arrow { display: grid; place-items: center; position: relative; }
+  .mc-arrow .ring { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border-default); box-shadow: var(--elev-1); color: var(--text-muted); z-index: 1; }
+  .mc-arrow .ring svg { width: 18px; height: 18px; }
+  .mc-arrow::before { content:""; position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: var(--border-default); }
+
+  /* signal bars */
+  .mc-signals { padding: 14px 18px; border-top: 1px solid var(--border-subtle); display: grid; grid-template-columns: 1fr 1fr; gap: 12px 26px; background: var(--surface-sunken); }
+  .sig { }
+  .sig-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
+  .sig-name { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+  .sig-pct { font-family: var(--font-mono); font-size: 12px; font-weight: 600; }
+  .sig-track { height: 8px; border-radius: 5px; background: var(--border-subtle); overflow: hidden; }
+  .sig-fill { height: 100%; border-radius: 5px; transition: width .5s; }
+
+  .mc-reason { padding: 14px 18px; font-size: 13.5px; color: var(--text-secondary); line-height: 1.6; display: flex; gap: 10px; align-items: flex-start; }
+  .mc-reason svg { width: 16px; height: 16px; color: var(--text-muted); flex: none; margin-top: 2px; }
+  .mc-reason .mono { font-family: var(--font-mono); font-weight: 500; }
+
+  .mc-actions { display: flex; gap: 9px; padding: 0 18px 16px; }
+
+  .resolved-strip { display: none; align-items: center; gap: 9px; padding: 14px 18px; font-size: 13px; font-weight: 500; }
+  .match-card.done-confirm .resolved-strip { display: flex; color: var(--income-text); }
+  .match-card.done-reject .resolved-strip { display: flex; color: var(--text-muted); }
+  .match-card.done-confirm .mc-panes, .match-card.done-confirm .mc-signals, .match-card.done-confirm .mc-reason, .match-card.done-confirm .mc-actions,
+  .match-card.done-reject .mc-panes, .match-card.done-reject .mc-signals, .match-card.done-reject .mc-reason, .match-card.done-reject .mc-actions { display: none; }
+  .resolved-strip svg { width: 16px; height: 16px; }
+
+  .all-clear { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+  .all-clear svg { width: 40px; height: 40px; color: var(--income-text); margin-bottom: 12px; }
+  .all-clear .ac-t { font-size: 17px; font-weight: 600; color: var(--text-secondary); }
+</style>
+</head>
+<body>
+<main class="main" id="main">
+  <div class="main-inner">
+
+    <div class="page-head">
+      <div data-screen-label="Matching">
+        <div class="ttl">Matching</div>
+        <div class="sub" id="mSub">Demo Trading Ltd · May 2026</div>
+      </div>
+    </div>
+
+    <div class="m-wrap">
+      <div class="m-tools">
+        <div class="field">
+          <select id="mFilter"><option value="all">All matches</option><option value="needs">Needs confirmation</option><option value="strong">Strong only</option><option value="weak">Weak only</option></select>
+          <span data-i="chevD"></span>
+        </div>
+        <span class="t-meta" id="mCount"></span>
+      </div>
+      <div class="m-stack" id="stack"></div>
+    </div>
+  </div>
+</main>
+
+<script src="shared/shell.js"></script>
+<script>
+  CB.renderShell({ active: 'matching' });
+  const icon = CB.icon;
+  document.querySelectorAll('[data-i]').forEach(el => { el.innerHTML = icon(el.getAttribute('data-i')); });
+
+  const tier = pct => pct >= 85 ? ['strong','Strong match','check'] : pct >= 60 ? ['possible','Possible match','alertCirc'] : ['weak','Weak match','alertTri'];
+  const sigColor = v => v >= 80 ? 'var(--income-text)' : v >= 50 ? 'var(--badge-warning-text)' : 'var(--expense-text)';
+
+  const MATCHES = [
+    { pct:92, tx:{amt:'−€213.77',cp:'Amazon Web Services',date:'2026-05-27',ref:'AWS-EU-44192'},
+      doc:{kind:'Vendor invoice',name:'AWS EMEA · INV-44192',amt:'€213.77',date:'2026-05-26'},
+      sig:{Amount:100,Date:95,Counterparty:88,Reference:90},
+      reason:'Amount, date and reference all line up with this <span class="mono">AWS EMEA</span> invoice. A confident automatic match.' },
+    { pct:64, tx:{amt:'−€890.00',cp:'Aphrodite Supplies',date:'2026-05-16',ref:'—'},
+      doc:{kind:'Vendor invoice',name:'Aphrodite Supplies · SUP-0890',amt:'€890.00',date:'2026-05-10'},
+      sig:{Amount:100,Date:55,Counterparty:72,Reference:40},
+      reason:'The <span class="mono">€890.00</span> amount matches this Aphrodite Supplies invoice, but the date is about a week off and there’s no reference on the payment.' },
+    { pct:48, tx:{amt:'−€146.20',cp:'Public',date:'2026-05-15',ref:'PUB-0515'},
+      doc:{kind:'Receipt',name:'Public · till receipt',amt:'€120.00',date:'2026-05-14'},
+      sig:{Amount:42,Date:90,Counterparty:80,Reference:18},
+      reason:'Counterparty and date are close, but the amounts differ (<span class="mono">€146.20</span> paid vs <span class="mono">€120.00</span> on the receipt) and the reference doesn’t match.' },
+    { pct:88, tx:{amt:'+€5,940.00',cp:'Lefkara Retail Ltd',date:'2026-05-21',ref:'INV-0142'},
+      doc:{kind:'Sales invoice',name:'INV-2026-0142',amt:'€5,940.00',date:'2026-05-21'},
+      sig:{Amount:100,Date:100,Counterparty:85,Reference:82},
+      reason:'This incoming payment matches invoice <span class="mono">INV-2026-0142</span> exactly on amount and date.' },
+    { pct:71, tx:{amt:'−€312.00',cp:'Wise',date:'2026-05-19',ref:'WISE-FX-771'},
+      doc:{kind:'Statement',name:'Wise FX settlement',amt:'€312.00',date:'2026-05-19'},
+      sig:{Amount:100,Date:100,Counterparty:60,Reference:30},
+      reason:'Amount and date match the Wise statement, but the counterparty naming and reference are weak — worth a quick confirm.' },
+  ];
+  MATCHES.forEach((m, i) => m.id = i);
+
+  function signalHTML(m) {
+    return Object.entries(m.sig).map(([k, v]) => `
+      <div class="sig"><div class="sig-top"><span class="sig-name">${k}</span><span class="sig-pct" style="color:${sigColor(v)}">${v}%</span></div>
+      <div class="sig-track"><div class="sig-fill" style="width:${v}%;background:${sigColor(v)}"></div></div></div>`).join('');
+  }
+
+  function cardHTML(m) {
+    const [cls, label, ic] = tier(m.pct);
+    return `<div class="match-card" data-id="${m.id}" data-pct="${m.pct}">
+      <div class="mc-head">
+        <span class="conf-badge conf-${cls}">${icon(ic)}${label}</span>
+        <span class="mc-pct" style="color:${cls==='strong'?'var(--income-text)':cls==='weak'?'var(--expense-text)':'var(--badge-warning-text)'}">${m.pct}%</span>
+        <span class="mh-meta">${cls==='strong'?'Auto-matched · confirm to lock':'Needs your confirmation'}</span>
+      </div>
+      <div class="mc-panes">
+        <div class="pane tx">
+          <div class="pane-label">${icon('receipt')}Bank transaction</div>
+          <div class="pane-amt ${m.tx.amt.startsWith('−')?'amt-expense':'amt-income'}">${m.tx.amt}</div>
+          <div class="pane-cp">${m.tx.cp}</div>
+          <div class="pane-rows">
+            <div class="pr"><span class="pk">Date</span><span class="pvv">${m.tx.date}</span></div>
+            <div class="pr"><span class="pk">Reference</span><span class="pvv">${m.tx.ref}</span></div>
+          </div>
+        </div>
+        <div class="mc-arrow"><span class="ring">${icon('link')}</span></div>
+        <div class="pane doc">
+          <div class="pane-label">${icon('doc')}${m.doc.kind}</div>
+          <div class="pane-amt">${m.doc.amt}</div>
+          <div class="pane-cp">${m.doc.name}</div>
+          <div class="pane-rows">
+            <div class="pr"><span class="pk">Date</span><span class="pvv">${m.doc.date}</span></div>
+          </div>
+          <span class="doc-thumb">${icon('doc')}View document</span>
+        </div>
+      </div>
+      <div class="mc-signals">${signalHTML(m)}</div>
+      <div class="mc-reason">${icon('infoCirc')}<div>${m.reason}</div></div>
+      <div class="mc-actions">
+        <button class="btn btn-primary btn-sm" onclick="resolve(${m.id},'confirm')">${icon('check')}Confirm match</button>
+        <button class="btn btn-secondary btn-sm" onclick="resolve(${m.id},'reject')">Reject</button>
+      </div>
+      <div class="resolved-strip">
+        <span class="rc"></span>
+      </div>
+    </div>`;
+  }
+
+  let filter = 'all';
+  function visible(m) {
+    const [cls] = tier(m.pct);
+    if (filter === 'all') return true;
+    if (filter === 'needs') return cls !== 'strong';
+    if (filter === 'strong') return cls === 'strong';
+    if (filter === 'weak') return cls === 'weak';
+  }
+  function render() {
+    const list = MATCHES.filter(m => !m.resolved && visible(m));
+    const stack = document.getElementById('stack');
+    stack.innerHTML = list.length ? list.map(cardHTML).join('')
+      : `<div class="all-clear">${icon('check')}<div class="ac-t">No matches in this view</div><div style="margin-top:4px;">Everything here has been reviewed.</div></div>`;
+    const open = MATCHES.filter(m => !m.resolved).length;
+    document.getElementById('mCount').textContent = `${open} match${open===1?'':'es'} awaiting review`;
+    document.getElementById('mSub').textContent = `Demo Trading Ltd · May 2026 · ${open} to review`;
+  }
+
+  window.resolve = (id, action) => {
+    const card = document.querySelector(`.match-card[data-id="${id}"]`);
+    if (!card) return;
+    card.classList.add(action === 'confirm' ? 'done-confirm' : 'done-reject');
+    card.querySelector('.resolved-strip .rc').innerHTML = action === 'confirm'
+      ? `${icon('check')} Match confirmed and locked`
+      : `${icon('x')} Match rejected — transaction returned to unmatched`;
+    setTimeout(() => { MATCHES[id].resolved = true; card.classList.add('resolved'); setTimeout(render, 320); }, 1100);
+  };
+
+  document.getElementById('mFilter').addEventListener('change', e => { filter = e.target.value; render(); });
+  render();
+</script>
+</body>
+</html>

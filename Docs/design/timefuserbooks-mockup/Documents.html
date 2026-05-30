@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TimeFuserBooks — Documents</title>
+<link rel="stylesheet" href="styles/tokens.css">
+<link rel="stylesheet" href="styles/shell.css">
+<style>
+  .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; max-width: 660px; margin-bottom: 20px; }
+  .stat { background: var(--surface); border: 1px solid var(--border-subtle); border-radius: var(--r-card); box-shadow: var(--elev-1); padding: 13px 16px; }
+  .stat .l { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); font-weight: 600; }
+  .stat .v { font-family: var(--font-mono); font-size: 21px; font-weight: 600; margin-top: 5px; }
+
+  .filters { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+  .filters .field { height: 38px; }
+
+  .tbl-card { background: var(--surface); border: 1px solid var(--border-subtle); border-radius: var(--r-card); box-shadow: var(--elev-1); overflow: hidden; }
+  .tbl-scroll { overflow-x: auto; }
+  table.docs { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 840px; }
+  table.docs thead th { text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); padding: 11px 16px; border-bottom: 1px solid var(--border-default); background: var(--surface-sunken); white-space: nowrap; }
+  table.docs tbody td { padding: 12px 16px; border-bottom: 1px solid var(--border-subtle); vertical-align: middle; }
+  table.docs tbody tr { cursor: pointer; transition: background .1s; }
+  table.docs tbody tr:hover { background: var(--surface-sunken); }
+  table.docs tbody tr:last-child td { border-bottom: none; }
+  .doc-name { display: flex; align-items: center; gap: 11px; }
+  .doc-ic { width: 34px; height: 40px; border-radius: 6px; background: var(--brand-tint); color: var(--brand); display: grid; place-items: center; flex: none; border: 1px solid color-mix(in srgb, var(--brand) 18%, transparent); }
+  .doc-ic svg { width: 16px; height: 16px; }
+  .doc-name .dn { font-weight: 600; white-space: nowrap; } .doc-name .dm { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+  .doc-name > div { min-width: 0; } .doc-name .dn, .doc-name .dm { overflow: hidden; text-overflow: ellipsis; }
+  .src { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--text-secondary); }
+  .src svg { width: 14px; height: 14px; color: var(--text-muted); }
+  .conf-pill { display: inline-flex; align-items: center; gap: 7px; }
+  .conf-mini { width: 54px; height: 6px; border-radius: 4px; background: var(--border-subtle); overflow: hidden; }
+  .conf-mini > span { display: block; height: 100%; border-radius: 4px; }
+  .conf-num { font-family: var(--font-mono); font-size: 12px; font-weight: 600; }
+
+  /* drawer */
+  .drawer.wide { width: 560px; }
+  .preview-pane { background: var(--surface-sunken); border: 1.5px dashed var(--border-strong); border-radius: 12px; padding: 34px 20px; text-align: center; margin-bottom: 22px; }
+  .preview-pane .pic { width: 56px; height: 66px; border-radius: 8px; background: var(--surface); border: 1px solid var(--border-default); display: grid; place-items: center; margin: 0 auto 14px; color: var(--text-muted); box-shadow: var(--elev-1); position: relative; }
+  .preview-pane .pic svg { width: 26px; height: 26px; }
+  .preview-pane .pic .corner { position: absolute; top: 0; right: 0; width: 14px; height: 14px; background: var(--canvas); border-left: 1px solid var(--border-default); border-bottom: 1px solid var(--border-default); border-bottom-left-radius: 4px; }
+  .preview-pane .pt { font-size: 13.5px; font-weight: 600; }
+  .preview-pane .pm { font-size: 12px; color: var(--text-muted); margin-top: 4px; max-width: 320px; margin-left: auto; margin-right: auto; line-height: 1.5; }
+  .preview-pane .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--text-secondary); background: var(--surface); border: 1px solid var(--border-default); border-radius: 999px; padding: 4px 11px; margin-top: 14px; }
+  .preview-pane .chip .pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--brand); }
+
+  .dl-sec { margin-bottom: 22px; }
+  .dl-sec h4 { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-secondary); margin: 0 0 12px; display: flex; align-items: center; justify-content: space-between; }
+  .ex-field { display: flex; align-items: center; gap: 14px; padding: 11px 0; border-bottom: 1px solid var(--border-subtle); }
+  .ex-field:last-child { border-bottom: none; }
+  .ex-k { width: 130px; flex: none; font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; font-weight: 600; }
+  .ex-v { flex: 1; font-size: 13.5px; font-weight: 500; }
+  .ex-v.mono { font-family: var(--font-mono); }
+  .ex-conf { display: flex; align-items: center; gap: 8px; flex: none; width: 120px; }
+  .ex-bar { flex: 1; height: 6px; border-radius: 4px; background: var(--border-subtle); overflow: hidden; }
+  .ex-bar > span { display: block; height: 100%; border-radius: 4px; }
+  .ex-pct { font-family: var(--font-mono); font-size: 11.5px; font-weight: 600; width: 34px; text-align: right; }
+  .ex-field.low { background: var(--badge-warning-bg); margin: 0 -22px; padding: 11px 22px; border-radius: 0; }
+  .lowtag { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--badge-warning-text); }
+</style>
+</head>
+<body>
+<main class="main" id="main">
+  <div class="main-inner">
+
+    <div class="page-head">
+      <div data-screen-label="Documents">
+        <div class="ttl">Documents</div>
+        <div class="sub">Demo Trading Ltd · May 2026</div>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-primary"><span data-i="upload"></span>Upload document</button>
+      </div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat"><div class="l">Documents</div><div class="v">182</div></div>
+      <div class="stat"><div class="l">Auto-extracted</div><div class="v amt-income">142</div></div>
+      <div class="stat"><div class="l">Needs review</div><div class="v" style="color:var(--badge-warning-text)">11</div></div>
+    </div>
+
+    <div class="filters">
+      <div class="field" style="min-width:240px;">
+        <span data-i="search"></span><input placeholder="Search documents or suppliers">
+      </div>
+      <div class="field"><select><option>All sources</option><option>Email</option><option>Drive</option><option>Manual upload</option></select><span data-i="chevD"></span></div>
+      <div class="field"><select><option>All extraction states</option><option>Extracted</option><option>Needs review</option><option>Ingested</option><option>Failed</option></select><span data-i="chevD"></span></div>
+    </div>
+
+    <div class="tbl-card">
+      <div class="tbl-scroll">
+        <table class="docs">
+          <thead><tr><th>Document</th><th>Source</th><th>Linked to</th><th>Extraction</th><th>Confidence</th></tr></thead>
+          <tbody id="docBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- drawer -->
+<div class="scrim" id="scrim" onclick="closeDrawer()"></div>
+<aside class="drawer wide" id="drawer" aria-hidden="true">
+  <div class="drawer-top" id="docHead"></div>
+  <div class="drawer-body" id="docBodyD"></div>
+  <div class="drawer-foot" id="docFoot"></div>
+</aside>
+
+<script src="shared/shell.js"></script>
+<script>
+  CB.renderShell({ active: 'documents' });
+  const icon = CB.icon;
+  document.querySelectorAll('[data-i]').forEach(el => { el.innerHTML = icon(el.getAttribute('data-i')); });
+
+  const STATUS = { EXTRACTED:['Extracted','success'], NEEDS_REVIEW:['Needs review','warning'], INGESTED:['Ingested','info'], FAILED:['Extraction failed','danger'] };
+  const SRC = { email:['Email','invoice'], drive:['Drive','layers'], upload:['Manual upload','upload'] };
+  const cColor = v => v >= 85 ? 'var(--income-text)' : v >= 60 ? 'var(--badge-warning-text)' : 'var(--expense-text)';
+
+  const DOCS = [
+    { name:'AWS EMEA · INV-44192', kind:'PDF · vendor invoice', src:'email', link:'AWS-EU-44192', status:'EXTRACTED', conf:96,
+      fields:[['Supplier','Amazon Web Services',98],['Invoice number','44192',97],['Invoice date','2026-05-26',95],['Net amount','€173.15',96],['VAT amount','€40.62',92],['Total','€213.77',98],['VAT treatment','EU reverse charge',88]] },
+    { name:'Aphrodite Supplies · SUP-0890', kind:'PDF · vendor invoice', src:'drive', link:'SUP-0890', status:'NEEDS_REVIEW', conf:61,
+      fields:[['Supplier','Aphrodite Supplies',90],['Invoice number','SUP-0890',58],['Invoice date','2026-05-10',54],['Net amount','€747.90',80],['VAT amount','€142.10',71],['Total','€890.00',88],['VAT treatment','Domestic standard 19%',42]] },
+    { name:'Public · till receipt', kind:'Image · receipt', src:'upload', link:'PUB-0515', status:'NEEDS_REVIEW', conf:47,
+      fields:[['Supplier','Public',74],['Invoice number','—',12],['Invoice date','2026-05-14',60],['Net amount','€100.84',40],['VAT amount','€19.16',38],['Total','€120.00',55],['VAT treatment','Domestic standard 19%',50]] },
+    { name:'INV-2026-0142', kind:'PDF · sales invoice', src:'upload', link:'INV-0142', status:'EXTRACTED', conf:99,
+      fields:[['Client','Lefkara Retail Ltd',99],['Invoice number','INV-2026-0142',99],['Issue date','2026-05-21',98],['Net amount','€4,991.60',99],['VAT amount','€948.40',97],['Total','€5,940.00',99],['VAT treatment','Domestic standard 19%',96]] },
+    { name:'Cyta · DD notice', kind:'PDF · statement', src:'email', link:'CYTA-0526', status:'INGESTED', conf:0,
+      fields:[['Supplier','Cyta',0],['Invoice number','—',0],['Invoice date','—',0],['Total','€78.40',0],['VAT treatment','—',0]] },
+    { name:'Bank of Cyprus · fee advice', kind:'PDF · statement', src:'email', link:'FEE-0509', status:'FAILED', conf:0,
+      fields:[['Supplier','—',0],['Total','—',0]] },
+  ];
+  DOCS.forEach((d, i) => d.id = i);
+
+  document.getElementById('docBody').innerHTML = DOCS.map(d => {
+    const [sl, sic] = SRC[d.src], [stl, stt] = STATUS[d.status];
+    return `<tr data-id="${d.id}">
+      <td><div class="doc-name"><span class="doc-ic">${icon(d.kind.startsWith('Image')?'doc':'invoice')}</span><div><div class="dn">${d.name}</div><div class="dm">${d.kind}</div></div></div></td>
+      <td><span class="src">${icon(sic)}${sl}</span></td>
+      <td class="mono" style="color:var(--text-secondary);font-size:12.5px;">${d.link}</td>
+      <td><span class="badge badge-${stt}">${stl}</span></td>
+      <td>${d.conf ? `<span class="conf-pill"><span class="conf-mini"><span style="width:${d.conf}%;background:${cColor(d.conf)}"></span></span><span class="conf-num" style="color:${cColor(d.conf)}">${d.conf}%</span></span>` : '<span class="t-meta">—</span>'}</td>
+    </tr>`;
+  }).join('');
+  document.querySelectorAll('#docBody tr').forEach(tr => tr.addEventListener('click', () => openDrawer(+tr.dataset.id)));
+
+  function openDrawer(id) {
+    const d = DOCS[id];
+    const [stl, stt] = STATUS[d.status];
+    document.getElementById('docHead').innerHTML = `
+      <div>
+        <div style="margin-bottom:7px;"><span class="badge badge-${stt}">${stl}</span></div>
+        <div style="font-size:18px;font-weight:600;letter-spacing:-.01em;">${d.name}</div>
+        <div class="t-meta" style="margin-top:3px;">${d.kind} · linked to <span class="mono">${d.link}</span></div>
+      </div>
+      <button class="x-btn" onclick="closeDrawer()">${icon('x')}</button>`;
+
+    const extractable = d.status === 'EXTRACTED' || d.status === 'NEEDS_REVIEW';
+    document.getElementById('docBodyD').innerHTML = `
+      <div class="preview-pane">
+        <div class="pic">${icon('doc')}<span class="corner"></span></div>
+        <div class="pt">Document preview</div>
+        <div class="pm">The in-app PDF & image viewer is on the way. Until then, extracted data below is fully available and editable.</div>
+        <span class="chip"><span class="pulse"></span>Viewer coming soon</span>
+      </div>
+      <div class="dl-sec">
+        <h4>Extracted fields ${extractable ? `<span class="t-meta" style="text-transform:none;letter-spacing:0;font-weight:450;">field confidence</span>` : ''}</h4>
+        ${extractable ? d.fields.map(([k, v, c]) => `
+          <div class="ex-field ${c < 60 ? 'low' : ''}">
+            <span class="ex-k">${k}</span>
+            <span class="ex-v ${/[€\d]/.test(v) ? 'mono' : ''}">${v}${c < 60 ? ' <span class="lowtag">· check</span>' : ''}</span>
+            <span class="ex-conf"><span class="ex-bar"><span style="width:${c}%;background:${cColor(c)}"></span></span><span class="ex-pct" style="color:${cColor(c)}">${c}%</span></span>
+          </div>`).join('')
+        : `<div class="preview-pane" style="padding:24px;"><div class="pt">${d.status === 'FAILED' ? 'Extraction failed' : 'Not extracted yet'}</div><div class="pm">${d.status === 'FAILED' ? 'The document couldn’t be read automatically. Re-upload a clearer copy or enter the values by hand.' : 'This document is ingested and queued for extraction.'}</div></div>`}
+      </div>`;
+
+    document.getElementById('docFoot').innerHTML = extractable
+      ? `<button class="btn btn-secondary" onclick="closeDrawer()">Close</button>
+         <button class="btn btn-secondary">Edit fields</button>
+         <button class="btn btn-primary">${icon('check')}Accept extraction</button>`
+      : `<button class="btn btn-secondary" onclick="closeDrawer()">Close</button>
+         <button class="btn btn-primary">${d.status === 'FAILED' ? 'Enter manually' : 'Re-run extraction'}</button>`;
+
+    document.getElementById('scrim').classList.add('open');
+    document.getElementById('drawer').classList.add('open');
+  }
+  function closeDrawer() { document.getElementById('scrim').classList.remove('open'); document.getElementById('drawer').classList.remove('open'); }
+  window.closeDrawer = closeDrawer;
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+</script>
+</body>
+</html>

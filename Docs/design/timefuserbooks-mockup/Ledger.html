@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TimeFuserBooks — Ledger & VAT</title>
+<link rel="stylesheet" href="styles/tokens.css">
+<link rel="stylesheet" href="styles/shell.css">
+<style>
+  /* VAT summary panel */
+  .vat-panel { background: var(--surface); border: 1px solid var(--border-subtle); border-radius: var(--r-card); box-shadow: var(--elev-1); padding: 18px 20px; margin-bottom: 20px; }
+  .vat-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+  .vat-head .h { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 9px; }
+  .vat-head .h .ic { color: var(--text-muted); display: inline-flex; } .vat-head .h .ic svg { width: 17px; height: 17px; }
+  .vat-flags { display: flex; gap: 7px; flex-wrap: wrap; }
+  .vat-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  @media (max-width: 760px){ .vat-tiles { grid-template-columns: 1fr; } }
+  .vtile { border: 1px solid var(--border-subtle); border-radius: 11px; padding: 15px 16px; background: var(--surface-sunken); }
+  .vtile.net { background: var(--bronze-tint); border-color: color-mix(in srgb, var(--bronze) 30%, transparent); }
+  .vtile .vl { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); font-weight: 600; display: flex; align-items: center; gap: 7px; }
+  .vtile .vl svg { width: 13px; height: 13px; }
+  .vtile .vv { font-family: var(--font-mono); font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 8px; }
+  .vtile .vsub { font-size: 11.5px; color: var(--text-muted); margin-top: 3px; }
+
+  /* controls row */
+  .lc { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+  .lc .legend2 { display: flex; gap: 14px; font-size: 12px; color: var(--text-muted); align-items: center; }
+  .lc .legend2 .lg { display: inline-flex; align-items: center; gap: 6px; }
+  .lc .legend2 .d { width: 9px; height: 9px; border-radius: 3px; }
+  .lc .right { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+
+  .tbl-card { background: var(--surface); border: 1px solid var(--border-subtle); border-radius: var(--r-card); box-shadow: var(--elev-1); overflow: hidden; }
+  .tbl-scroll { overflow-x: auto; }
+  table.led { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 900px; }
+  table.led thead th { text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); padding: 11px 16px; border-bottom: 1px solid var(--border-default); background: var(--surface-sunken); white-space: nowrap; }
+  table.led thead th.r { text-align: right; }
+  table.led thead th.sortable { cursor: pointer; user-select: none; }
+  table.led tbody td { padding: 12px 16px; border-bottom: 1px solid var(--border-subtle); vertical-align: middle; white-space: nowrap; }
+  table.led tbody tr { cursor: pointer; transition: background .1s; }
+  table.led tbody tr:hover { background: var(--surface-sunken); }
+  table.led tbody tr:last-child td { border-bottom: none; }
+  table.led.compact tbody td { padding: 7px 16px; }
+  .led-acc { font-weight: 600; }
+  .led-desc { font-size: 12px; color: var(--text-muted); margin-top: 1px; white-space: normal; }
+  .led-date { font-family: var(--font-mono); color: var(--text-secondary); }
+  .num { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  .num.zero { color: var(--text-muted); opacity: .4; }
+  .treat-cell { font-size: 12.5px; color: var(--text-secondary); }
+  .lock-glyph { color: var(--bronze-strong); display: inline-flex; vertical-align: -2px; margin-right: 5px; } .lock-glyph svg { width: 13px; height: 13px; }
+
+  /* drawer */
+  .de-tbl { border: 1px solid var(--border-subtle); border-radius: 10px; overflow: hidden; margin-bottom: 6px; }
+  .de-h, .de-r, .de-t { display: grid; grid-template-columns: 1.6fr .9fr .9fr; gap: 8px; padding: 10px 13px; }
+  .de-h { background: var(--surface-sunken); font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); font-weight: 600; }
+  .de-r { border-top: 1px solid var(--border-subtle); font-size: 13px; align-items: center; }
+  .de-r .acc { font-weight: 500; }
+  .de-r .num, .de-h .num, .de-t .num { text-align: right; }
+  .de-t { border-top: 2px solid var(--border-default); font-weight: 700; font-size: 13px; background: var(--surface-sunken); }
+  .de-bal { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--income-text); margin: 8px 0 22px; font-weight: 600; }
+  .de-bal svg { width: 13px; height: 13px; }
+
+  .dl-sec { margin-bottom: 22px; }
+  .dl-sec h4 { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-secondary); margin: 0 0 12px; }
+  .kv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px 18px; }
+  .kv-grid .k { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; font-weight: 600; }
+  .kv-grid .vv { font-size: 13.5px; margin-top: 2px; }
+  .kv-grid .vv.mono { font-family: var(--font-mono); }
+  .link-row { display: flex; align-items: center; gap: 10px; padding: 11px 13px; border: 1px solid var(--border-subtle); border-radius: 9px; background: var(--surface-sunken); margin-bottom: 8px; }
+  .link-row .li { width: 30px; height: 30px; border-radius: 8px; background: var(--brand-tint); color: var(--brand); display: grid; place-items: center; flex: none; } .link-row .li svg { width: 15px; height: 15px; }
+  .link-row .lt { font-size: 13px; font-weight: 500; } .link-row .lm { font-size: 11.5px; color: var(--text-muted); }
+  .link-row .go { margin-left: auto; color: var(--text-muted); } .link-row .go svg { width: 16px; height: 16px; }
+
+  .deny-note { width: 100%; background: var(--bronze-tint); border: 1px solid color-mix(in srgb, var(--bronze) 35%, transparent); border-radius: 9px; padding: 10px 13px; margin-bottom: 6px; }
+  .deny-title { display: flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 700; color: var(--bronze-strong); }
+  .deny-title svg { width: 14px; height: 14px; }
+  .deny-note p { margin: 5px 0 0; font-size: 12px; color: var(--text-secondary); }
+  .drawer-foot { flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<main class="main" id="main">
+  <div class="main-inner">
+
+    <div class="page-head">
+      <div data-screen-label="Ledger">
+        <div class="ttl">Ledger &amp; VAT</div>
+        <div class="sub">Demo Trading Ltd · May 2026</div>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-secondary btn-sm"><span data-i="report"></span>Export VAT return</button>
+      </div>
+    </div>
+
+    <!-- VAT summary -->
+    <div class="vat-panel">
+      <div class="vat-head">
+        <div class="h"><span class="ic" data-i="ledger"></span>Cyprus VAT summary</div>
+        <div class="vat-flags">
+          <span class="badge badge-info" id="rcFlag"></span>
+          <span class="badge badge-success" id="viesFlag"></span>
+          <span class="badge badge-warning" id="revFlag"></span>
+        </div>
+      </div>
+      <div class="vat-tiles">
+        <div class="vtile">
+          <div class="vl"><span data-i="check"></span>Input VAT · receivable</div>
+          <div class="vv amt-income">€4,820.00</div>
+          <div class="vsub">Reclaimable on purchases (money in)</div>
+        </div>
+        <div class="vtile">
+          <div class="vl"><span data-i="minus"></span>Output VAT · payable</div>
+          <div class="vv amt-expense">€9,240.00</div>
+          <div class="vsub">Charged on sales (money out)</div>
+        </div>
+        <div class="vtile net">
+          <div class="vl"><span data-i="ledger"></span>Net VAT · payable</div>
+          <div class="vv amt-expense">€4,420.00</div>
+          <div class="vsub">Due to Cyprus Tax Department</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- controls -->
+    <div class="lc">
+      <div class="legend2">
+        <span class="lg"><span class="d" style="background:var(--badge-neutral-text);opacity:.5"></span>Draft</span>
+        <span class="lg"><span class="d" style="background:var(--income-text)"></span>Locked</span>
+      </div>
+      <div class="right">
+        <div class="seg" id="density" role="group" aria-label="Density">
+          <button class="on" data-d="comfortable">Comfortable</button>
+          <button data-d="compact">Compact</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="tbl-card">
+      <div class="tbl-scroll">
+        <table class="led" id="ledTable">
+          <thead><tr>
+            <th class="sortable" data-sort="date" style="width:118px;">Date</th>
+            <th>Account</th>
+            <th class="r" style="width:120px;">Debit</th>
+            <th class="r" style="width:120px;">Credit</th>
+            <th style="width:200px;">VAT treatment</th>
+            <th style="width:110px;">Status</th>
+          </tr></thead>
+          <tbody id="ledBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- entry drawer -->
+<div class="scrim" id="scrim" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <div class="drawer-top" id="ledHead"></div>
+  <div class="drawer-body" id="ledBodyD"></div>
+  <div class="drawer-foot" id="ledFoot"></div>
+</aside>
+
+<script src="shared/shell.js"></script>
+<script>
+  CB.renderShell({ active: 'ledger' });
+  const icon = CB.icon;
+  document.querySelectorAll('[data-i]').forEach(el => { el.innerHTML = icon(el.getAttribute('data-i')); });
+  document.getElementById('rcFlag').innerHTML = icon('link') + 'Reverse charge present';
+  document.getElementById('viesFlag').innerHTML = icon('check') + 'VIES validated';
+  document.getElementById('revFlag').innerHTML = icon('clock') + 'Accountant review: in progress';
+
+  const money = a => '€' + Math.abs(a).toLocaleString('en-IE',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+  // journals (double-entry); table flattens to posting lines
+  const J = [
+    { date:'2026-05-21', desc:'Sales invoice INV-0142 · Lefkara Retail', treat:'Domestic standard 19%', rate:19, status:'LOCKED', txRef:'INV-2026-0142', doc:'Invoice PDF', rc:false, vies:false,
+      lines:[ {acc:'Bank', d:5940.00, c:0}, {acc:'Sales revenue', d:0, c:4991.60}, {acc:'Output VAT', d:0, c:948.40} ] },
+    { date:'2026-05-27', desc:'AWS EMEA invoice · reverse charge', treat:'EU reverse charge', rate:19, status:'DRAFT', txRef:'AWS-EU-44192', doc:'Awaiting receipt', rc:true, vies:true,
+      lines:[ {acc:'Cloud expenses', d:213.77, c:0}, {acc:'Input VAT (RC)', d:40.62, c:0}, {acc:'Output VAT (RC)', d:0, c:40.62}, {acc:'Accounts payable', d:0, c:213.77} ] },
+    { date:'2026-05-24', desc:'Payroll · May salaries', treat:'Outside scope', rate:0, status:'LOCKED', txRef:'PAY-2026-05', doc:'Payroll register', rc:false, vies:false,
+      lines:[ {acc:'Payroll expense', d:12800.00, c:0}, {acc:'Bank', d:0, c:12800.00} ] },
+    { date:'2026-05-18', desc:'Office rent · May · Nicosia Holdings', treat:'Exempt', rate:0, status:'DRAFT', txRef:'RENT-05', doc:'Lease agreement', rc:false, vies:false,
+      lines:[ {acc:'Rent expense', d:1200.00, c:0}, {acc:'Bank', d:0, c:1200.00} ] },
+    { date:'2026-05-15', desc:'Office supplies · Public', treat:'Domestic standard 19%', rate:19, status:'DRAFT', txRef:'PUB-0515', doc:'Receipt', rc:false, vies:false,
+      lines:[ {acc:'Office supplies', d:122.86, c:0}, {acc:'Input VAT', d:23.34, c:0}, {acc:'Bank', d:0, c:146.20} ] },
+    { date:'2026-05-13', desc:'VAT payment · Q1 2026', treat:'No VAT', rate:0, status:'LOCKED', txRef:'VAT-Q1-26', doc:'Payment confirmation', rc:false, vies:false,
+      lines:[ {acc:'VAT control', d:3420.00, c:0}, {acc:'Bank', d:0, c:3420.00} ] },
+    { date:'2026-05-12', desc:'Consulting income · zero-rated export', treat:'Domestic zero-rated', rate:0, status:'DRAFT', txRef:'CONS-0512', doc:'—', rc:false, vies:false,
+      lines:[ {acc:'Bank', d:1500.00, c:0}, {acc:'Sales revenue', d:0, c:1500.00} ] },
+  ];
+  J.forEach((j, i) => j.id = i);
+
+  // flatten to posting lines
+  const ROWS = [];
+  J.forEach(j => j.lines.forEach(l => ROWS.push({ j, ...l })));
+
+  const treatBadge = '';
+  function statusCell(s) {
+    return s === 'LOCKED'
+      ? `<span class="lock-glyph">${icon('lock')}</span><span class="badge badge-success">Locked</span>`
+      : `<span class="badge badge-neutral">Draft</span>`;
+  }
+
+  let sortDir = 1;
+  function render() {
+    const rows = [...ROWS].sort((a, b) => a.j.date.localeCompare(b.j.date) * sortDir);
+    document.getElementById('ledBody').innerHTML = rows.map((r, idx) => `
+      <tr data-j="${r.j.id}">
+        <td class="led-date">${r.j.date}</td>
+        <td><div class="led-acc">${r.acc}</div><div class="led-desc">${r.j.desc}</div></td>
+        <td class="num ${r.d ? '' : 'zero'}">${r.d ? money(r.d) : '—'}</td>
+        <td class="num ${r.c ? '' : 'zero'}">${r.c ? money(r.c) : '—'}</td>
+        <td class="treat-cell">${r.j.treat}${r.j.rate ? ` · ${r.j.rate}%` : ''}</td>
+        <td>${statusCell(r.j.status)}</td>
+      </tr>`).join('');
+    document.querySelectorAll('#ledBody tr').forEach(tr => tr.addEventListener('click', () => openDrawer(+tr.dataset.j)));
+  }
+
+  document.querySelector('th.sortable').addEventListener('click', function () { sortDir *= -1; render(); });
+  document.querySelectorAll('#density button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('#density button').forEach(x => x.classList.remove('on')); b.classList.add('on');
+    document.getElementById('ledTable').classList.toggle('compact', b.dataset.d === 'compact');
+  }));
+
+  function openDrawer(jid) {
+    const j = J[jid];
+    const totD = j.lines.reduce((s, l) => s + l.d, 0), totC = j.lines.reduce((s, l) => s + l.c, 0);
+    const locked = j.status === 'LOCKED';
+    document.getElementById('ledHead').innerHTML = `
+      <div>
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:7px;">
+          ${locked ? `<span class="lock-glyph">${icon('lock')}</span><span class="badge badge-success">Locked</span>` : '<span class="badge badge-neutral">Draft</span>'}
+        </div>
+        <div style="font-size:17px;font-weight:600;letter-spacing:-.01em;max-width:330px;">${j.desc}</div>
+        <div class="t-meta mono" style="margin-top:4px;">${j.date} · ${j.txRef}</div>
+      </div>
+      <button class="x-btn" onclick="closeDrawer()">${icon('x')}</button>`;
+
+    document.getElementById('ledBodyD').innerHTML = `
+      <div class="dl-sec">
+        <h4>Double-entry breakdown</h4>
+        <div class="de-tbl">
+          <div class="de-h"><span>Account</span><span class="num">Debit</span><span class="num">Credit</span></div>
+          ${j.lines.map(l => `<div class="de-r"><span class="acc">${l.acc}</span><span class="num ${l.d?'':'zero'}">${l.d?money(l.d):'—'}</span><span class="num ${l.c?'':'zero'}">${l.c?money(l.c):'—'}</span></div>`).join('')}
+          <div class="de-t"><span>Total</span><span class="num">${money(totD)}</span><span class="num">${money(totC)}</span></div>
+        </div>
+        <div class="de-bal">${icon('check')} Balanced · debits equal credits</div>
+      </div>
+
+      <div class="dl-sec">
+        <h4>VAT treatment</h4>
+        <div class="kv-grid">
+          <div><div class="k">Treatment</div><div class="vv">${j.treat}</div></div>
+          <div><div class="k">Rate</div><div class="vv mono">${j.rate}%</div></div>
+          <div><div class="k">Reverse charge</div><div class="vv">${j.rc ? '<span class="badge badge-info">'+icon('link')+'Applied</span>' : 'No'}</div></div>
+          <div><div class="k">VIES</div><div class="vv">${j.vies ? '<span class="badge badge-success">'+icon('check')+'Validated</span>' : '—'}</div></div>
+        </div>
+      </div>
+
+      <div class="dl-sec">
+        <h4>Linked records</h4>
+        <a class="link-row" href="Transactions.html"><span class="li">${icon('receipt')}</span><div><div class="lt">Source transaction</div><div class="lm mono">${j.txRef}</div></div><span class="go">${icon('chevR')}</span></a>
+        <div class="link-row"><span class="li">${icon('doc')}</span><div><div class="lt">Evidence document</div><div class="lm">${j.doc}</div></div></div>
+      </div>`;
+
+    document.getElementById('ledFoot').innerHTML = locked
+      ? `<div class="deny-note"><div class="deny-title">${icon('lock')} Entry is locked</div><p>This entry belongs to a finalized period and is tamper-evident. It can’t be edited — post an adjustment run from Periods instead.</p></div>
+         <div style="display:flex;gap:8px;width:100%;justify-content:flex-end;">
+           <button class="btn btn-secondary" onclick="closeDrawer()">Close</button>
+           <button class="btn btn-primary" aria-disabled="true" title="Locked — period is finalized">Edit entry</button>
+         </div>`
+      : `<button class="btn btn-secondary" onclick="closeDrawer()">Close</button>
+         <button class="btn btn-secondary">Edit entry</button>
+         <button class="btn btn-primary">${icon('lock')}Post &amp; lock</button>`;
+
+    document.getElementById('scrim').classList.add('open');
+    document.getElementById('drawer').classList.add('open');
+  }
+  function closeDrawer() { document.getElementById('scrim').classList.remove('open'); document.getElementById('drawer').classList.remove('open'); }
+  window.closeDrawer = closeDrawer;
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+
+  render();
+</script>
+</body>
+</html>

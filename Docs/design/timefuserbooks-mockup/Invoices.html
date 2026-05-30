@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TimeFuserBooks — Invoices</title>
+<link rel="stylesheet" href="styles/tokens.css">
+<link rel="stylesheet" href="styles/shell.css">
+<style>
+  .tabs { display: flex; gap: 24px; border-bottom: 1px solid var(--border-default); margin-bottom: 18px; }
+  .tab { padding: 0 1px 12px; font-size: 14px; font-weight: 500; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .tab.on { color: var(--text-primary); font-weight: 600; border-bottom-color: var(--brand); }
+
+  /* lifecycle pill strip */
+  .pills { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .pill { display: inline-flex; align-items: center; gap: 7px; padding: 7px 13px; border-radius: 999px; border: 1px solid var(--border-default); background: var(--surface); font-size: 13px; font-weight: 500; color: var(--text-secondary); cursor: pointer; transition: background .12s, border-color .12s; }
+  .pill:hover { background: var(--surface-sunken); }
+  .pill.on { background: var(--brand); color: #fff; border-color: var(--brand); }
+  .pill .pc { font-family: var(--font-mono); font-size: 11px; background: var(--surface-sunken); color: var(--text-muted); border-radius: 5px; padding: 1px 6px; }
+  .pill.on .pc { background: rgba(255,255,255,.22); color: #fff; }
+
+  .tbl-card { background: var(--surface); border: 1px solid var(--border-subtle); border-radius: var(--r-card); box-shadow: var(--elev-1); overflow: hidden; }
+  table.inv { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 820px; }
+  table.inv thead th { text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); padding: 11px 16px; border-bottom: 1px solid var(--border-default); background: var(--surface-sunken); white-space: nowrap; }
+  table.inv tbody td { padding: 12px 16px; border-bottom: 1px solid var(--border-subtle); vertical-align: middle; white-space: nowrap; }
+  table.inv tbody tr { cursor: pointer; transition: background .1s; }
+  table.inv tbody tr:hover { background: var(--surface-sunken); }
+  table.inv tbody tr:last-child td { border-bottom: none; }
+  .inv-num { font-family: var(--font-mono); font-weight: 500; }
+  .inv-num.draft { color: var(--text-muted); font-style: italic; font-family: var(--font-ui); }
+  .col-r { text-align: right; }
+  .inv-total { font-family: var(--font-mono); text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; }
+  .mono { font-family: var(--font-mono); }
+  .tbl-scroll { overflow-x: auto; }
+
+  /* shared drawer bits */
+  .kv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px 18px; }
+  .kv-grid .k { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; font-weight: 600; }
+  .kv-grid .vv { font-size: 13.5px; margin-top: 2px; }
+  .dl-sec { margin-bottom: 22px; }
+  .dl-sec h4 { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-secondary); margin: 0 0 12px; }
+
+  .money-block { background: var(--surface-sunken); border: 1px solid var(--border-subtle); border-radius: 11px; padding: 14px 16px; margin-bottom: 22px; }
+  .money-block .mb { display: flex; justify-content: space-between; font-size: 13.5px; padding: 4px 0; color: var(--text-secondary); }
+  .money-block .mb.total { border-top: 1px solid var(--border-default); margin-top: 6px; padding-top: 10px; font-size: 16px; font-weight: 700; color: var(--text-primary); }
+  .money-block .mb.total .mono { font-size: 17px; }
+  .computed-note { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; margin-top: 10px; }
+  .computed-note svg { width: 12px; height: 12px; }
+
+  /* line items table */
+  .li-tbl { border: 1px solid var(--border-subtle); border-radius: 10px; overflow: hidden; }
+  .li-h, .li-r { display: grid; grid-template-columns: 2fr .5fr .8fr 1.6fr .8fr .9fr; gap: 8px; padding: 9px 12px; align-items: center; }
+  .li-h { background: var(--surface-sunken); font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); font-weight: 600; border-bottom: 1px solid var(--border-subtle); }
+  .li-r { border-bottom: 1px solid var(--border-subtle); font-size: 12.5px; }
+  .li-r:last-child { border-bottom: none; }
+  .li-r .r, .li-h .r { text-align: right; }
+  .li-desc { font-weight: 500; }
+  .li-treat { font-size: 11.5px; color: var(--text-muted); }
+
+  .deny-note { width: 100%; background: var(--expense-tint); border: 1px solid var(--expense-border); border-radius: 9px; padding: 10px 13px; margin-bottom: 6px; }
+  .deny-title { display: flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 700; color: var(--expense-text); }
+  .deny-title svg { width: 14px; height: 14px; }
+  .deny-note ul { margin: 6px 0 0; padding-left: 22px; }
+  .deny-note li { font-size: 12px; color: var(--text-secondary); margin-bottom: 2px; }
+  .deny-note li span { color: var(--text-muted); }
+  .drawer-foot { flex-wrap: wrap; }
+
+  /* create flow */
+  .drawer.create { width: 560px; }
+  .csteps { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .cstep { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 500; color: var(--text-muted); white-space: nowrap; }
+  .cstep .cn { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 600; background: var(--surface-sunken); border: 1px solid var(--border-default); color: var(--text-muted); }
+  .cstep .cn svg { width: 12px; height: 12px; }
+  .cstep.on { color: var(--text-primary); font-weight: 600; }
+  .cstep.on .cn { background: var(--brand); color: #fff; border-color: var(--brand); }
+  .cstep.done .cn { background: var(--income-text); color: #fff; border-color: var(--income-text); }
+  .cstep-line { flex: 1; height: 1px; background: var(--border-default); min-width: 8px; }
+
+  .radio-cards { display: flex; flex-direction: column; gap: 10px; }
+  .rc { display: flex; gap: 12px; align-items: flex-start; padding: 13px 14px; border: 1px solid var(--border-default); border-radius: 10px; cursor: pointer; }
+  .rc.on { border-color: var(--brand); background: var(--brand-tint); }
+  .rc input { margin-top: 2px; accent-color: var(--brand); }
+  .rc-t { font-size: 13.5px; font-weight: 600; }
+  .rc-m { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+
+  .le-head { display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-secondary); margin-bottom: 12px; }
+  .le-row { display: grid; grid-template-columns: 1fr 54px 84px 1.5fr auto 28px; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .le-in { border: 1px solid var(--border-default); border-radius: 7px; padding: 7px 9px; font: inherit; font-size: 12.5px; background: var(--surface); color: var(--text-primary); }
+  .le-in:focus { outline: none; border-color: var(--brand); box-shadow: var(--focus-ring); }
+  .le-in.r { text-align: right; font-family: var(--font-mono); }
+  .le-sel { padding: 5px 9px; height: 34px; }
+  .le-sel select { font-size: 12px; border: none; background: transparent; color: inherit; outline: none; width: 100%; }
+  .le-tot { font-size: 12.5px; text-align: right; font-weight: 500; min-width: 76px; }
+  .le-del { width: 28px; height: 28px; border-radius: 7px; border: 1px solid var(--border-default); background: var(--surface); color: var(--text-muted); cursor: pointer; display: grid; place-items: center; }
+  .le-del:hover:not(:disabled) { background: var(--expense-tint); color: var(--expense-text); border-color: var(--expense-border); }
+  .le-del:disabled { opacity: .4; cursor: not-allowed; }
+  .le-del svg { width: 13px; height: 13px; }
+
+  .review-head { display: flex; align-items: center; gap: 9px; }
+  .money-block.computed { background: var(--brand-tint); border-color: color-mix(in srgb, var(--brand) 20%, transparent); }
+  .step-success { display: flex; flex-direction: column; align-items: center; }
+  .step-seal { width: 56px; height: 56px; border-radius: 50%; background: var(--income-tint); color: var(--income-text); display: grid; place-items: center; border: 1.5px solid var(--income-border); }
+  .step-seal svg { width: 28px; height: 28px; }
+
+  /* recurring */
+  .rec-stack { display: flex; flex-direction: column; gap: 12px; max-width: 940px; }
+  .rec-card { display: flex; align-items: center; gap: 18px; background: var(--surface); border: 1px solid var(--border-subtle); border-radius: var(--r-card); box-shadow: var(--elev-1); padding: 16px 18px; }
+  .rec-ic { width: 42px; height: 42px; border-radius: 10px; background: var(--brand-tint); color: var(--brand); display: grid; place-items: center; flex: none; }
+  .rec-ic svg { width: 19px; height: 19px; }
+  .rec-main { flex: 1; min-width: 0; }
+  .rec-main .rt { font-size: 14.5px; font-weight: 600; }
+  .rec-meta { display: flex; flex-wrap: wrap; gap: 5px 18px; margin-top: 5px; font-size: 12px; color: var(--text-muted); }
+  .rec-meta b { color: var(--text-secondary); font-weight: 600; }
+  .rec-end { display: flex; align-items: center; gap: 14px; flex: none; }
+  .switch { width: 38px; height: 22px; border-radius: 999px; background: var(--border-strong); position: relative; cursor: pointer; transition: background .16s; flex: none; }
+  .switch::after { content:""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform .16s; box-shadow: var(--elev-1); }
+  .switch.on { background: var(--income-text); } .switch.on::after { transform: translateX(16px); }
+  .switch-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .switch-wrap .sl { font-size: 9.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); font-weight: 600; }
+</style>
+</head>
+<body>
+<main class="main" id="main">
+  <div class="main-inner">
+
+    <div class="page-head">
+      <div data-screen-label="Invoices">
+        <div class="ttl">Invoices</div>
+        <div class="sub" id="invSub">Demo Trading Ltd · 13 total</div>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-primary" onclick="INV.openCreate()"><span data-i="plus"></span>New invoice</button>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab on" data-tab="invoices">Invoices</div>
+      <div class="tab" data-tab="recurring">Recurring</div>
+    </div>
+
+    <!-- ===== INVOICES TAB ===== -->
+    <div id="tab-invoices">
+      <div class="pills" id="pills"></div>
+      <div class="tbl-card">
+        <div class="tbl-scroll">
+          <table class="inv">
+            <thead><tr>
+              <th>Number</th><th>Client</th><th>Type</th><th>Issued</th><th>Due</th><th class="col-r">Total</th><th>Status</th>
+            </tr></thead>
+            <tbody id="invBody2"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== RECURRING TAB ===== -->
+    <div id="tab-recurring" style="display:none;">
+      <div class="rec-stack" id="recStack"></div>
+    </div>
+
+  </div>
+</main>
+
+<!-- detail drawer -->
+<div class="scrim" id="invScrim" onclick="INV.close()"></div>
+<aside class="drawer" id="invDrawer" aria-hidden="true">
+  <div class="drawer-top" id="invHead"></div>
+  <div class="drawer-body" id="invBody"></div>
+  <div class="drawer-foot" id="invFoot"></div>
+</aside>
+
+<!-- create drawer -->
+<div class="scrim" id="createScrim" onclick="INV.closeCreate()"></div>
+<aside class="drawer create" id="createDrawer" aria-hidden="true">
+  <div class="drawer-top" style="flex-direction:column;align-items:stretch;gap:14px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div style="font-size:18px;font-weight:600;">New invoice</div>
+      <button class="x-btn" onclick="INV.closeCreate()" data-i="x"></button>
+    </div>
+    <div class="csteps" id="createSteps"></div>
+  </div>
+  <div class="drawer-body" id="createBody"></div>
+  <div class="drawer-foot" id="createFoot"></div>
+</aside>
+
+<script src="shared/shell.js"></script>
+<script src="shared/invoices.js"></script>
+<script>
+  CB.renderShell({ active: 'invoices' });
+  const icon = CB.icon;
+  document.querySelectorAll('[data-i]').forEach(el => { el.innerHTML = icon(el.getAttribute('data-i')); });
+
+  // ---- pills ----
+  const PILLS = [['all','All'],['drafts','Drafts'],['awaiting','Awaiting payment'],['settled','Settled'],['closed','Closed']];
+  let group = 'all';
+  function renderPills() {
+    document.getElementById('pills').innerHTML = PILLS.map(([k, label]) => {
+      const n = INV.DATA.filter(d => INV.GROUPS[k](d.status)).length;
+      return `<button class="pill ${k === group ? 'on' : ''}" data-g="${k}">${label} <span class="pc">${n}</span></button>`;
+    }).join('');
+    document.querySelectorAll('.pill').forEach(p => p.addEventListener('click', () => { group = p.dataset.g; renderPills(); renderTable(); }));
+  }
+  function renderTable() {
+    const rows = INV.DATA.map((d, i) => ({ d, i })).filter(({ d }) => INV.GROUPS[group](d.status));
+    document.getElementById('invBody2').innerHTML = rows.map(({ d, i }) => {
+      const t = INV.totals(d);
+      return `<tr data-i="${i}">
+        <td>${d.num ? `<span class="inv-num">${d.num}</span>` : '<span class="inv-num draft">Draft</span>'}</td>
+        <td>${d.client}</td>
+        <td>${INV.typeBadge(d.type)}</td>
+        <td class="mono" style="color:var(--text-secondary)">${d.issue || '—'}</td>
+        <td class="mono" style="color:var(--text-secondary)">${d.due || '—'}</td>
+        <td class="inv-total">${INV.money(t.total)}</td>
+        <td>${INV.statusBadge(d.status)}</td>
+      </tr>`;
+    }).join('');
+    document.querySelectorAll('#invBody2 tr').forEach(tr => tr.addEventListener('click', () => INV.openDetail(+tr.dataset.i)));
+  }
+  renderPills(); renderTable();
+  document.getElementById('invSub').textContent = `Demo Trading Ltd · ${INV.DATA.length} total`;
+
+  // ---- tabs ----
+  document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('on')); t.classList.add('on');
+    const w = t.dataset.tab;
+    document.getElementById('tab-invoices').style.display = w === 'invoices' ? '' : 'none';
+    document.getElementById('tab-recurring').style.display = w === 'recurring' ? '' : 'none';
+  }));
+
+  // ---- recurring ----
+  const REC = [
+    ['Monthly retainer — Lefkara Retail','Lefkara Retail Ltd','MONTHLY','1st','2026-06-01','ACTIVE',true],
+    ['Quarterly bookkeeping — Coral Bay','Coral Bay Hotels','QUARTERLY','15th','2026-07-15','ACTIVE',true],
+    ['Annual audit — Paphos Marine','Paphos Marine','ANNUAL','30 Apr','2027-04-30','ACTIVE',false],
+    ['Bi-weekly payroll run — Nicosia','Nicosia Holdings','BIWEEKLY','Mon','2026-06-09','PAUSED',false],
+    ['Semi-annual review — Troodos','Troodos Foods','SEMI_ANNUAL','1 Jan','2026-07-01','ACTIVE',true],
+    ['Weekly delivery invoice — Larnaca','Larnaca Logistics','WEEKLY','Fri','—','ENDED',false],
+  ];
+  const recStatus = { ACTIVE:'badge-success', PAUSED:'badge-warning', ENDED:'badge-neutral' };
+  function cadence(c){ return c.replace('_',' ').toLowerCase().replace(/^\w/,x=>x.toUpperCase()); }
+  document.getElementById('recStack').innerHTML = REC.map((r, i) => `
+    <div class="rec-card">
+      <span class="rec-ic">${icon('refresh')}</span>
+      <div class="rec-main">
+        <div class="rt">${r[0]}</div>
+        <div class="rec-meta">
+          <span>${r[1]}</span>
+          <span>Cadence <b>${cadence(r[2])}</b></span>
+          <span>Anchor <b>${r[3]}</b></span>
+          <span>Next due <b class="mono">${r[4]}</b></span>
+        </div>
+      </div>
+      <div class="rec-end">
+        <div class="switch-wrap"><div class="switch ${r[6] ? 'on' : ''}" onclick="this.classList.toggle('on')"></div><span class="sl">Auto-send</span></div>
+        <span class="badge ${recStatus[r[5]]}">${r[5][0] + r[5].slice(1).toLowerCase()}</span>
+        ${r[5] === 'ACTIVE'
+          ? `<button class="btn btn-secondary btn-sm">Pause</button>`
+          : r[5] === 'PAUSED' ? `<button class="btn btn-secondary btn-sm">Resume</button>` : `<button class="btn btn-ghost btn-sm" disabled>Ended</button>`}
+      </div>
+    </div>`).join('');
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { INV.close(); INV.closeCreate(); } });
+</script>
+</body>
+</html>

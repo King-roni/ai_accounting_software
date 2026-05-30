@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TimeFuserBooks — Dashboard</title>
+<link rel="stylesheet" href="styles/tokens.css">
+<link rel="stylesheet" href="styles/shell.css">
+<style>
+  .dgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; align-items: start; grid-auto-flow: row dense; }
+  @media (max-width: 1240px){ .dgrid { grid-template-columns: repeat(2, 1fr); } }
+
+  .dcard { background: var(--surface); border: 1px solid var(--border-subtle); border-radius: var(--r-card); box-shadow: var(--elev-1); padding: 16px 17px; display: flex; flex-direction: column; gap: 12px; position: relative; transition: box-shadow .16s, border-color .16s, transform .16s; }
+  .dcard.clickable { cursor: pointer; }
+  .dcard.clickable:hover { box-shadow: var(--elev-2); border-color: var(--border-default); transform: translateY(-1px); }
+  .dcard.clickable:hover .drill { opacity: 1; }
+  .dcard-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .dcard-head .t-kpi-label { display: flex; align-items: center; gap: 7px; }
+  .dcard-head .t-kpi-label .di { color: var(--text-muted); display: inline-flex; } .dcard-head .di svg { width: 14px; height: 14px; }
+  .card-refresh { width: 26px; height: 26px; border-radius: 7px; border: 1px solid transparent; background: transparent; color: var(--text-muted); display: grid; place-items: center; cursor: pointer; }
+  .card-refresh:hover { background: var(--surface-sunken); color: var(--text-secondary); }
+  .card-refresh svg { width: 14px; height: 14px; transition: transform .5s; }
+  .card-refresh:active svg { transform: rotate(-180deg); }
+  .drill { position: absolute; top: 14px; right: 44px; color: var(--text-muted); opacity: 0; transition: opacity .15s; }
+  .drill svg { width: 15px; height: 15px; }
+
+  .kpi-hero { display: flex; flex-direction: column; gap: 2px; }
+  .kpi-hero .num { font-size: 32px; font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums; font-family: var(--font-mono); line-height: 1.05; }
+  .kpi-sub { font-size: 12px; color: var(--text-muted); }
+  /* bronze underline under the hero KPI — second signature touch */
+  .kpi-hero.underlined .num { display: inline; background-image: linear-gradient(var(--bronze), var(--bronze)); background-repeat: no-repeat; background-position: 0 100%; background-size: 56px 2px; padding-bottom: 4px; }
+
+  .split3 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 18px; }
+  .split3 .it .l { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); font-weight: 600; }
+  .split3 .it .v { font-family: var(--font-mono); font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 2px; }
+
+  .prow { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; border-top: 1px solid var(--border-subtle); }
+  .prow:first-of-type { border-top: none; }
+  .prow .pl { min-width: 0; }
+  .prow .pl .pt { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .prow .pl .pm { font-size: 11.5px; color: var(--text-muted); margin-top: 1px; }
+  .prow .pr { font-family: var(--font-mono); font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
+
+  .mini-tbl { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .mini-tbl td { padding: 7px 0; border-top: 1px solid var(--border-subtle); }
+  .mini-tbl tr:first-child td { border-top: none; }
+  .mini-tbl .num { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  .mini-tbl .lbl { color: var(--text-secondary); }
+
+  /* progress ring */
+  .ring-wrap { display: flex; align-items: center; gap: 16px; }
+  .ring { transform: rotate(-90deg); }
+  .ring .bg { stroke: var(--border-default); }
+  .ring .fg { stroke: var(--income-text); stroke-linecap: round; transition: stroke-dashoffset .6s; }
+
+  /* progress bar */
+  .pbar { height: 7px; border-radius: 4px; background: var(--border-subtle); overflow: hidden; }
+  .pbar > span { display: block; height: 100%; border-radius: 4px; background: var(--brand); }
+
+  /* charts (real + stub) */
+  .chart-box { position: relative; }
+  .stub-note { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+  .stub-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--text-secondary); background: var(--surface); border: 1px solid var(--border-default); border-radius: 999px; padding: 4px 11px; box-shadow: var(--elev-1); }
+  .stub-chip .pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--brand); position: relative; }
+  .stub-chip .pulse::after { content:""; position: absolute; inset: -4px; border-radius: 50%; border: 1.5px solid var(--brand); opacity: .4; animation: ping 1.8s ease-out infinite; }
+  @keyframes ping { 0% { transform: scale(.6); opacity: .5; } 100% { transform: scale(1.6); opacity: 0; } }
+  .stub .bar-faint { fill: var(--border-default); }
+  .stub .line-faint { stroke: var(--border-strong); }
+  .stub-label { font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 4px; }
+
+  .legend { display: flex; flex-direction: column; gap: 7px; }
+  .legend .lg { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+  .legend .sw { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+  .legend .lv { margin-left: auto; font-family: var(--font-mono); font-size: 12px; font-weight: 600; }
+
+  .sev-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+
+  .card-foot-link { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: var(--brand); margin-top: 2px; }
+  .card-foot-link svg { width: 13px; height: 13px; }
+
+  .bars { display: flex; align-items: flex-end; gap: 7px; height: 84px; }
+  .bars .b { flex: 1; border-radius: 4px 4px 0 0; }
+</style>
+</head>
+<body>
+<main class="main" id="main">
+  <div class="main-inner">
+
+    <div class="page-head">
+      <div data-screen-label="Dashboard">
+        <div class="ttl">Dashboard</div>
+        <div class="sub">Demo Trading Ltd · May 2026 · updated 4 min ago</div>
+      </div>
+      <div class="page-actions">
+        <div class="seg" role="group" aria-label="Scope">
+          <button class="on">This business</button>
+          <button>All businesses</button>
+        </div>
+        <button class="btn btn-secondary btn-sm" id="refreshAll"><span>Refresh</span></button>
+      </div>
+    </div>
+
+    <div class="dgrid" id="grid">
+
+      <!-- 1 · Monthly Overview (REAL, hero) -->
+      <div class="dcard" style="grid-column: span 2;">
+        <div class="dcard-head"><span class="t-kpi-label"><span class="di" data-i="chart"></span>Monthly overview</span><button class="card-refresh" data-i="refresh"></button></div>
+        <div class="kpi-hero underlined">
+          <span class="num amt-income">+€18,540.00</span>
+          <span class="kpi-sub">Net position · May 2026 · <span style="color:var(--income-text);font-weight:600;">▲ 12%</span> vs April</span>
+        </div>
+        <div class="split3">
+          <div class="it"><div class="l">Money in</div><div class="v amt-income">+€64,210.00</div></div>
+          <div class="it"><div class="l">Money out</div><div class="v amt-expense">−€45,670.00</div></div>
+        </div>
+      </div>
+
+      <!-- 8 · Evidence Collection (REAL) -->
+      <div class="dcard clickable">
+        <div class="dcard-head"><span class="t-kpi-label"><span class="di" data-i="doc"></span>Evidence collection</span><span class="drill" data-i="arrowOut"></span></div>
+        <div class="ring-wrap">
+          <svg class="ring" width="74" height="74" viewBox="0 0 74 74">
+            <circle class="bg" cx="37" cy="37" r="31" fill="none" stroke-width="8"></circle>
+            <circle class="fg" cx="37" cy="37" r="31" fill="none" stroke-width="8" stroke-dasharray="195" stroke-dashoffset="43"></circle>
+          </svg>
+          <div>
+            <div style="font-size:26px;font-weight:600;font-family:var(--font-mono);">78%</div>
+            <div class="kpi-sub">142 of 182 docs matched</div>
+          </div>
+        </div>
+        <div class="kpi-sub" style="border-top:1px solid var(--border-subtle);padding-top:9px;">40 receipts still awaiting evidence</div>
+      </div>
+
+      <!-- 4 · VAT Summary (STUB donut) -->
+      <div class="dcard">
+        <div class="dcard-head"><span class="t-kpi-label"><span class="di" data-i="ledger"></span>VAT summary</span><button class="card-refresh" data-i="refresh"></button></div>
+        <div class="chart-box stub" style="display:flex;align-items:center;gap:14px;">
+          <svg width="78" height="78" viewBox="0 0 42 42">
+            <circle cx="21" cy="21" r="15.9" fill="none" stroke="var(--border-default)" stroke-width="6"></circle>
+            <circle cx="21" cy="21" r="15.9" fill="none" stroke="var(--border-strong)" stroke-width="6" stroke-dasharray="38 62" stroke-dashoffset="25" opacity=".55"></circle>
+          </svg>
+          <div class="legend" style="flex:1;">
+            <div class="lg"><span class="sw" style="background:var(--income-tint);border:1px solid var(--income-border)"></span>Input VAT<span class="lv" style="color:var(--text-muted)">— —</span></div>
+            <div class="lg"><span class="sw" style="background:var(--expense-tint);border:1px solid var(--expense-border)"></span>Output VAT<span class="lv" style="color:var(--text-muted)">— —</span></div>
+            <div class="lg"><span class="sw" style="background:var(--bronze-tint);border:1px solid var(--bronze)"></span>Net VAT<span class="lv" style="color:var(--text-muted)">— —</span></div>
+          </div>
+          <div class="stub-note"><span class="stub-chip"><span class="pulse"></span>Awaiting data</span></div>
+        </div>
+        <div class="stub-label">Lights up when the VAT engine is connected</div>
+      </div>
+
+      <!-- 2 · Income Overview (STUB bars) -->
+      <div class="dcard">
+        <div class="dcard-head"><span class="t-kpi-label"><span class="di" data-i="chart"></span>Income overview</span><button class="card-refresh" data-i="refresh"></button></div>
+        <div class="chart-box stub">
+          <div class="bars">
+            <div class="b bar-faint" style="height:40%;"></div><div class="b bar-faint" style="height:62%;"></div>
+            <div class="b bar-faint" style="height:48%;"></div><div class="b bar-faint" style="height:78%;"></div>
+            <div class="b bar-faint" style="height:55%;"></div><div class="b bar-faint" style="height:88%;"></div>
+            <div class="b bar-faint" style="height:70%;"></div>
+          </div>
+          <div class="stub-note"><span class="stub-chip"><span class="pulse"></span>Awaiting data</span></div>
+        </div>
+        <div class="stub-label">Weekly inflow · target view</div>
+      </div>
+
+      <!-- 3 · Expense Overview (STUB bars) -->
+      <div class="dcard">
+        <div class="dcard-head"><span class="t-kpi-label"><span class="di" data-i="chart"></span>Expense overview</span><button class="card-refresh" data-i="refresh"></button></div>
+        <div class="chart-box stub">
+          <div class="bars">
+            <div class="b bar-faint" style="height:64%;"></div><div class="b bar-faint" style="height:42%;"></div>
+            <div class="b bar-faint" style="height:80%;"></div><div class="b bar-faint" style="height:36%;"></div>
+            <div class="b bar-faint" style="height:58%;"></div><div class="b bar-faint" style="height:50%;"></div>
+            <div class="b bar-faint" style="height:72%;"></div>
+          </div>
+          <div class="stub-note"><span class="stub-chip"><span class="pulse"></span>Awaiting data</span></div>
+        </div>
+        <div class="stub-label">Weekly outflow · target view</div>
+      </div>
+
+      <!-- 7 · Unresolved Review Items (REAL) -->
+      <div class="dcard clickable" style="grid-column: span 2;" onclick="location.href='Reviews.html'">
+        <div class="dcard-head"><span class="t-kpi-label"><span class="di" data-i="review"></span>Unresolved review items</span><span class="drill" data-i="arrowOut"></span></div>
+        <div class="kpi-hero"><span class="num" style="font-size:24px;">7 open</span><span class="kpi-sub">1 blocking finalization · 2 high priority</span></div>
+        <div>
+          <div class="prow"><div class="pl" style="display:flex;align-items:center;gap:9px;"><span class="sev-dot" style="background:var(--expense-text)"></span><div><div class="pt">Large payment flagged for review</div><div class="pm">Missing documents · €1,200 rent</div></div></div><span class="badge badge-danger">Blocking</span></div>
+          <div class="prow"><div class="pl" style="display:flex;align-items:center;gap:9px;"><span class="sev-dot" style="background:var(--badge-warning-text)"></span><div><div class="pt">Possible duplicate supplier payment</div><div class="pm">Needs confirmation · €890.00</div></div></div><span class="badge badge-warning" style="font-weight:600;">High</span></div>
+          <div class="prow"><div class="pl" style="display:flex;align-items:center;gap:9px;"><span class="sev-dot" style="background:var(--badge-warning-text)"></span><div><div class="pt">AWS invoice needs confirmation</div><div class="pm">Possible tax/VAT issue · €213.77</div></div></div><span class="badge badge-warning">Medium</span></div>
+        </div>
+        <span class="card-foot-link">View all 7 <span data-i="chevR"></span></span>
+      </div>
+
+      <!-- 6 · Client Invoice Aging (REAL) -->
+      <div class="dcard clickable" style="grid-column: span 2;" onclick="location.href='Invoices.html'">
+        <div class="dcard-head"><span class="t-kpi-label"><span class="di" data-i="invoice"></span>Client invoice aging</span><span class="drill" data-i="arrowOut"></span></div>
+        <div class="kpi-hero"><span class="num amt-expense" style="font-size:24px;">€19,810.00</span><span class="kpi-sub">Outstanding across 14 invoices</span></div>
+        <table class="mini-tbl">
+          <tr><td class="lbl">Current</td><td class="num">€12,400.00</td><td style="width:42%;padding-left:14px;"><div class="pbar"><span style="width:63%;background:var(--income-text)"></span></div></td></tr>
+          <tr><td class="lbl">1–30 days</td><td class="num">€4,820.00</td><td style="padding-left:14px;"><div class="pbar"><span style="width:24%;background:var(--brand)"></span></div></td></tr>
+          <tr><td class="lbl">31–60 days</td><td class="num">€1,950.00</td><td style="padding-left:14px;"><div class="pbar"><span style="width:10%;background:var(--badge-warning-text)"></span></div></td></tr>
+          <tr><td class="lbl">60+ days <span class="badge badge-danger" style="margin-left:4px;">Overdue</span></td><td class="num amt-expense">€640.00</td><td style="padding-left:14px;"><div class="pbar"><span style="width:4%;background:var(--expense-text)"></span></div></td></tr>
+        </table>
+      </div>
+
+      <!-- 5 · Recurring Revenue (STUB line) -->
+      <div class="dcard" style="grid-column: span 2;">
+        <div class="dcard-head"><span class="t-kpi-label"><span class="di" data-i="refresh"></span>Recurring revenue</span><button class="card-refresh" data-i="refresh"></button></div>
+        <div class="chart-box stub">
+          <svg viewBox="0 0 400 96" width="100%" height="96" preserveAspectRatio="none">
+            <polyline class="line-faint" fill="none" stroke-width="2.5" opacity=".5" points="0,72 57,66 114,68 171,52 228,56 285,40 342,44 400,28"></polyline>
+          </svg>
+          <div class="stub-note"><span class="stub-chip"><span class="pulse"></span>Awaiting data</span></div>
+        </div>
+        <div class="stub-label">MRR trend · target view — lights up when recurring invoices run</div>
+      </div>
+
+      <!-- 11 · Unmatched Transactions (REAL → drawer) -->
+      <div class="dcard clickable" id="unmatchedCard">
+        <div class="dcard-head"><span class="t-kpi-label"><span class="di" data-i="link"></span>Unmatched transactions</span><span class="drill" data-i="arrowOut"></span></div>
+        <div class="kpi-hero"><span class="num" style="font-size:24px;">9</span><span class="kpi-sub">€3,448.40 unreconciled this period</span></div>
+        <div>
+          <div class="prow"><div class="pl"><div class="pt">Revolut transfer</div><div class="pm mono">2026-05-28</div></div><span class="pr amt-expense">−€450.00</span></div>
+          <div class="prow"><div class="pl"><div class="pt">Cyta Telecom</div><div class="pm mono">2026-05-26</div></div><span class="pr amt-expense">−€78.40</span></div>
+          <div class="prow"><div class="pl"><div class="pt">Cash deposit</div><div class="pm mono">2026-05-22</div></div><span class="pr amt-income">+€2,000.00</span></div>
+        </div>
+        <span class="card-foot-link">Open drill-down <span data-i="arrowOut"></span></span>
+      </div>
+
+      <!-- 9 · Recent Finalizations (REAL) -->
+      <div class="dcard clickable" onclick="location.href='Periods.html'">
+        <div class="dcard-head"><span class="t-kpi-label"><span class="di" data-i="period"></span>Recent finalizations</span><span class="drill" data-i="arrowOut"></span></div>
+        <div>
+          <div class="prow"><div class="pl" style="display:flex;align-items:center;gap:9px;"><span class="badge badge-seal" data-seal></span><div><div class="pt">April 2026 · OUT</div><div class="pm mono">Sealed 2026-05-02</div></div></div></div>
+          <div class="prow"><div class="pl" style="display:flex;align-items:center;gap:9px;"><span class="badge badge-seal" data-seal></span><div><div class="pt">April 2026 · IN</div><div class="pm mono">Sealed 2026-05-02</div></div></div></div>
+          <div class="prow"><div class="pl" style="display:flex;align-items:center;gap:9px;"><span class="badge badge-seal" data-seal></span><div><div class="pt">March 2026 · OUT</div><div class="pm mono">Sealed 2026-04-03</div></div></div></div>
+        </div>
+      </div>
+
+      <!-- 10 · Tax Treatment Breakdown (STUB donut) -->
+      <div class="dcard">
+        <div class="dcard-head"><span class="t-kpi-label"><span class="di" data-i="ledger"></span>Tax treatment breakdown</span><button class="card-refresh" data-i="refresh"></button></div>
+        <div class="chart-box stub" style="display:flex;align-items:center;gap:14px;">
+          <svg width="78" height="78" viewBox="0 0 42 42">
+            <circle cx="21" cy="21" r="15.9" fill="none" stroke="var(--border-default)" stroke-width="6"></circle>
+            <circle cx="21" cy="21" r="15.9" fill="none" stroke="var(--border-strong)" stroke-width="6" stroke-dasharray="55 45" stroke-dashoffset="0" opacity=".5"></circle>
+          </svg>
+          <div class="legend" style="flex:1;">
+            <div class="lg"><span class="sw" style="background:var(--border-default)"></span>Standard 19%<span class="lv" style="color:var(--text-muted)">—</span></div>
+            <div class="lg"><span class="sw" style="background:var(--border-strong)"></span>Reduced 9/5%<span class="lv" style="color:var(--text-muted)">—</span></div>
+            <div class="lg"><span class="sw" style="background:var(--bronze-tint);border:1px solid var(--bronze)"></span>Reverse charge<span class="lv" style="color:var(--text-muted)">—</span></div>
+          </div>
+          <div class="stub-note"><span class="stub-chip"><span class="pulse"></span>Awaiting data</span></div>
+        </div>
+        <div class="stub-label">VAT treatment mix · target view</div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<!-- ===== Drill-down drawer: Unmatched Transactions ===== -->
+<div class="scrim" id="scrim" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <div class="drawer-top">
+    <div>
+      <div class="t-kpi-label" style="margin-bottom:6px;">Drill-down · Unmatched transactions</div>
+      <div style="font-size:19px;font-weight:600;letter-spacing:-.01em;">9 records · <span class="amt-expense mono" style="font-size:17px;">€3,448.40</span></div>
+      <div class="t-meta" style="margin-top:3px;">Demo Trading Ltd · May 2026 · not yet linked to a document</div>
+    </div>
+    <button class="x-btn" onclick="closeDrawer()" data-i="x"></button>
+  </div>
+  <div class="drawer-body">
+    <table class="tbl">
+      <thead><tr><th>Date</th><th>Description</th><th style="text-align:right;">Amount</th><th>Status</th></tr></thead>
+      <tbody id="drawerRows"></tbody>
+    </table>
+  </div>
+  <div class="drawer-foot">
+    <button class="btn btn-secondary" onclick="closeDrawer()">Close</button>
+    <a class="btn btn-primary" href="Transactions.html">Open in Transactions <span data-i="chevR" style="display:inline-flex"></span></a>
+  </div>
+</aside>
+
+<script src="shared/shell.js"></script>
+<script>
+  CB.renderShell({ active: 'dashboard' });
+
+  // hydrate inline icons
+  document.querySelectorAll('[data-i]').forEach(el => { el.innerHTML = CB.icon(el.getAttribute('data-i')); });
+  // refresh button icon
+  document.getElementById('refreshAll').insertAdjacentHTML('afterbegin', CB.icon('refresh'));
+  // bronze seals
+  document.querySelectorAll('[data-seal]').forEach(el => { el.innerHTML = CB.icon('check') + 'Finalized'; });
+
+  // ---- drawer ----
+  const UNMATCHED = [
+    ['2026-05-28','Revolut transfer','Revolut','−€450.00','expense','NEW','neutral'],
+    ['2026-05-26','Cyta Telecom','Cyta','−€78.40','expense','NEW','neutral'],
+    ['2026-05-22','Cash deposit','—','+€2,000.00','income','NEEDS_REVIEW','warning'],
+    ['2026-05-19','FX settlement','Wise','−€312.00','expense','NEW','neutral'],
+    ['2026-05-15','Office supplies','Public','−€146.20','expense','NEW','neutral'],
+    ['2026-05-12','Consulting fee','—','+€1,500.00','income','NEEDS_REVIEW','warning'],
+    ['2026-05-09','Bank charge','Bank of Cyprus','−€18.00','expense','NEW','neutral'],
+    ['2026-05-05','Refund · supplier','Amazon','+€61.80','income','NEW','neutral'],
+    ['2026-05-02','Parking','JCC','−€9.60','expense','NEW','neutral'],
+  ];
+  const sIcon = { neutral:'doc', warning:'period' };
+  function openDrawer() {
+    document.getElementById('drawerRows').innerHTML = UNMATCHED.map(r => `
+      <tr><td class="mono" style="color:var(--text-secondary)">${r[0]}</td>
+      <td><div style="font-weight:500;">${r[1]}</div>${r[2] !== '—' ? `<div class="t-meta">${r[2]}</div>` : ''}</td>
+      <td class="num amt-${r[4]}">${r[3]}</td>
+      <td><span class="badge badge-${r[6]}">${r[5].replace('_',' ').toLowerCase().replace(/^\w/,c=>c.toUpperCase())}</span></td></tr>`).join('');
+    document.getElementById('scrim').classList.add('open');
+    document.getElementById('drawer').classList.add('open');
+    document.getElementById('drawer').setAttribute('aria-hidden','false');
+  }
+  function closeDrawer() {
+    document.getElementById('scrim').classList.remove('open');
+    document.getElementById('drawer').classList.remove('open');
+    document.getElementById('drawer').setAttribute('aria-hidden','true');
+  }
+  window.closeDrawer = closeDrawer;
+  document.getElementById('unmatchedCard').addEventListener('click', openDrawer);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+
+  // card refresh affordance — stop propagation so it doesn't open drawer
+  document.querySelectorAll('.card-refresh').forEach(b => b.addEventListener('click', e => e.stopPropagation()));
+
+  // scope toggle: This business <-> All businesses (aggregate mode)
+  const segBtns = document.querySelectorAll('.seg button');
+  const subEl = document.querySelector('.page-head .sub');
+  segBtns.forEach((b, i) => b.addEventListener('click', () => {
+    segBtns.forEach(x => x.classList.remove('on')); b.classList.add('on');
+    subEl.textContent = i === 1 ? 'All businesses (3) · May 2026 · aggregated view' : 'Demo Trading Ltd · May 2026 · updated 4 min ago';
+  }));
+</script>
+</body>
+</html>

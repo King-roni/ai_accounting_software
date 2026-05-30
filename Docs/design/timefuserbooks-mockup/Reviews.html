@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TimeFuserBooks — Review queue</title>
+<link rel="stylesheet" href="styles/tokens.css">
+<link rel="stylesheet" href="styles/shell.css">
+<style>
+  .rev-wrap { max-width: 760px; }
+
+  .pills { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+  .pill { display: inline-flex; align-items: center; gap: 7px; padding: 7px 13px; border-radius: 999px; border: 1px solid var(--border-default); background: var(--surface); font-size: 13px; font-weight: 500; color: var(--text-secondary); cursor: pointer; transition: background .12s, border-color .12s; }
+  .pill:hover { background: var(--surface-sunken); }
+  .pill.on { background: var(--brand); color: #fff; border-color: var(--brand); }
+  .pill .pc { font-family: var(--font-mono); font-size: 11px; background: var(--surface-sunken); color: var(--text-muted); border-radius: 5px; padding: 1px 6px; }
+  .pill.on .pc { background: rgba(255,255,255,.22); color: #fff; }
+
+  .rev-stack { display: flex; flex-direction: column; gap: 14px; }
+
+  .rev-card { background: var(--surface); border: 1px solid var(--border-subtle); border-left: 3px solid var(--ac); border-radius: var(--r-card); box-shadow: var(--elev-1); padding: 18px 20px; transition: opacity .25s, box-shadow .16s; }
+  .rev-card:hover { box-shadow: var(--elev-2); }
+  .rev-card.snoozed { opacity: .55; }
+
+  .rev-top { display: flex; align-items: center; gap: 10px; margin-bottom: 11px; }
+  .rev-bucket { font-size: 12px; color: var(--text-muted); font-weight: 500; display: inline-flex; align-items: center; gap: 6px; }
+  .rev-bucket svg { width: 13px; height: 13px; }
+  .rev-assigned { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--text-secondary); }
+  .rev-assigned .av { width: 20px; height: 20px; border-radius: 50%; background: var(--bronze); color: #fff; display: grid; place-items: center; font-size: 9px; font-weight: 700; }
+
+  .rev-title { font-size: 16px; font-weight: 600; letter-spacing: -.01em; margin-bottom: 5px; }
+  .rev-desc { font-size: 13.5px; color: var(--text-secondary); line-height: 1.6; max-width: 600px; }
+  .rev-desc .mono { font-family: var(--font-mono); font-weight: 500; }
+
+  .rev-actions { display: flex; gap: 8px; align-items: center; margin-top: 16px; flex-wrap: wrap; }
+  .snooze-wrap { position: relative; }
+  .snooze-reason { position: absolute; bottom: calc(100% + 8px); left: 0; width: 250px; background: var(--text-primary); color: var(--canvas); font-size: 12px; line-height: 1.5; padding: 9px 11px; border-radius: 9px; box-shadow: var(--elev-3); opacity: 0; pointer-events: none; transform: translateY(4px); transition: opacity .15s, transform .15s; z-index: 5; }
+  .snooze-reason::after { content:""; position: absolute; top: 100%; left: 18px; border: 6px solid transparent; border-top-color: var(--text-primary); }
+  .snooze-wrap.show .snooze-reason { opacity: 1; transform: none; pointer-events: auto; }
+  .snooze-reason b { color: #fff; }
+
+  .snoozed-note { display: none; align-items: center; gap: 8px; margin-top: 14px; font-size: 12.5px; color: var(--text-muted); }
+  .rev-card.snoozed .rev-actions { display: none; }
+  .rev-card.snoozed .snoozed-note { display: flex; }
+  .snoozed-note .undo { color: var(--brand); font-weight: 600; cursor: pointer; }
+
+  .reassure { display: flex; align-items: flex-start; gap: 11px; background: var(--income-tint); border: 1px solid var(--income-border); border-radius: 11px; padding: 13px 15px; margin-bottom: 20px; }
+  .reassure svg { width: 18px; height: 18px; color: var(--income-text); flex: none; margin-top: 1px; }
+  .reassure .rt { font-size: 13px; color: var(--text-secondary); line-height: 1.55; }
+  .reassure b { color: var(--text-primary); }
+
+  .all-clear { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+  .all-clear svg { width: 40px; height: 40px; color: var(--income-text); margin-bottom: 12px; }
+  .all-clear .ac-t { font-size: 17px; font-weight: 600; color: var(--text-secondary); }
+</style>
+</head>
+<body>
+<main class="main" id="main">
+  <div class="main-inner">
+
+    <div class="page-head">
+      <div data-screen-label="Reviews">
+        <div class="ttl">Review queue</div>
+        <div class="sub" id="revSub">Demo Trading Ltd · 8 open</div>
+      </div>
+    </div>
+
+    <div class="rev-wrap">
+      <div class="reassure">
+        <span id="reassureIc"></span>
+        <div class="rt"><b>Nothing here needs an accountant.</b> These are plain-language checks the system wants a quick human eye on. Clear the blocking one and this period is ready to finalize.</div>
+      </div>
+
+      <div class="pills" id="pills"></div>
+      <div class="rev-stack" id="stack"></div>
+    </div>
+  </div>
+</main>
+
+<script src="shared/shell.js"></script>
+<script>
+  CB.renderShell({ active: 'reviews' });
+  const icon = CB.icon;
+  document.getElementById('reassureIc').innerHTML = icon('shield');
+
+  const SEV = {
+    BLOCKING: { tone:'danger',  ic:'stop',      label:'Blocking', ac:'var(--expense-text)',       rank:0, strong:false },
+    HIGH:     { tone:'warning', ic:'alertTri',  label:'High',     ac:'var(--badge-warning-text)', rank:1, strong:true },
+    MEDIUM:   { tone:'warning', ic:'alertCirc', label:'Medium',   ac:'var(--badge-warning-text)', rank:2, strong:false },
+    LOW:      { tone:'info',    ic:'infoCirc',  label:'Low',      ac:'var(--brand)',              rank:3, strong:false },
+  };
+  const BUCKET = {
+    'missing-docs':      ['Missing documents', 'doc'],
+    'needs-confirmation':['Needs confirmation','check'],
+    'wrong-match':       ['Possible wrong match','link'],
+    'tax-vat':           ['Possible tax/VAT issue','ledger'],
+    'unusual':           ['Unusual transaction','alertTri'],
+  };
+  const ROUTE = { tx:['Open transaction','Transactions.html'], ledger:['Open in ledger','Ledger.html'], match:['Review match','Transactions.html'] };
+
+  const ITEMS = [
+    { sev:'BLOCKING', bucket:'missing-docs', route:'tx',
+      title:'Large payment flagged for review',
+      desc:'The <span class="amt-expense mono">€1,200.00</span> rent payment is larger than usual for this account. Add a short explanation so it can be cleared for finalization.' },
+    { sev:'BLOCKING', bucket:'tax-vat', route:'ledger',
+      title:'A sale is missing its VAT treatment',
+      desc:'One line on invoice <span class="mono">INV-2026-0147</span> doesn’t have a VAT treatment set yet. Choose one so the VAT total is correct before the period closes.' },
+    { sev:'HIGH', bucket:'wrong-match', route:'match',
+      title:'This receipt might be matched to the wrong payment',
+      desc:'An AWS invoice was linked to a <span class="amt-expense mono">€213.77</span> card payment, but the supplier name and reference don’t line up well. Take a quick look to confirm it’s the right one.' },
+    { sev:'HIGH', bucket:'unusual', route:'tx',
+      title:'A payment came in that we didn’t expect',
+      desc:'<span class="amt-income mono">+€10,000.00</span> arrived from A. Kyriacou. This looks more like a shareholder loan than normal income — confirm how it should be treated.' },
+    { sev:'MEDIUM', bucket:'needs-confirmation', route:'tx',
+      title:'This payment might be a duplicate',
+      desc:'A <span class="amt-expense mono">€890.00</span> payment to Aphrodite Supplies looks very similar to an earlier one this month. Confirm whether it’s a separate payment or a duplicate.' },
+    { sev:'MEDIUM', bucket:'tax-vat', route:'ledger',
+      title:'Reverse-charge VAT might apply here',
+      desc:'A <span class="amt-expense mono">€312.00</span> charge from an EU supplier may need reverse-charge VAT. Check the treatment so the return stays accurate.' },
+    { sev:'LOW', bucket:'needs-confirmation', route:'tx',
+      title:'A small payment needs a quick label',
+      desc:'A <span class="amt-expense mono">€18.00</span> charge from Bank of Cyprus looks like a routine bank fee. Confirm the category when you have a moment.' },
+    { sev:'LOW', bucket:'missing-docs', route:'tx',
+      title:'A receipt would be nice to have',
+      desc:'The <span class="amt-expense mono">€146.20</span> office-supplies payment doesn’t have a receipt attached. It’s not blocking anything — just good to keep on file.' },
+  ];
+  ITEMS.forEach((it, i) => it.id = i);
+
+  let group = 'all';
+  const PILLS = [['all','All'], ...Object.entries(BUCKET).map(([k, v]) => [k, v[0]])];
+
+  function renderPills() {
+    document.getElementById('pills').innerHTML = PILLS.map(([k, label]) => {
+      const n = ITEMS.filter(it => (k === 'all' || it.bucket === k) && !it.snoozed).length;
+      return `<button class="pill ${k === group ? 'on' : ''}" data-g="${k}">${label} <span class="pc">${n}</span></button>`;
+    }).join('');
+    document.querySelectorAll('.pill').forEach(p => p.addEventListener('click', () => { group = p.dataset.g; renderPills(); render(); }));
+  }
+
+  function card(it) {
+    const s = SEV[it.sev], b = BUCKET[it.bucket], r = ROUTE[it.route];
+    const sevBadge = `<span class="badge badge-${s.tone}" style="${s.strong ? 'font-weight:600;' : ''}">${icon(s.ic)}${s.label}</span>`;
+    const blocking = it.sev === 'BLOCKING';
+    return `<div class="rev-card" style="--ac:${s.ac}" data-id="${it.id}">
+      <div class="rev-top">
+        ${sevBadge}
+        <span class="rev-bucket">${icon(b[1])}${b[0]}</span>
+        <span class="rev-assigned" data-assigned style="display:none;"><span class="av">AK</span>Assigned to you</span>
+      </div>
+      <div class="rev-title">${it.title}</div>
+      <div class="rev-desc">${it.desc}</div>
+      <div class="rev-actions">
+        <a class="btn btn-primary btn-sm" href="${r[1]}">${r[0]}</a>
+        <button class="btn btn-secondary btn-sm" onclick="assign(${it.id})">Assign to me</button>
+        ${blocking
+          ? `<span class="snooze-wrap" data-sw>
+               <button class="btn btn-ghost btn-sm" aria-disabled="true" onclick="denySnooze(${it.id})">${icon('snooze')}Snooze</button>
+               <span class="snooze-reason"><b>Can’t snooze a blocking issue.</b> This one stops the period from being finalized, so it needs to be cleared rather than postponed.</span>
+             </span>`
+          : `<button class="btn btn-ghost btn-sm" onclick="snooze(${it.id})">${icon('snooze')}Snooze</button>`}
+      </div>
+      <div class="snoozed-note">${icon('snooze')} Snoozed for 7 days · <span class="undo" onclick="unsnooze(${it.id})">Undo</span></div>
+    </div>`;
+  }
+
+  function render() {
+    const list = ITEMS.filter(it => !it.snoozed && (group === 'all' || it.bucket === group))
+                      .sort((a, b) => SEV[a.sev].rank - SEV[b.sev].rank);
+    const stack = document.getElementById('stack');
+    if (!list.length) {
+      stack.innerHTML = `<div class="all-clear">${icon('check')}<div class="ac-t">All clear in this view</div><div style="margin-top:4px;">Nothing here needs your attention right now.</div></div>`;
+    } else {
+      stack.innerHTML = list.map(card).join('');
+    }
+    const open = ITEMS.filter(it => !it.snoozed).length;
+    document.getElementById('revSub').textContent = `Demo Trading Ltd · ${open} open`;
+  }
+
+  window.assign = id => {
+    const el = document.querySelector(`.rev-card[data-id="${id}"] [data-assigned]`);
+    const btn = document.querySelector(`.rev-card[data-id="${id}"] .btn-secondary`);
+    if (el) { el.style.display = 'inline-flex'; btn.textContent = 'Unassign'; btn.onclick = () => render(); }
+  };
+  window.snooze = id => { ITEMS[id].snoozed = true; document.querySelector(`.rev-card[data-id="${id}"]`).classList.add('snoozed'); setTimeout(() => { renderPills(); render(); }, 300); };
+  window.unsnooze = id => { ITEMS[id].snoozed = false; renderPills(); render(); };
+  window.denySnooze = id => {
+    const wrap = document.querySelector(`.rev-card[data-id="${id}"] [data-sw]`);
+    wrap.classList.add('show');
+    clearTimeout(wrap._t); wrap._t = setTimeout(() => wrap.classList.remove('show'), 3800);
+  };
+  document.addEventListener('click', e => { if (!e.target.closest('[data-sw]')) document.querySelectorAll('[data-sw].show').forEach(w => w.classList.remove('show')); });
+
+  renderPills();
+  render();
+</script>
+</body>
+</html>

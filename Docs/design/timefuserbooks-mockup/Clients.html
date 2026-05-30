@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TimeFuserBooks — Clients</title>
+<link rel="stylesheet" href="styles/tokens.css">
+<link rel="stylesheet" href="styles/shell.css">
+<style>
+  .filters { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+  .filters .field { height: 38px; }
+
+  .tbl-card { background: var(--surface); border: 1px solid var(--border-subtle); border-radius: var(--r-card); box-shadow: var(--elev-1); overflow: hidden; }
+  .tbl-scroll { overflow-x: auto; }
+  table.cl { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 880px; }
+  table.cl thead th { text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); padding: 11px 16px; border-bottom: 1px solid var(--border-default); background: var(--surface-sunken); white-space: nowrap; }
+  table.cl tbody td { padding: 12px 16px; border-bottom: 1px solid var(--border-subtle); vertical-align: middle; white-space: nowrap; }
+  table.cl tbody tr { cursor: pointer; transition: background .1s; }
+  table.cl tbody tr:hover { background: var(--surface-sunken); }
+  table.cl tbody tr:last-child td { border-bottom: none; }
+  .cl-name { display: flex; align-items: center; gap: 11px; }
+  .cl-av { width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: #fff; flex: none; }
+  .cl-name .cn { font-weight: 600; } .cl-name .cl-legal { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+  .cc { font-family: var(--font-mono); font-size: 11px; font-weight: 600; background: var(--surface-sunken); border: 1px solid var(--border-default); border-radius: 5px; padding: 2px 6px; color: var(--text-secondary); }
+  .vatn { font-family: var(--font-mono); font-size: 12.5px; }
+  .inactive td { opacity: .55; }
+
+  /* drawer form */
+  .drawer.wide { width: 520px; }
+  .form-sec { margin-bottom: 22px; }
+  .form-sec h4 { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-secondary); margin: 0 0 13px; }
+  .frow { margin-bottom: 14px; }
+  .frow.two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .input-label { font-size: 12px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; display: block; }
+  .field { width: 100%; }
+  .vat-field { position: relative; }
+  .vat-valid { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600; margin-top: 7px; }
+  .vat-valid.ok { color: var(--income-text); } .vat-valid.bad { color: var(--expense-text); }
+  .vat-valid svg { width: 13px; height: 13px; }
+  .seg-full { display: flex; background: var(--surface-sunken); border: 1px solid var(--border-default); border-radius: 9px; padding: 3px; gap: 2px; }
+  .seg-full button { flex: 1; border: none; background: transparent; font: inherit; font-size: 12.5px; font-weight: 500; color: var(--text-secondary); padding: 7px; border-radius: 7px; cursor: pointer; }
+  .seg-full button.on { background: var(--surface); color: var(--text-primary); box-shadow: var(--elev-1); }
+  .seg-full button.on.act { color: var(--income-text); } .seg-full button.on.ina { color: var(--text-muted); }
+</style>
+</head>
+<body>
+<main class="main" id="main">
+  <div class="main-inner">
+
+    <div class="page-head">
+      <div data-screen-label="Clients">
+        <div class="ttl">Clients</div>
+        <div class="sub" id="clSub">Demo Trading Ltd · 8 clients</div>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-primary" onclick="openClient(null)"><span data-i="plus"></span>New client</button>
+      </div>
+    </div>
+
+    <div class="filters">
+      <div class="field" style="min-width:240px;"><span data-i="search"></span><input placeholder="Search clients"></div>
+      <div class="field"><select><option>All clients</option><option>Active</option><option>Inactive</option></select><span data-i="chevD"></span></div>
+    </div>
+
+    <div class="tbl-card">
+      <div class="tbl-scroll">
+        <table class="cl">
+          <thead><tr><th>Client</th><th>Country</th><th>VAT number</th><th>Currency</th><th>Terms</th><th>Status</th></tr></thead>
+          <tbody id="clBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- drawer -->
+<div class="scrim" id="scrim" onclick="closeDrawer()"></div>
+<aside class="drawer wide" id="drawer" aria-hidden="true">
+  <div class="drawer-top" id="clHead"></div>
+  <div class="drawer-body" id="clBodyD"></div>
+  <div class="drawer-foot" id="clFoot"></div>
+</aside>
+
+<script src="shared/shell.js"></script>
+<script>
+  CB.renderShell({ active: 'clients' });
+  const icon = CB.icon;
+  document.querySelectorAll('[data-i]').forEach(el => { el.innerHTML = icon(el.getAttribute('data-i')); });
+
+  const AVC = ['var(--brand)','var(--bronze)','var(--income-text)','#6b5b95','#3f7d8c','#9a6a4f'];
+  const VAT_TREAT = ['Domestic standard 19%','Domestic reduced 9%','Domestic reduced 5%','Domestic zero-rated','EU reverse charge','Exempt'];
+  const CLIENTS = [
+    { name:'Lefkara Retail Ltd', legal:'Lefkara Retail Limited', cc:'CY', vat:'CY10123456X', valid:true, cur:'EUR', terms:'Net 30', treat:'Domestic standard 19%', active:true },
+    { name:'Coral Bay Hotels', legal:'Coral Bay Hospitality PLC', cc:'CY', vat:'CY10234567Y', valid:true, cur:'EUR', terms:'Net 30', treat:'Domestic standard 19%', active:true },
+    { name:'Nicosia Holdings', legal:'Nicosia Holdings Ltd', cc:'CY', vat:'CY10345678Z', valid:true, cur:'EUR', terms:'Net 14', treat:'Exempt', active:true },
+    { name:'Larnaca Logistics', legal:'Larnaca Logistics Ltd', cc:'CY', vat:'CY10456789A', valid:true, cur:'EUR', terms:'Net 30', treat:'Domestic standard 19%', active:true },
+    { name:'Paphos Marine', legal:'Paphos Marine Services', cc:'CY', vat:'CY10567890B', valid:true, cur:'EUR', terms:'Net 45', treat:'Domestic reduced 9%', active:true },
+    { name:'Hellenic Imports', legal:'Hellenic Imports AE', cc:'GR', vat:'EL094259216', valid:true, cur:'EUR', terms:'Net 30', treat:'EU reverse charge', active:true },
+    { name:'Albion Trading', legal:'Albion Trading Ltd', cc:'GB', vat:'GB123456789', valid:false, cur:'GBP', terms:'Net 30', treat:'EU reverse charge', active:true },
+    { name:'Akamas Resorts', legal:'Akamas Resorts Ltd', cc:'CY', vat:'CY10678901C', valid:true, cur:'EUR', terms:'Net 30', treat:'Domestic standard 19%', active:false },
+  ];
+  CLIENTS.forEach((c, i) => c.id = i);
+  const initials = n => n.split(' ').slice(0,2).map(w => w[0]).join('').toUpperCase();
+
+  function render() {
+    document.getElementById('clBody').innerHTML = CLIENTS.map(c => `
+      <tr data-id="${c.id}" class="${c.active ? '' : 'inactive'}">
+        <td><div class="cl-name"><span class="cl-av" style="background:${AVC[c.id % AVC.length]}">${initials(c.name)}</span><div><div class="cn">${c.name}</div><div class="cl-legal">${c.legal}</div></div></div></td>
+        <td><span class="cc">${c.cc}</span></td>
+        <td><span class="vatn">${c.vat}</span> ${c.valid ? `<span class="badge badge-success" style="margin-left:4px;">${icon('check')}Valid</span>` : `<span class="badge badge-warning" style="margin-left:4px;">${icon('alertTri')}Check format</span>`}</td>
+        <td class="mono" style="color:var(--text-secondary)">${c.cur}</td>
+        <td style="color:var(--text-secondary)">${c.terms}</td>
+        <td>${c.active ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-neutral">Inactive</span>'}</td>
+      </tr>`).join('');
+    document.querySelectorAll('#clBody tr').forEach(tr => tr.addEventListener('click', () => openClient(+tr.dataset.id)));
+    document.getElementById('clSub').textContent = `Demo Trading Ltd · ${CLIENTS.length} clients`;
+  }
+
+  function openClient(id) {
+    const c = id === null ? { name:'', legal:'', cc:'CY', vat:'', valid:null, cur:'EUR', terms:'Net 30', treat:'Domestic standard 19%', active:true } : CLIENTS[id];
+    document.getElementById('clHead').innerHTML = `
+      <div style="font-size:18px;font-weight:600;">${id === null ? 'New client' : 'Edit client'}</div>
+      <button class="x-btn" onclick="closeDrawer()">${icon('x')}</button>`;
+    document.getElementById('clBodyD').innerHTML = `
+      <div class="form-sec">
+        <h4>Identity</h4>
+        <div class="frow"><label class="input-label">Display name</label><div class="field"><input id="fName" value="${c.name}" placeholder="e.g. Lefkara Retail"></div></div>
+        <div class="frow"><label class="input-label">Legal name</label><div class="field"><input value="${c.legal}" placeholder="Registered legal entity name"></div></div>
+        <div class="frow two">
+          <div><label class="input-label">Country</label><div class="field"><select id="fCC">${['CY','GR','GB','DE','FR','NL'].map(x => `<option ${x===c.cc?'selected':''}>${x}</option>`).join('')}</select><span>${icon('chevD')}</span></div></div>
+          <div><label class="input-label">VAT number</label><div class="field vat-field"><input id="fVat" value="${c.vat}" placeholder="CY########X" oninput="checkVat()"></div></div>
+        </div>
+        <div id="vatValid">${vatValidHTML(c.valid, c.cc)}</div>
+      </div>
+      <div class="form-sec">
+        <h4>Defaults</h4>
+        <div class="frow two">
+          <div><label class="input-label">Currency</label><div class="field"><select>${['EUR','GBP','USD'].map(x => `<option ${x===c.cur?'selected':''}>${x}</option>`).join('')}</select><span>${icon('chevD')}</span></div></div>
+          <div><label class="input-label">Payment terms</label><div class="field"><select>${['Net 14','Net 30','Net 45','Net 60','Due on receipt'].map(x => `<option ${x===c.terms?'selected':''}>${x}</option>`).join('')}</select><span>${icon('chevD')}</span></div></div>
+        </div>
+        <div class="frow"><label class="input-label">Default VAT treatment</label><div class="field"><select>${VAT_TREAT.map(x => `<option ${x===c.treat?'selected':''}>${x}</option>`).join('')}</select><span>${icon('chevD')}</span></div></div>
+      </div>
+      <div class="form-sec">
+        <h4>Billing</h4>
+        <div class="frow"><label class="input-label">Billing email</label><div class="field"><input placeholder="accounts@client.com"></div></div>
+      </div>
+      <div class="form-sec">
+        <h4>Status</h4>
+        <div class="seg-full" id="statusSeg">
+          <button class="${c.active ? 'on act' : ''}" data-a="1">Active</button>
+          <button class="${c.active ? '' : 'on ina'}" data-a="0">Inactive</button>
+        </div>
+      </div>`;
+    document.getElementById('clFoot').innerHTML = `
+      <button class="btn btn-secondary" onclick="closeDrawer()">Cancel</button>
+      <button class="btn btn-primary" onclick="closeDrawer()">${icon('check')}${id === null ? 'Create client' : 'Save changes'}</button>`;
+    document.querySelectorAll('#statusSeg button').forEach(b => b.addEventListener('click', () => {
+      document.querySelectorAll('#statusSeg button').forEach(x => x.className = '');
+      b.className = 'on ' + (b.dataset.a === '1' ? 'act' : 'ina');
+    }));
+    document.getElementById('scrim').classList.add('open');
+    document.getElementById('drawer').classList.add('open');
+  }
+  function vatValidHTML(valid, cc) {
+    if (valid === null) return '';
+    return valid
+      ? `<div class="vat-valid ok">${icon('check')} Format valid for ${cc} · VIES-checkable</div>`
+      : `<div class="vat-valid bad">${icon('alertTri')} Doesn’t match the ${cc} VAT number format</div>`;
+  }
+  window.checkVat = () => {
+    const v = document.getElementById('fVat').value.trim().toUpperCase();
+    const cc = document.getElementById('fCC').value;
+    const patterns = { CY: /^CY\d{8}[A-Z]$/, GR: /^EL\d{9}$/, GB: /^GB\d{9}$/, DE: /^DE\d{9}$/, FR: /^FR[A-Z0-9]{2}\d{9}$/, NL: /^NL\d{9}B\d{2}$/ };
+    const valid = v ? (patterns[cc] ? patterns[cc].test(v) : true) : null;
+    document.getElementById('vatValid').innerHTML = vatValidHTML(valid, cc);
+  };
+  window.openClient = openClient;
+  function closeDrawer() { document.getElementById('scrim').classList.remove('open'); document.getElementById('drawer').classList.remove('open'); }
+  window.closeDrawer = closeDrawer;
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+  render();
+</script>
+</body>
+</html>

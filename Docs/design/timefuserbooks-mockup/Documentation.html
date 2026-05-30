@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TimeFuserBooks — Design & Build Documentation</title>
+<link rel="stylesheet" href="styles/tokens.css">
+<style>
+  body { line-height: 1.6; }
+  .doc { display: grid; grid-template-columns: 232px 1fr; max-width: 1180px; margin: 0 auto; gap: 0; }
+  @media (max-width: 860px){ .doc { grid-template-columns: 1fr; } .toc { display: none; } }
+
+  /* TOC */
+  .toc { position: sticky; top: 0; align-self: start; height: 100vh; overflow-y: auto; padding: 32px 20px; border-right: 1px solid var(--border-subtle); background: var(--surface); }
+  .toc .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .toc .brand .mk { width: 30px; height: 30px; border-radius: 8px; background: var(--brand); display: grid; place-items: center; color: #fff; }
+  .toc .brand .mk svg { width: 17px; height: 17px; }
+  .toc .brand .wd { font-size: 15px; font-weight: 700; letter-spacing: -.02em; }
+  .toc .brand .wd b { color: var(--bronze-strong); }
+  .toc .tag { font-size: 11px; color: var(--text-muted); margin-bottom: 22px; }
+  .toc a { display: block; font-size: 12.5px; color: var(--text-secondary); text-decoration: none; padding: 5px 9px; border-radius: 7px; margin-bottom: 1px; }
+  .toc a:hover { background: var(--surface-sunken); color: var(--text-primary); }
+  .toc a.sub { padding-left: 20px; font-size: 12px; color: var(--text-muted); }
+  .toc .grp { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); font-weight: 700; margin: 18px 0 6px 9px; }
+
+  .body { padding: 48px 56px 120px; min-width: 0; }
+  @media (max-width: 860px){ .body { padding: 32px 24px 80px; } }
+
+  .hero-eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--bronze-strong); margin-bottom: 14px; }
+  h1 { font-size: 40px; font-weight: 600; letter-spacing: -.03em; margin: 0 0 12px; line-height: 1.05; }
+  .lede { font-size: 16px; color: var(--text-secondary); max-width: 640px; margin-bottom: 12px; }
+
+  section { scroll-margin-top: 24px; padding-top: 44px; margin-top: 44px; border-top: 1px solid var(--border-subtle); }
+  section:first-of-type { border-top: none; margin-top: 32px; }
+  h2 { font-size: 25px; font-weight: 600; letter-spacing: -.02em; margin: 0 0 6px; display: flex; align-items: center; gap: 12px; }
+  h2 .n { font-family: var(--font-mono); font-size: 13px; color: var(--bronze-strong); font-weight: 500; }
+  h3 { font-size: 16px; font-weight: 600; margin: 28px 0 10px; }
+  p { margin: 0 0 14px; max-width: 680px; }
+  .muted { color: var(--text-secondary); }
+  strong { font-weight: 600; }
+  code { font-family: var(--font-mono); font-size: .88em; background: var(--surface-sunken); border: 1px solid var(--border-subtle); border-radius: 5px; padding: 1px 6px; color: var(--bronze-strong); }
+  ul { margin: 0 0 14px; padding-left: 22px; max-width: 680px; } li { margin-bottom: 7px; }
+
+  .callout { background: var(--bronze-tint); border: 1px solid color-mix(in srgb, var(--bronze) 32%, transparent); border-radius: 11px; padding: 15px 18px; margin: 18px 0; display: flex; gap: 12px; max-width: 680px; }
+  .callout svg { width: 18px; height: 18px; color: var(--bronze-strong); flex: none; margin-top: 2px; }
+  .callout .ct { font-size: 13.5px; color: var(--text-secondary); }
+
+  /* swatch row */
+  .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 10px; margin: 16px 0; max-width: 680px; }
+  .sw { border: 1px solid var(--border-subtle); border-radius: 9px; overflow: hidden; background: var(--surface); }
+  .sw .c { height: 46px; border-bottom: 1px solid var(--border-subtle); }
+  .sw .m { padding: 7px 9px; } .sw .nm { font-size: 11.5px; font-weight: 500; } .sw .hx { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-muted); }
+
+  /* screen cards */
+  .screens { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 18px 0; max-width: 760px; }
+  @media (max-width: 620px){ .screens { grid-template-columns: 1fr; } }
+  .scard { border: 1px solid var(--border-subtle); border-radius: 11px; padding: 15px 16px; background: var(--surface); box-shadow: var(--elev-1); }
+  .scard .sh { display: flex; align-items: center; gap: 9px; margin-bottom: 7px; }
+  .scard .si { width: 30px; height: 30px; border-radius: 8px; background: var(--brand-tint); color: var(--brand); display: grid; place-items: center; flex: none; } .scard .si svg { width: 16px; height: 16px; }
+  .scard .st { font-size: 14px; font-weight: 600; }
+  .scard .sf { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-muted); }
+  .scard .sd { font-size: 12.5px; color: var(--text-secondary); line-height: 1.5; }
+
+  /* type specimens */
+  .type-row { display: flex; align-items: baseline; gap: 18px; padding: 9px 0; border-bottom: 1px solid var(--border-subtle); max-width: 680px; }
+  .type-row .tg { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); width: 130px; flex: none; }
+
+  /* tree */
+  pre.tree { font-family: var(--font-mono); font-size: 12.5px; background: var(--surface-sunken); border: 1px solid var(--border-subtle); border-radius: 11px; padding: 18px 20px; overflow-x: auto; max-width: 680px; color: var(--text-secondary); line-height: 1.7; }
+  pre.tree b { color: var(--text-primary); font-weight: 600; }
+  pre.tree .cm { color: var(--text-muted); }
+
+  table.spec-tbl { border-collapse: collapse; width: 100%; max-width: 680px; font-size: 13px; margin: 16px 0; }
+  table.spec-tbl th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); font-weight: 600; padding: 8px 12px; border-bottom: 1px solid var(--border-default); }
+  table.spec-tbl td { padding: 9px 12px; border-bottom: 1px solid var(--border-subtle); vertical-align: top; }
+  table.spec-tbl td:first-child { font-weight: 600; white-space: nowrap; }
+
+  .badge-demo { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+
+  .theme-toggle { position: fixed; top: 18px; right: 22px; z-index: 10; display: inline-flex; gap: 2px; background: var(--surface); border: 1px solid var(--border-default); border-radius: 999px; padding: 3px; box-shadow: var(--elev-1); }
+  .theme-toggle button { border: none; background: transparent; font: inherit; font-size: 12px; font-weight: 500; color: var(--text-secondary); padding: 5px 12px; border-radius: 999px; cursor: pointer; }
+  .theme-toggle button.on { background: var(--brand-tint); color: var(--brand); }
+</style>
+</head>
+<body>
+<div class="theme-toggle">
+  <button id="lb" class="on" onclick="setT('light')">Light</button>
+  <button id="db" onclick="setT('dark')">Dark</button>
+</div>
+
+<div class="doc">
+  <!-- TOC -->
+  <nav class="toc">
+    <div class="brand"><span class="mk" id="mk"></span><span class="wd">TimeFuser<b>Books</b></span></div>
+    <div class="tag">Design &amp; Build Documentation</div>
+    <a href="#overview">Overview</a>
+    <a href="#direction">Design direction</a>
+    <div class="grp">Design system</div>
+    <a href="#color" class="sub">Color</a>
+    <a href="#type" class="sub">Typography</a>
+    <a href="#badges" class="sub">Status &amp; badges</a>
+    <a href="#components" class="sub">Components</a>
+    <a href="#depth" class="sub">Depth &amp; spacing</a>
+    <a href="#dark" class="sub">Dark mode</a>
+    <div class="grp">Product</div>
+    <a href="#ia" class="sub">Information architecture</a>
+    <a href="#screens" class="sub">The 14 screens</a>
+    <a href="#patterns" class="sub">Interaction patterns</a>
+    <div class="grp">Engineering</div>
+    <a href="#architecture" class="sub">Architecture</a>
+    <a href="#files" class="sub">File structure</a>
+    <a href="#run" class="sub">Running it</a>
+  </nav>
+
+  <!-- BODY -->
+  <div class="body">
+    <div class="hero-eyebrow">TimeFuserBooks</div>
+    <h1>A premium bookkeeping-automation product for Cyprus SMEs</h1>
+    <p class="lede">This document explains what was built, the design system behind it, every screen in the product, and how the code is organised. The whole suite — 14 screens — runs on one shared, token-driven visual system with first-class light and dark modes.</p>
+
+    <!-- OVERVIEW -->
+    <section id="overview">
+      <h2><span class="n">01</span> Overview</h2>
+      <p>TimeFuserBooks is operating software for the monthly bookkeeping cycle: it ingests bank transactions and documents, classifies and matches them, prepares a Cyprus-VAT-correct ledger, surfaces exceptions in plain language, and finalizes each period into a tamper-evident archive. It serves both business owners and the accountants who work their books.</p>
+      <p>The brief was to take a product that "looked like a default Tailwind admin scaffold" and give it a real, distinctive identity — without making it flashy. The guiding rule throughout: <strong>design the target state, but never invent fields, statuses or entities that aren't in the domain.</strong> Features whose backend isn't live yet (analytics charts, the document viewer, e-filing) are designed as first-class but shown in an honest "awaiting data / coming soon" state, so nothing is load-bearing on fake data.</p>
+    </section>
+
+    <!-- DIRECTION -->
+    <section id="direction">
+      <h2><span class="n">02</span> Design direction — "Quiet-Luxury Light"</h2>
+      <p>The aesthetic target is <strong>Mercury × Stripe × a private-bank statement</strong>: warm, calm, precise, trustworthy. It deliberately rejects the cold blue-grey SaaS template look.</p>
+      <ul>
+        <li><strong>Warm over cold.</strong> Every neutral is a warm stone, never a cool grey. The canvas is warm paper; cards are white lifting on hairline borders.</li>
+        <li><strong>Restraint signals expense.</strong> Hairline borders and subtle background shifts do most of the work; heavy shadow is reserved for things that truly float (drawers, modals).</li>
+        <li><strong>One ink, one bronze.</strong> A single deep-ink blue carries all actions, links and active states. A muted bronze is the signature accent — used in barely two or three places total: the active-period underline, KPI hero underline, and finalized/verified seals.</li>
+        <li><strong>Data is the hero.</strong> This is operating software, so tables run wide and dense (with a comfortable/compact toggle), numbers are tabular monospace and right-aligned, and dates never wrap.</li>
+      </ul>
+      <div class="callout"><span id="co1"></span><div class="ct"><strong>Typeface decision:</strong> we use <strong>Inter</strong> as the single UI typeface (titles just go heavier and tighter), with <strong>JetBrains Mono</strong> reserved for every number, ID and date. The optional editorial serif was switched off in favour of a cleaner operating feel.</div></div>
+    </section>
+
+    <!-- COLOR -->
+    <section id="color">
+      <h2><span class="n">03</span> Color</h2>
+      <p class="muted">Warm-stone neutrals, one structural ink, one luxe bronze, and AA-safe money semantics (income green, warm brick for expense — never pure red).</p>
+      <h3>Neutrals &amp; brand</h3>
+      <div class="swatches" id="sw-a"></div>
+      <h3>Bronze &amp; money</h3>
+      <div class="swatches" id="sw-b"></div>
+    </section>
+
+    <!-- TYPE -->
+    <section id="type">
+      <h2><span class="n">04</span> Typography</h2>
+      <div class="type-row"><span class="tg">page-title · 28/600</span><span class="t-page-title">Period finalization readiness</span></div>
+      <div class="type-row"><span class="tg">section · 19/600</span><span class="t-section">Cyprus VAT summary</span></div>
+      <div class="type-row"><span class="tg">kpi-label · 11/600</span><span class="t-kpi-label">Net VAT payable</span></div>
+      <div class="type-row"><span class="tg">body · 14/450</span><span>Plain-language copy, written for a non-accountant.</span></div>
+      <div class="type-row"><span class="tg">hero-number</span><span class="t-hero-num">€48,210.00</span></div>
+      <div class="type-row"><span class="tg">tabular mono</span><span class="mono" style="font-size:16px;">+€1,800.00 · −€213.77 · 2026-05-31</span></div>
+    </section>
+
+    <!-- BADGES -->
+    <section id="badges">
+      <h2><span class="n">05</span> Status &amp; badges</h2>
+      <p>Status is the backbone of this product — there are dozens of domain statuses across runs, invoices, transactions and reviews. Every one maps to one of five tones, and <strong>colour is never the only signal</strong>: each badge carries a subtle background, a hairline border, dark legible text, and an icon.</p>
+      <div class="badge-demo" id="badge-tones"></div>
+      <p class="muted" style="font-size:13px;">A four-level severity quartet (Blocking / High / Medium / Low) drives the review queue, and a dedicated <strong>bronze seal</strong> marks anything finalized or integrity-verified.</p>
+      <div class="badge-demo" id="badge-seal"></div>
+    </section>
+
+    <!-- COMPONENTS -->
+    <section id="components">
+      <h2><span class="n">06</span> Components</h2>
+      <p>A small, consistent component kit is defined once in <code>tokens.css</code> and reused everywhere:</p>
+      <ul>
+        <li><strong>Buttons</strong> — primary, secondary, tertiary, danger, ghost (+ small variant), each with hover / focus / disabled states.</li>
+        <li><strong>Inputs &amp; selects</strong> — hairline fields with a focus ring; selects use a single custom chevron.</li>
+        <li><strong>Tabs</strong> — underlined (section nav) and pill (lifecycle filters with counts).</li>
+        <li><strong>Cards</strong> — plain and left-accent (for severity-coded review items).</li>
+        <li><strong>Tables</strong> — sticky headers, sortable columns, hover lift, comfortable/compact density.</li>
+        <li><strong>Right-slide drawers</strong> — the primary detail surface across the product.</li>
+        <li><strong>Toast, alert, skeleton, empty state</strong> — for feedback and loading/empty conditions.</li>
+      </ul>
+      <p class="muted">All of these are rendered live on the <code>Foundation.html</code> style board.</p>
+    </section>
+
+    <!-- DEPTH -->
+    <section id="depth">
+      <h2><span class="n">07</span> Depth, radius &amp; spacing</h2>
+      <table class="spec-tbl">
+        <tr><th>Token</th><th>Value</th><th>Use</th></tr>
+        <tr><td>radius</td><td>6 · 8 · 12 · full</td><td>badge · button/input · card · avatar</td></tr>
+        <tr><td>spacing</td><td>4 8 12 16 24 32 48</td><td>consistent rhythm scale</td></tr>
+        <tr><td>elev-1</td><td>soft 1px</td><td>resting cards</td></tr>
+        <tr><td>elev-2</td><td>2–8px</td><td>raised / hover</td></tr>
+        <tr><td>elev-3</td><td>12–32px</td><td>drawers &amp; modals</td></tr>
+      </table>
+      <p class="muted">All shadows are warm-tinted and low-spread, so depth reads soft rather than harsh.</p>
+    </section>
+
+    <!-- DARK -->
+    <section id="dark">
+      <h2><span class="n">08</span> Dark mode</h2>
+      <p>Dark mode is first-class, not an afterthought — a <strong>warm charcoal</strong>, never pure black or cold slate. It's a complete token override under <code>[data-theme="dark"]</code>: the brand lightens for contrast, bronze warms, money colours shift to readable variants, and status tints become low-alpha overlays. Toggle it from the topbar on any screen (try the switch top-right of this page).</p>
+      <div class="callout"><span id="co2"></span><div class="ct">Because the theme is driven entirely by CSS custom properties on the root element, a single toggle re-themes all 14 screens instantly, with no per-component work.</div></div>
+    </section>
+
+    <!-- IA -->
+    <section id="ia">
+      <h2><span class="n">09</span> Information architecture</h2>
+      <p>Every screen lives inside one shared shell: a top bar (logo · business switcher · period switcher · search · notifications · language · theme · user) and a collapsible left sidebar. The <strong>business and period switchers are cockpit controls</strong> — they re-scope everything below them.</p>
+      <pre class="tree"><b>Dashboard</b>
+<b>Workspace</b>  Transactions · Invoices · Documents · Matching ·
+           Ledger · Reviews · Periods · Reports
+<b>Organisation</b>  Subscriptions · Team · Clients
+<b>System</b>  Settings · Help</pre>
+    </section>
+
+    <!-- SCREENS -->
+    <section id="screens">
+      <h2><span class="n">10</span> The 14 screens</h2>
+      <div class="screens" id="screenGrid"></div>
+    </section>
+
+    <!-- PATTERNS -->
+    <section id="patterns">
+      <h2><span class="n">11</span> Interaction patterns</h2>
+      <p>A few patterns repeat across the product and give it its coherence:</p>
+      <ul>
+        <li><strong>Drawer-for-detail.</strong> Clicking any row or card opens a right-slide drawer with the full record — never a full page navigation. Esc or the scrim closes it.</li>
+        <li><strong>Allowed <em>and</em> denied states.</strong> Every primary action has both a working state and a "denied-with-reason" state, surfaced inline rather than as a generic error. Examples: a blocking review can't be snoozed; a draft invoice can't allocate a number until it has a client; a locked ledger entry can't be edited; a period can't be finalized while gates fail.</li>
+        <li><strong>Honest stubs.</strong> Backend-stubbed features render their real target shape behind an "awaiting data" / "coming soon" treatment — dashboard analytics charts, the document viewer, report generation, and Tax-Department e-filing.</li>
+        <li><strong>Step-up for irreversible actions.</strong> Finalizing a period requires step-up authentication (a 6-digit modal) and produces a bronze, tamper-evident seal.</li>
+        <li><strong>Plain language for humans.</strong> The review queue is written for a non-accountant — calm, reassuring, never alarming or gamified.</li>
+      </ul>
+    </section>
+
+    <!-- ARCHITECTURE -->
+    <section id="architecture">
+      <h2><span class="n">12</span> Architecture</h2>
+      <p>The product is built as plain, dependency-free HTML/CSS/JS — no framework, no build step. It is intentionally simple so it can be opened directly in a browser and handed to engineering as a faithful reference.</p>
+      <ul>
+        <li><strong><code>styles/tokens.css</code></strong> — the single source of truth for all design tokens (light + dark), plus base component classes (badges, buttons, fields, cards, tables, toast, alert, skeleton).</li>
+        <li><strong><code>styles/shell.css</code></strong> — the app frame: top bar, sidebar, page header, segmented controls, and the right-slide drawer.</li>
+        <li><strong><code>shared/shell.js</code></strong> — injects the top bar + sidebar into every page, owns the icon set (inline SVG, no icon font), and handles theme, period and sidebar state. Each page calls <code>CB.renderShell({ active: '…' })</code>.</li>
+        <li><strong><code>shared/periods.js</code> / <code>shared/invoices.js</code></strong> — the two data-heavy screens have their run/phase/gate and invoice/line-item/VAT logic split into modules to keep page files lean.</li>
+      </ul>
+      <div class="callout"><span id="co3"></span><div class="ct">Each page is a thin HTML file: it links the two stylesheets, contains its own screen markup and demo data, then calls the shared shell. Adding a screen means copying this pattern — the visual system comes for free.</div></div>
+    </section>
+
+    <!-- FILES -->
+    <section id="files">
+      <h2><span class="n">13</span> File structure</h2>
+      <pre class="tree">TimeFuserBooks/
+├─ <b>Foundation.html</b>        <span class="cm">visual-system style board</span>
+├─ <b>Dashboard.html</b>
+├─ <b>Periods.html</b>           <span class="cm">+ shared/periods.js</span>
+├─ <b>Transactions.html</b>
+├─ <b>Invoices.html</b>          <span class="cm">+ shared/invoices.js</span>
+├─ <b>Reviews.html</b>
+├─ <b>Ledger.html</b>
+├─ <b>Matching.html</b>
+├─ <b>Documents.html</b>
+├─ <b>Reports.html</b>
+├─ <b>Clients.html</b>
+├─ <b>Subscriptions.html</b>
+├─ <b>Team.html</b>
+├─ <b>Settings.html</b>
+├─ <b>Help.html</b>
+├─ <b>Documentation.html</b>     <span class="cm">this document</span>
+├─ styles/
+│  ├─ <b>tokens.css</b>          <span class="cm">design tokens + components (light/dark)</span>
+│  └─ <b>shell.css</b>           <span class="cm">app frame + drawer</span>
+└─ shared/
+   ├─ <b>shell.js</b>            <span class="cm">shell + icons + theme/period</span>
+   ├─ <b>periods.js</b>
+   └─ <b>invoices.js</b></pre>
+    </section>
+
+    <!-- RUN -->
+    <section id="run">
+      <h2><span class="n">14</span> Running it</h2>
+      <p>No install, no build. Open <code>Dashboard.html</code> in any modern browser and click through the sidebar — every screen links to the next. Toggle light/dark from the topbar; switch periods with the <code>‹ May 2026 ›</code> control. All data is illustrative (Demo Trading Ltd, May 2026).</p>
+      <p class="muted" style="font-size:13px;">Because the pages reference <code>styles/</code> and <code>shared/</code> by relative path, keep the folder structure intact when moving the bundle.</p>
+    </section>
+  </div>
+</div>
+
+<script src="shared/shell.js"></script>
+<script>
+  const icon = CB.icon;
+  document.getElementById('mk').innerHTML = icon('chart',17);
+  ['co1','co2','co3'].forEach(id => document.getElementById(id).innerHTML = icon('shield'));
+
+  function setT(t){ document.documentElement.setAttribute('data-theme', t);
+    document.getElementById('lb').classList.toggle('on', t==='light');
+    document.getElementById('db').classList.toggle('on', t==='dark');
+    try{ localStorage.setItem('cb-theme', t);}catch(e){} }
+  (function(){ try{ const s=localStorage.getItem('cb-theme'); if(s) setT(s);}catch(e){} })();
+
+  // swatches
+  const swA = [['Canvas','#F6F4EF'],['Surface','#FFFFFF'],['Border','#E2DDD3'],['Text','#1C1A17'],['Brand ink','#2E4F75'],['Brand tint','#EEF2F7']];
+  const swB = [['Bronze','#9A7B4F'],['Bronze tint','#F3EEE4'],['Income','#1F6B43'],['Income tint','#E8F2EB'],['Expense','#A33A2E'],['Expense tint','#F7EAE7']];
+  const sw = arr => arr.map(([n,h]) => `<div class="sw"><div class="c" style="background:${h}"></div><div class="m"><div class="nm">${n}</div><div class="hx">${h}</div></div></div>`).join('');
+  document.getElementById('sw-a').innerHTML = sw(swA);
+  document.getElementById('sw-b').innerHTML = sw(swB);
+
+  // badges
+  document.getElementById('badge-tones').innerHTML = [
+    ['neutral','doc','Neutral · Draft'],['info','send','Info · Sent'],['success','check','Success · Paid'],
+    ['warning','clock','Warning · Awaiting'],['danger','stop','Danger · Failed']
+  ].map(([t,i,l]) => `<span class="badge badge-${t}">${icon(i)}${l}</span>`).join('');
+  document.getElementById('badge-seal').innerHTML =
+    `<span class="badge badge-seal">${icon('seal')}Finalized</span><span class="badge badge-seal">${icon('lock')}Verified · integrity OK</span>`;
+
+  // screen cards
+  const SCREENS = [
+    ['Foundation','chart','Style board','The full visual system — colour, type, badges, components, depth — rendered live.'],
+    ['Dashboard','chart','/dashboard','11 scoped cards: real-data heroes (net position, evidence, aging, reviews) plus honest "awaiting data" analytics stubs, with a drill-down drawer.'],
+    ['Periods','period','/periods','The signature flow. Paired OUT/IN runs across 11 statuses; a run-detail drawer with phase plan + 9 readiness gates, step-up auth, denied state, and a tamper-evident archive.'],
+    ['Transactions','receipt','/transactions','The dense table archetype — sortable, four status fields per row, detail drawer, skeleton + empty states, density toggle.'],
+    ['Invoices','invoice','/invoices','The richest CRUD: 12-status lifecycle, line items + Cyprus VAT, status-gated actions, a 4-step create flow, and recurring templates.'],
+    ['Reviews','review','/reviews','Plain-language exception queue, severity-sorted left-accent cards, actions that route to the right screen, snooze-denied on blocking issues.'],
+    ['Ledger','ledger','/ledger','Cyprus VAT summary + draft/locked ledger entries; a double-entry drawer with VAT treatment, VIES flags, and a locked-entry denied state.'],
+    ['Matching','link','/matching','Transaction↔document match cards with confidence tiers and per-signal bars (amount/date/counterparty/reference); confirm or reject.'],
+    ['Documents','doc','/documents','Document list with per-field extraction confidence, low-confidence flagging, and an honest deferred "viewer coming soon" pane.'],
+    ['Reports','report','/reports','A 13-export catalogue (format + scope chips) and an export history with truthful Queued / Generating / Ready / Failed states.'],
+    ['Clients','clients','/clients','Client list + create/edit drawer with live Cyprus/EU VAT-format validation, country, currency, terms and default treatment.'],
+    ['Subscriptions','sub','/subscriptions','The recurring spend the business pays, auto-detected from transactions: vendors, cadence, next charge, monthly/annualised totals, price-increase flags.'],
+    ['Team','team','/team','Members, role badges and permissions, with active / invited states.'],
+    ['Settings','settings','/settings','Business profile, VAT &amp; compliance, integrations (connected / coming-soon), and preferences incl. the theme control.'],
+    ['Help','help','/help','Searchable topic guides, contact support, and a system-status panel.'],
+  ];
+  document.getElementById('screenGrid').innerHTML = SCREENS.map(s => `
+    <div class="scard"><div class="sh"><span class="si">${icon(s[1])}</span><span class="st">${s[0]}</span></div>
+    <div class="sf">${s[2]}</div><div class="sd" style="margin-top:6px;">${s[3]}</div></div>`).join('');
+</script>
+</body>
+</html>

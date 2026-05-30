@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TimeFuserBooks — Team</title>
+<link rel="stylesheet" href="styles/tokens.css">
+<link rel="stylesheet" href="styles/shell.css">
+<style>
+  .tbl-card { background: var(--surface); border: 1px solid var(--border-subtle); border-radius: var(--r-card); box-shadow: var(--elev-1); overflow: hidden; max-width: 980px; }
+  .tbl-scroll { overflow-x: auto; }
+  table.team { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 760px; }
+  table.team thead th { text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); padding: 11px 18px; border-bottom: 1px solid var(--border-default); background: var(--surface-sunken); white-space: nowrap; }
+  table.team tbody td { padding: 13px 18px; border-bottom: 1px solid var(--border-subtle); vertical-align: middle; }
+  table.team tbody tr:last-child td { border-bottom: none; }
+  table.team tbody tr:hover { background: var(--surface-sunken); }
+  .mem { display: flex; align-items: center; gap: 12px; }
+  .mem .av { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-size: 12.5px; font-weight: 700; color: #fff; flex: none; }
+  .mem .mn { font-weight: 600; } .mem .me { font-size: 12px; color: var(--text-muted); }
+  .role-sel { display: inline-flex; align-items: center; gap: 7px; }
+  .perm-note { display: flex; gap: 11px; align-items: flex-start; background: var(--brand-tint); border: 1px solid color-mix(in srgb, var(--brand) 18%, transparent); border-radius: 10px; padding: 12px 15px; margin: 18px 0 0; max-width: 980px; }
+  .perm-note svg { width: 17px; height: 17px; color: var(--brand); flex: none; margin-top: 1px; }
+  .perm-note .pt { font-size: 12.5px; color: var(--text-secondary); line-height: 1.55; }
+  .row-act { color: var(--text-muted); width: 30px; height: 30px; border-radius: 7px; border: 1px solid transparent; background: transparent; cursor: pointer; display: grid; place-items: center; }
+  .row-act:hover { background: var(--surface-sunken); color: var(--text-primary); }
+  .row-act svg { width: 16px; height: 16px; }
+  .role-legend { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 18px; max-width: 980px; }
+  .rl { font-size: 12px; color: var(--text-muted); } .rl b { color: var(--text-secondary); font-weight: 600; }
+</style>
+</head>
+<body>
+<main class="main" id="main">
+  <div class="main-inner">
+
+    <div class="page-head">
+      <div data-screen-label="Team">
+        <div class="ttl">Team</div>
+        <div class="sub" id="tSub">Demo Trading Ltd · 4 members · 1 invited</div>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-primary"><span data-i="plus"></span>Invite member</button>
+      </div>
+    </div>
+
+    <div class="tbl-card">
+      <div class="tbl-scroll">
+        <table class="team">
+          <thead><tr><th>Member</th><th>Role</th><th>Status</th><th>Last active</th><th></th></tr></thead>
+          <tbody id="teamBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="perm-note">
+      <span id="permIc"></span>
+      <div class="pt"><b style="color:var(--text-primary)">Roles control what each member can do.</b> Only Admins can finalize periods and provide step-up authentication. Accountants can prepare and review; Bookkeepers can classify and match; Viewers have read-only access.</div>
+    </div>
+
+    <div class="role-legend">
+      <span class="rl"><b>Admin</b> — full access + finalize</span>
+      <span class="rl"><b>Accountant</b> — prepare, review, report</span>
+      <span class="rl"><b>Bookkeeper</b> — classify &amp; match</span>
+      <span class="rl"><b>Viewer</b> — read-only</span>
+    </div>
+  </div>
+</main>
+
+<script src="shared/shell.js"></script>
+<script>
+  CB.renderShell({ active: 'team' });
+  const icon = CB.icon;
+  document.querySelectorAll('[data-i]').forEach(el => { el.innerHTML = icon(el.getAttribute('data-i')); });
+  document.getElementById('permIc').innerHTML = icon('shield');
+
+  const AVC = ['var(--bronze)','var(--brand)','var(--income-text)','#6b5b95','#3f7d8c'];
+  const ROLE = { Admin:'badge-info', Accountant:'badge-success', Bookkeeper:'badge-neutral', Viewer:'badge-neutral' };
+  const MEMBERS = [
+    ['Andreas Kyriacou','andreas@demotrading.cy','AK','Admin','Active','Active now'],
+    ['Maria Georgiou','maria@demotrading.cy','MG','Accountant','Active','2 hours ago'],
+    ['Petros Stylianou','petros@demotrading.cy','PS','Bookkeeper','Active','Yesterday'],
+    ['Elena Christou','elena@demotrading.cy','EC','Viewer','Active','3 days ago'],
+    ['nikos@partner-firm.cy','Invitation sent','—','Accountant','Invited','—'],
+  ];
+  document.getElementById('teamBody').innerHTML = MEMBERS.map((m, i) => {
+    const invited = m[4] === 'Invited';
+    return `<tr>
+      <td><div class="mem">${invited ? `<span class="av" style="background:var(--border-strong)">${icon('plus')}</span>` : `<span class="av" style="background:${AVC[i % AVC.length]}">${m[2]}</span>`}<div><div class="mn">${m[0]}</div><div class="me">${m[1]}</div></div></div></td>
+      <td><span class="badge ${ROLE[m[3]]}">${m[3]}</span></td>
+      <td>${invited ? '<span class="badge badge-warning">Invited</span>' : '<span class="badge badge-success">Active</span>'}</td>
+      <td style="color:var(--text-secondary);font-size:12.5px;">${m[5]}</td>
+      <td style="text-align:right;"><button class="row-act">${icon('settings')}</button></td>
+    </tr>`;
+  }).join('');
+</script>
+</body>
+</html>

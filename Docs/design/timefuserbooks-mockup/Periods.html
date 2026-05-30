@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TimeFuserBooks — Periods</title>
+<link rel="stylesheet" href="styles/tokens.css">
+<link rel="stylesheet" href="styles/shell.css">
+<style>
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spin { animation: spin 1.4s linear infinite; display: inline-flex; }
+
+  /* tabs */
+  .tabs { display: flex; gap: 24px; border-bottom: 1px solid var(--border-default); margin-bottom: 22px; }
+  .tab { padding: 0 1px 12px; font-size: 14px; font-weight: 500; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; display: flex; align-items: center; gap: 7px; }
+  .tab.on { color: var(--text-primary); font-weight: 600; border-bottom-color: var(--brand); }
+  .tab .cnt { font-family: var(--font-mono); font-size: 11px; background: var(--surface-sunken); border: 1px solid var(--border-subtle); border-radius: 5px; padding: 1px 6px; color: var(--text-muted); }
+
+  .periods-stack { display: flex; flex-direction: column; gap: 16px; max-width: 940px; }
+
+  .period-card { background: var(--surface); border: 1px solid var(--border-subtle); border-radius: var(--r-card); box-shadow: var(--elev-1); overflow: hidden; }
+  .pc-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--border-subtle); background: var(--surface-sunken); }
+  .pc-head .mo { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+  .pc-head .mo .ic { color: var(--text-muted); display: inline-flex; } .pc-head .mo .ic svg { width: 16px; height: 16px; }
+  .pc-meta { font-size: 12px; color: var(--text-muted); }
+
+  .run-row { display: flex; align-items: center; gap: 16px; padding: 15px 18px; cursor: pointer; transition: background .12s; border-top: 1px solid var(--border-subtle); }
+  .run-row:first-child { border-top: none; }
+  .run-row:hover { background: var(--surface-sunken); }
+  .run-kind { width: 40px; height: 40px; border-radius: 9px; display: grid; place-items: center; font-size: 11px; font-weight: 700; letter-spacing: .03em; flex: none; }
+  .run-kind.OUT { background: var(--expense-tint); color: var(--expense-text); border: 1px solid var(--expense-border); }
+  .run-kind.IN { background: var(--income-tint); color: var(--income-text); border: 1px solid var(--income-border); }
+  .run-info { flex: 1; min-width: 0; }
+  .run-info .wt { font-size: 14px; font-weight: 600; }
+  .run-info .rm { font-size: 12px; color: var(--text-muted); margin-top: 2px; display: flex; align-items: center; gap: 8px; }
+  .run-info .rm .mono { color: var(--text-secondary); }
+  .run-progress { width: 150px; flex: none; }
+  .run-progress .pbar2 { height: 6px; border-radius: 4px; background: var(--border-subtle); overflow: hidden; }
+  .run-progress .pbar2 > span { display: block; height: 100%; background: var(--brand); border-radius: 4px; }
+  .run-progress .pl { font-size: 10.5px; color: var(--text-muted); margin-top: 5px; font-family: var(--font-mono); }
+  .run-end { display: flex; align-items: center; gap: 12px; flex: none; }
+  .run-end .chev { color: var(--text-muted); display: inline-flex; } .run-end .chev svg { width: 17px; height: 17px; }
+
+  /* run-detail drawer (wider) */
+  .drawer.wide { width: 540px; }
+  .rd-sec { margin-bottom: 26px; }
+  .rd-sec-head { display: flex; align-items: center; justify-content: space-between; font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-secondary); margin-bottom: 16px; }
+
+  /* phase plan */
+  .phases { display: flex; flex-direction: column; }
+  .phase { display: flex; gap: 14px; }
+  .phase-rail { display: flex; flex-direction: column; align-items: center; flex: none; width: 26px; }
+  .phase-dot { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: color-mix(in srgb, var(--c) 12%, var(--surface)); border: 1.5px solid color-mix(in srgb, var(--c) 36%, transparent); }
+  .phase-dot .pi svg { width: 14px; height: 14px; }
+  .phase-line { width: 2px; flex: 1; background: var(--border-default); margin: 2px 0; min-height: 14px; }
+  .phase-main { padding-bottom: 18px; flex: 1; }
+  .phase-top { display: flex; align-items: center; gap: 9px; }
+  .phase-name { font-size: 13.5px; font-weight: 500; }
+  .phase.opt .phase-name { color: var(--text-secondary); font-weight: 450; }
+  .opt-tag { font-size: 9.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); background: var(--surface-sunken); border: 1px solid var(--border-subtle); border-radius: 4px; padding: 1px 5px; margin-left: 8px; font-weight: 600; }
+  .phase-status { font-size: 11.5px; margin-top: 2px; display: inline-block; }
+  .phase.active .phase-name { font-weight: 600; }
+  .gate-chip { font-size: 10.5px; font-weight: 600; padding: 1px 8px; border-radius: 999px; }
+  .gate-success { background: var(--badge-success-bg); color: var(--badge-success-text); }
+  .gate-warning { background: var(--badge-warning-bg); color: var(--badge-warning-text); }
+  .gate-info { background: var(--badge-info-bg); color: var(--badge-info-text); }
+
+  /* gates */
+  .gates { display: grid; gap: 8px; }
+  .gate { display: flex; gap: 11px; align-items: flex-start; padding: 11px 13px; border-radius: 9px; border: 1px solid; }
+  .gate.ok { background: var(--income-tint); border-color: var(--income-border); }
+  .gate.bad { background: var(--expense-tint); border-color: var(--expense-border); }
+  .gate-ic { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; flex: none; color: #fff; margin-top: 1px; }
+  .gate.ok .gate-ic { background: var(--income-text); } .gate.bad .gate-ic { background: var(--expense-text); }
+  .gate-ic svg { width: 12px; height: 12px; }
+  .gate-label { font-size: 13px; font-weight: 600; }
+  .gate-reason { font-size: 12px; color: var(--text-secondary); margin-top: 1px; }
+
+  .drawer-foot { flex-wrap: wrap; }
+  .deny-note { width: 100%; background: var(--expense-tint); border: 1px solid var(--expense-border); border-radius: 9px; padding: 11px 13px; margin-bottom: 4px; }
+  .deny-title { display: flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 700; color: var(--expense-text); }
+  .deny-title svg { width: 14px; height: 14px; }
+  .deny-note ul { margin: 7px 0 0; padding-left: 22px; }
+  .deny-note li { font-size: 12px; color: var(--text-secondary); margin-bottom: 3px; }
+  .deny-note li span { color: var(--text-muted); }
+
+  /* step-up modal */
+  .modal-scrim { position: fixed; inset: 0; background: rgba(28,26,23,.44); display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 60; }
+  .modal-scrim.open { opacity: 1; pointer-events: auto; }
+  .modal { width: 400px; max-width: 92vw; background: var(--surface); border: 1px solid var(--border-default); border-radius: 16px; box-shadow: var(--elev-3); padding: 26px; transform: translateY(8px) scale(.98); transition: transform .2s; }
+  .modal-scrim.open .modal { transform: none; }
+  .step-shield { width: 48px; height: 48px; border-radius: 12px; background: var(--brand-tint); color: var(--brand); display: grid; place-items: center; margin: 0 auto 14px; }
+  .step-shield svg { width: 24px; height: 24px; }
+  .step-body { text-align: center; }
+  .otp { display: flex; gap: 9px; justify-content: center; margin: 20px 0 6px; }
+  .otp input { width: 42px; height: 50px; text-align: center; font-family: var(--font-mono); font-size: 20px; border: 1px solid var(--border-default); border-radius: 9px; background: var(--surface-sunken); color: var(--text-primary); }
+  .otp input:focus { outline: none; border-color: var(--brand); box-shadow: var(--focus-ring); background: var(--surface); }
+  .step-success { display: flex; flex-direction: column; align-items: center; padding: 8px 0; }
+  .step-seal { width: 60px; height: 60px; border-radius: 50%; background: var(--bronze-tint); color: var(--bronze-strong); display: grid; place-items: center; border: 1.5px solid color-mix(in srgb, var(--bronze) 45%, transparent); }
+  .step-seal svg { width: 30px; height: 30px; }
+
+  /* archive */
+  .arch-stack { display: flex; flex-direction: column; gap: 12px; max-width: 940px; }
+  .arch-card { display: flex; align-items: center; gap: 18px; background: var(--surface); border: 1px solid var(--border-subtle); border-radius: var(--r-card); box-shadow: var(--elev-1); padding: 16px 18px; }
+  .arch-lock { width: 44px; height: 44px; border-radius: 11px; background: var(--bronze-tint); color: var(--bronze-strong); display: grid; place-items: center; flex: none; border: 1px solid color-mix(in srgb, var(--bronze) 35%, transparent); }
+  .arch-lock svg { width: 20px; height: 20px; }
+  .arch-main { flex: 1; min-width: 0; }
+  .arch-main .at { font-size: 14.5px; font-weight: 600; display: flex; align-items: center; gap: 9px; }
+  .arch-grid { display: flex; flex-wrap: wrap; gap: 6px 22px; margin-top: 7px; }
+  .arch-grid .kv { font-size: 11.5px; color: var(--text-muted); }
+  .arch-grid .kv b { color: var(--text-secondary); font-weight: 600; }
+  .arch-grid .hash { font-family: var(--font-mono); font-size: 11px; }
+  .arch-end { display: flex; align-items: center; gap: 10px; flex: none; }
+  .verify-ok { display: none; }
+</style>
+</head>
+<body>
+<main class="main" id="main">
+  <div class="main-inner">
+
+    <div class="page-head">
+      <div data-screen-label="Periods">
+        <div class="ttl">Periods</div>
+        <div class="sub">Demo Trading Ltd · monthly close workflow</div>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-primary" id="startBtn"><span data-i="plus"></span>Start a period</button>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab on" data-tab="periods">Periods <span class="cnt">4</span></div>
+      <div class="tab" data-tab="archive">Archive <span class="cnt">6</span></div>
+    </div>
+
+    <!-- ===== PERIODS TAB ===== -->
+    <div id="tab-periods">
+      <div class="periods-stack">
+
+        <!-- May 2026 — active -->
+        <div class="period-card">
+          <div class="pc-head">
+            <span class="mo"><span class="ic" data-i="period"></span>May 2026</span>
+            <span class="pc-meta">In progress · started 1 May 2026</span>
+          </div>
+          <div class="run-row" onclick="PER.open('may-out')">
+            <span class="run-kind OUT">OUT</span>
+            <div class="run-info"><div class="wt">Out · monthly</div><div class="rm">Expenses &amp; payables · <span class="mono">248 lines</span> · <span class="mono amt-expense">−€45,670.00</span></div></div>
+            <div class="run-progress"><div class="pbar2"><span style="width:82%"></span></div><div class="pl">9 / 11 phases · holding</div></div>
+            <div class="run-end" data-status="REVIEW_HOLD"><span class="chev" data-i="chevR"></span></div>
+          </div>
+          <div class="run-row" onclick="PER.open('may-in')">
+            <span class="run-kind IN">IN</span>
+            <div class="run-info"><div class="wt">In · monthly</div><div class="rm">Income &amp; receivables · <span class="mono">96 lines</span> · <span class="mono amt-income">+€64,210.00</span></div></div>
+            <div class="run-progress"><div class="pbar2"><span style="width:44%"></span></div><div class="pl">3 / 8 phases · running</div></div>
+            <div class="run-end" data-status="RUNNING"><span class="chev" data-i="chevR"></span></div>
+          </div>
+        </div>
+
+        <!-- April 2026 — finalized -->
+        <div class="period-card">
+          <div class="pc-head">
+            <span class="mo"><span class="ic" data-i="period"></span>April 2026</span>
+            <span class="pc-meta">Finalized · 2 May 2026</span>
+          </div>
+          <div class="run-row" onclick="PER.open('mar-adj')">
+            <span class="run-kind OUT">OUT</span>
+            <div class="run-info"><div class="wt">Out · monthly</div><div class="rm">Expenses &amp; payables · <span class="mono">231 lines</span></div></div>
+            <div class="run-progress"><div class="pbar2"><span style="width:100%;background:var(--income-text)"></span></div><div class="pl">11 / 11 phases</div></div>
+            <div class="run-end" data-status="FINALIZED"><span class="chev" data-i="chevR"></span></div>
+          </div>
+          <div class="run-row" onclick="PER.open('mar-adj')">
+            <span class="run-kind IN">IN</span>
+            <div class="run-info"><div class="wt">In · monthly</div><div class="rm">Income &amp; receivables · <span class="mono">88 lines</span></div></div>
+            <div class="run-progress"><div class="pbar2"><span style="width:100%;background:var(--income-text)"></span></div><div class="pl">8 / 8 phases</div></div>
+            <div class="run-end" data-status="FINALIZED"><span class="chev" data-i="chevR"></span></div>
+          </div>
+        </div>
+
+        <!-- March 2026 — finalized + adjustment awaiting -->
+        <div class="period-card">
+          <div class="pc-head">
+            <span class="mo"><span class="ic" data-i="period"></span>March 2026</span>
+            <span class="pc-meta">Finalized · adjustment pending approval</span>
+          </div>
+          <div class="run-row" onclick="PER.open('mar-adj')">
+            <span class="run-kind OUT">OUT</span>
+            <div class="run-info"><div class="wt">Out · monthly</div><div class="rm">Expenses &amp; payables · <span class="mono">219 lines</span></div></div>
+            <div class="run-progress"><div class="pbar2"><span style="width:100%;background:var(--income-text)"></span></div><div class="pl">11 / 11 phases</div></div>
+            <div class="run-end" data-status="FINALIZED"><span class="chev" data-i="chevR"></span></div>
+          </div>
+          <div class="run-row" onclick="PER.open('mar-adj')">
+            <span class="run-kind OUT">OUT</span>
+            <div class="run-info"><div class="wt">Out · adjustment <span class="badge badge-info" style="margin-left:6px;">Correction</span></div><div class="rm">Re-classified 3 expenses · <span class="mono amt-expense">−€2,140.00</span></div></div>
+            <div class="run-progress"><div class="pbar2"><span style="width:91%;background:var(--badge-warning-text)"></span></div><div class="pl">Ready · awaiting step-up</div></div>
+            <div class="run-end" data-status="AWAITING_APPROVAL"><span class="chev" data-i="chevR"></span></div>
+          </div>
+        </div>
+
+        <!-- February 2026 — a failed run -->
+        <div class="period-card">
+          <div class="pc-head">
+            <span class="mo"><span class="ic" data-i="period"></span>February 2026</span>
+            <span class="pc-meta">Recovered · re-run finalized</span>
+          </div>
+          <div class="run-row" onclick="PER.open('may-in')">
+            <span class="run-kind OUT">OUT</span>
+            <div class="run-info"><div class="wt">Out · monthly <span class="t-meta">(attempt 1)</span></div><div class="rm">Ingestion error on statement import</div></div>
+            <div class="run-progress"><div class="pbar2"><span style="width:18%;background:var(--expense-text)"></span></div><div class="pl">Failed at phase 2</div></div>
+            <div class="run-end" data-status="COMPENSATING"><span class="chev" data-i="chevR"></span></div>
+          </div>
+          <div class="run-row" onclick="PER.open('mar-adj')">
+            <span class="run-kind OUT">OUT</span>
+            <div class="run-info"><div class="wt">Out · monthly <span class="t-meta">(attempt 2)</span></div><div class="rm">Clean re-run · <span class="mono">204 lines</span></div></div>
+            <div class="run-progress"><div class="pbar2"><span style="width:100%;background:var(--income-text)"></span></div><div class="pl">11 / 11 phases</div></div>
+            <div class="run-end" data-status="FINALIZED"><span class="chev" data-i="chevR"></span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===== ARCHIVE TAB ===== -->
+    <div id="tab-archive" style="display:none;">
+      <div class="arch-stack" id="archStack"></div>
+    </div>
+
+  </div>
+</main>
+
+<!-- run-detail drawer -->
+<div class="scrim" id="runScrim" onclick="PER.close()"></div>
+<aside class="drawer wide" id="runDrawer" aria-hidden="true">
+  <div class="drawer-top" id="runHeader"></div>
+  <div class="drawer-body" id="runBody"></div>
+  <div class="drawer-foot" id="runFoot"></div>
+</aside>
+
+<!-- step-up modal -->
+<div class="modal-scrim" id="stepModal" onclick="if(event.target===this)PER.closeStep()">
+  <div class="modal">
+    <div class="step-body">
+      <div class="step-shield" data-i="fingerprint"></div>
+      <div style="font-size:17px;font-weight:600;">Step-up authentication</div>
+      <div class="t-meta" style="margin-top:5px;max-width:300px;margin-left:auto;margin-right:auto;">Finalizing a period is irreversible and tamper-evident. Enter the 6-digit code from your authenticator to seal it.</div>
+      <div class="otp">
+        <input maxlength="1" inputmode="numeric"><input maxlength="1" inputmode="numeric"><input maxlength="1" inputmode="numeric">
+        <input maxlength="1" inputmode="numeric"><input maxlength="1" inputmode="numeric"><input maxlength="1" inputmode="numeric">
+      </div>
+      <div class="t-meta" style="margin-bottom:18px;">Signed in as <b style="color:var(--text-secondary)">A. Kyriacou</b> · admin</div>
+      <div style="display:flex;gap:9px;">
+        <button class="btn btn-secondary" style="flex:1;" onclick="PER.closeStep()">Cancel</button>
+        <button class="btn btn-primary" style="flex:1;" onclick="PER.confirmStep()">Approve &amp; seal</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="shared/shell.js"></script>
+<script src="shared/periods.js"></script>
+<script>
+  CB.renderShell({ active: 'periods' });
+  document.querySelectorAll('[data-i]').forEach(el => { el.innerHTML = CB.icon(el.getAttribute('data-i')); });
+
+  // inject status badges on run rows
+  document.querySelectorAll('.run-end[data-status]').forEach(el => {
+    el.insertAdjacentHTML('afterbegin', PER.statusBadge(el.getAttribute('data-status')));
+  });
+
+  // tabs
+  document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('on')); t.classList.add('on');
+    const which = t.getAttribute('data-tab');
+    document.getElementById('tab-periods').style.display = which === 'periods' ? '' : 'none';
+    document.getElementById('tab-archive').style.display = which === 'archive' ? '' : 'none';
+  }));
+
+  // start-a-period: open a step-up-free toast-ish (just open run for demo)
+  document.getElementById('startBtn').addEventListener('click', () => PER.open('may-out'));
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { PER.close(); PER.closeStep(); } });
+
+  // OTP auto-advance
+  const otps = [...document.querySelectorAll('.otp input')];
+  otps.forEach((inp, i) => inp.addEventListener('input', () => { if (inp.value && i < otps.length - 1) otps[i + 1].focus(); }));
+
+  // ---- archive packages ----
+  const ARCH = [
+    ['April 2026','Original','A. Kyriacou','b7f3…9e21','2 May 2026'],
+    ['March 2026','Original','A. Kyriacou','4c1a…77d0','3 Apr 2026'],
+    ['March 2026','Adjustment','M. Georgiou','9ee2…1b48','5 Apr 2026'],
+    ['February 2026','Original','A. Kyriacou','01ab…c4f5','4 Mar 2026'],
+    ['January 2026','Original','A. Kyriacou','d44e…8a90','3 Feb 2026'],
+    ['December 2025','Original','M. Georgiou','77c0…2e13','4 Jan 2026'],
+  ];
+  document.getElementById('archStack').innerHTML = ARCH.map((a, i) => `
+    <div class="arch-card">
+      <span class="arch-lock">${CB.icon('lock')}</span>
+      <div class="arch-main">
+        <div class="at">${a[0]} <span class="badge ${a[1]==='Adjustment'?'badge-info':'badge-neutral'}">${a[1]}</span></div>
+        <div class="arch-grid">
+          <span class="kv">Step-up by <b>${a[2]}</b></span>
+          <span class="kv hash">⛓ ${a[3]}</span>
+          <span class="kv">Sealed <b>${a[4]}</b></span>
+        </div>
+      </div>
+      <div class="arch-end">
+        <span class="badge badge-seal verify-ok" id="vok-${i}">${CB.icon('seal')}Verified</span>
+        <button class="btn btn-secondary btn-sm" id="vbtn-${i}" onclick="verify(${i})">${CB.icon('shield')}Verify integrity</button>
+      </div>
+    </div>`).join('');
+
+  window.verify = function (i) {
+    const btn = document.getElementById('vbtn-' + i);
+    btn.innerHTML = `<span class="spin">${CB.icon('loader')}</span>Verifying…`;
+    btn.disabled = true;
+    setTimeout(() => {
+      btn.style.display = 'none';
+      document.getElementById('vok-' + i).style.display = 'inline-flex';
+    }, 900);
+  };
+</script>
+</body>
+</html>

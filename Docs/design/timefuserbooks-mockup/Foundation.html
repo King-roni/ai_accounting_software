@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TimeFuserBooks — Foundation</title>
+<link rel="stylesheet" href="styles/tokens.css">
+<style>
+  .board { max-width: 1160px; margin: 0 auto; padding: 48px 40px 96px; }
+
+  /* board header */
+  .board-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 8px; }
+  .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--bronze-strong); margin-bottom: 14px; }
+  .board-head h1 { font-family: var(--font-serif); font-size: 44px; font-weight: 600; letter-spacing: -.03em; margin: 0 0 10px; line-height: 1.04; }
+  .board-head .lede { font-size: 15.5px; color: var(--text-secondary); max-width: 560px; line-height: 1.55; }
+  .toolbar { display: flex; gap: 8px; align-items: center; }
+
+  .logo { display: inline-flex; align-items: center; gap: 11px; }
+  .logo-mark { width: 34px; height: 34px; border-radius: 9px; background: var(--brand); display: grid; place-items: center; color: #fff; box-shadow: var(--elev-1); }
+  .logo-mark .seal-dot { position: absolute; }
+  .logo-word { font-family: var(--font-serif); font-size: 18px; font-weight: 700; letter-spacing: -.02em; }
+  .logo-word b { color: var(--bronze-strong); font-weight: 600; }
+
+  /* section scaffolding */
+  section.block { margin-top: 64px; }
+  .block-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid var(--border-default); }
+  .block-num { font-family: var(--font-mono); font-size: 12px; color: var(--bronze-strong); font-weight: 500; }
+  .block-head h2 { font-size: 21px; font-weight: 600; margin: 0; letter-spacing: -.01em; }
+  .block-head p { font-size: 13px; color: var(--text-muted); margin: 0; margin-left: auto; max-width: 380px; text-align: right; }
+
+  .label-row { display: flex; align-items: center; gap: 8px; margin: 28px 0 13px; }
+  .label-row h3 { font-size: 12.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--text-secondary); margin: 0; }
+  .label-row .hr { flex: 1; height: 1px; background: var(--border-subtle); }
+
+  /* swatches */
+  .swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 12px; }
+  .swatch { border: 1px solid var(--border-subtle); border-radius: 10px; overflow: hidden; background: var(--surface); box-shadow: var(--elev-1); }
+  .swatch .chip { height: 64px; border-bottom: 1px solid var(--border-subtle); }
+  .swatch .meta { padding: 9px 11px; }
+  .swatch .nm { font-size: 12.5px; font-weight: 500; }
+  .swatch .hex { font-family: var(--font-mono); font-size: 11.5px; color: var(--text-muted); margin-top: 1px; }
+
+  /* type specimens */
+  .spec { display: flex; align-items: baseline; gap: 20px; padding: 13px 0; border-bottom: 1px solid var(--border-subtle); }
+  .spec .tag { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); width: 150px; flex: none; }
+  .num-strip { display: flex; flex-wrap: wrap; gap: 28px; align-items: baseline; padding: 18px 0; }
+  .num-strip .big { font-family: var(--font-mono); font-size: 26px; font-variant-numeric: tabular-nums; }
+
+  .badge-cluster { display: flex; flex-wrap: wrap; gap: 10px; }
+
+  /* component bench */
+  .bench { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+  .bench .card-pad { padding: 20px; }
+  .state-row { display: flex; flex-wrap: wrap; gap: 9px; align-items: center; }
+  .state-tags { display: flex; gap: 16px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); font-weight: 600; margin-top: 14px; }
+  .comp-title { font-size: 12.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--text-secondary); margin: 0 0 15px; }
+
+  /* drawer mock */
+  .drawer-mock { width: 360px; border: 1px solid var(--border-default); border-radius: 12px; overflow: hidden; box-shadow: var(--elev-3); background: var(--surface); }
+  .drawer-head { padding: 18px 20px; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: flex-start; }
+
+  /* elevation */
+  .elev-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 640px; }
+  .elev-card { background: var(--surface); border: 1px solid var(--border-subtle); border-radius: 14px; height: 110px; display: grid; place-items: center; font-size: 12.5px; color: var(--text-secondary); }
+  .radius-grid { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end; }
+  .radius-box { background: var(--brand-tint); border: 1px solid var(--brand); display: grid; place-items: end center; padding-bottom: 8px; color: var(--brand); font-size: 11px; font-family: var(--font-mono); width: 92px; height: 64px; }
+
+  /* spacing ruler */
+  .space-row { display: flex; align-items: flex-end; gap: 18px; }
+  .space-bar .b { background: var(--bronze); border-radius: 3px; }
+  .space-bar .l { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin-top: 6px; text-align: center; }
+
+  .theme-pill { display: inline-flex; background: var(--surface-sunken); border: 1px solid var(--border-default); border-radius: 999px; padding: 3px; gap: 2px; }
+  .theme-pill button { border: none; background: transparent; font: inherit; font-size: 12.5px; font-weight: 500; color: var(--text-secondary); padding: 6px 14px; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  .theme-pill button.on { background: var(--surface); color: var(--text-primary); box-shadow: var(--elev-1); }
+  .theme-pill svg { width: 15px; height: 15px; }
+
+  .note { font-size: 12.5px; color: var(--text-muted); margin-top: 10px; line-height: 1.55; }
+  .empty-mock { border: 1.5px dashed var(--border-strong); border-radius: 10px; padding: 28px 20px; text-align: center; color: var(--text-muted); }
+  .empty-mock svg { width: 30px; height: 30px; opacity: .55; margin-bottom: 8px; }
+
+  .nav-card { margin-top: 64px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 22px 26px; background: var(--surface); border: 1px solid var(--border-subtle); border-radius: 12px; box-shadow: var(--elev-1); }
+  .nav-card .lbl { font-size: 13px; color: var(--text-secondary); font-weight: 500; margin-right: 6px; }
+</style>
+</head>
+<body>
+<div class="board">
+
+  <!-- ===== Header ===== -->
+  <div class="board-head">
+    <div>
+      <div class="logo" style="margin-bottom:24px;">
+        <span class="logo-mark">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l3-3 3 3 4-5"/></svg>
+        </span>
+        <span class="logo-word">TimeFuser<b>Books</b></span>
+      </div>
+      <div class="eyebrow">Foundation · Visual System</div>
+      <h1>Quiet-Luxury Light</h1>
+      <p class="lede">A warm, calm, accountant-grade system for premium bookkeeping. Built like a private-bank statement — restraint over flash, hairlines over heavy shadow, bronze used in barely two places.</p>
+    </div>
+    <div class="toolbar">
+      <div class="theme-pill" role="group" aria-label="Theme">
+        <button id="lightBtn" class="on" onclick="setTheme('light')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Light
+        </button>
+        <button id="darkBtn" onclick="setTheme('dark')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>Dark
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 1. COLOR ===== -->
+  <section class="block">
+    <div class="block-head">
+      <span class="block-num">01</span><h2>Color</h2>
+      <p>Warm stone neutrals, one deep ink for action, one bronze for the signature. Never cold blue-grey.</p>
+    </div>
+
+    <div class="label-row"><h3>Neutrals — warm stone</h3><span class="hr"></span></div>
+    <div class="swatch-grid" id="sw-neutral"></div>
+
+    <div class="label-row"><h3>Structural brand — deep ink blue</h3><span class="hr"></span></div>
+    <div class="swatch-grid" id="sw-brand"></div>
+
+    <div class="label-row"><h3>Luxe accent — muted bronze <span style="font-weight:450;text-transform:none;letter-spacing:0;color:var(--text-muted)">· used sparingly</span></h3><span class="hr"></span></div>
+    <div class="swatch-grid" id="sw-bronze"></div>
+
+    <div class="label-row"><h3>Money semantics</h3><span class="hr"></span></div>
+    <div class="swatch-grid" id="sw-money"></div>
+  </section>
+
+  <!-- ===== 2. TYPE ===== -->
+  <section class="block">
+    <div class="block-head">
+      <span class="block-num">02</span><h2>Typography</h2>
+      <p>Inter for UI · JetBrains Mono for every number, ID & date · Newsreader serif for titles and hero figures.</p>
+    </div>
+
+    <div class="spec"><span class="tag">page-title · serif 28/600</span><span class="t-page-title">Period finalization readiness</span></div>
+    <div class="spec"><span class="tag">section · 19/600</span><span class="t-section">Cyprus VAT summary</span></div>
+    <div class="spec"><span class="tag">kpi-label · 11/600 caps</span><span class="t-kpi-label">Net VAT payable</span></div>
+    <div class="spec"><span class="tag">body · 14/450</span><span class="t-body">The rent payment is larger than usual for this account. Add a short note so it can be cleared.</span></div>
+    <div class="spec"><span class="tag">meta · 12.5/muted</span><span class="t-meta">Demo Trading Ltd · May 2026 · updated 4 min ago</span></div>
+    <div class="spec"><span class="tag">hero-number · serif 34</span><span class="t-hero-num">€48,210.00</span></div>
+
+    <div class="label-row"><h3>Tabular monospace numbers</h3><span class="hr"></span></div>
+    <div class="num-strip">
+      <span class="big">0123456789</span>
+      <span class="big amt-income">+€1,800.00</span>
+      <span class="big amt-expense">−€213.77</span>
+      <span class="big mono" style="font-size:15px;color:var(--text-secondary)">INV-2026-0148</span>
+      <span class="big mono" style="font-size:15px;color:var(--text-secondary)">2026-05-31</span>
+    </div>
+    <p class="note">Numbers are right-aligned in tables and never wrap. Income reads green, expense reads warm brick — never pure red.</p>
+  </section>
+
+  <!-- ===== 3. BADGES ===== -->
+  <section class="block">
+    <div class="block-head">
+      <span class="block-num">03</span><h2>Status & badges</h2>
+      <p>Five tones, each = subtle bg + hairline + dark text + icon. Color is never the only signal.</p>
+    </div>
+
+    <div class="label-row"><h3>Five tones</h3><span class="hr"></span></div>
+    <div class="badge-cluster" id="bd-tones"></div>
+
+    <div class="label-row"><h3>Severity quartet — reviews</h3><span class="hr"></span></div>
+    <div class="badge-cluster" id="bd-sev"></div>
+
+    <div class="label-row"><h3>Real domain statuses, mapped on</h3><span class="hr"></span></div>
+    <div class="badge-cluster" id="bd-domain"></div>
+
+    <div class="label-row"><h3>The bronze seal — finalized & verified</h3><span class="hr"></span></div>
+    <div class="badge-cluster" id="bd-seal"></div>
+  </section>
+
+  <!-- ===== 4. COMPONENTS ===== -->
+  <section class="block">
+    <div class="block-head">
+      <span class="block-num">04</span><h2>Core components</h2>
+      <p>Resting · hover · focus · disabled. White cards lifting on hairline borders.</p>
+    </div>
+
+    <div class="bench">
+      <!-- Buttons -->
+      <div class="card card-pad">
+        <p class="comp-title">Buttons</p>
+        <div class="state-row" style="margin-bottom:10px;">
+          <button class="btn btn-primary">Approve &amp; finalize</button>
+          <button class="btn btn-secondary">Cancel</button>
+        </div>
+        <div class="state-row" style="margin-bottom:10px;">
+          <button class="btn btn-tertiary">View ledger</button>
+          <button class="btn btn-danger">Write off</button>
+        </div>
+        <div class="state-row">
+          <button class="btn btn-ghost">Snooze</button>
+          <button class="btn btn-primary" disabled>Finalize</button>
+        </div>
+        <div class="state-tags"><span>Primary</span><span>Secondary</span><span>Tertiary</span><span>Danger</span><span>Disabled</span></div>
+      </div>
+
+      <!-- Inputs -->
+      <div class="card card-pad">
+        <p class="comp-title">Input &amp; Select</p>
+        <label class="input-label">Search transactions</label>
+        <div class="field" style="width:100%;margin-bottom:14px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input placeholder="Description or counterparty">
+        </div>
+        <label class="input-label">Direction</label>
+        <div class="field" style="width:100%;margin-bottom:14px;">
+          <select><option>All directions</option><option>Money in</option><option>Money out</option></select>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+        <label class="input-label">Locked field</label>
+        <div class="field field-disabled" style="width:100%;"><input value="Period finalized" disabled></div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="card card-pad">
+        <p class="comp-title">Tabs</p>
+        <div style="display:flex;gap:22px;border-bottom:1px solid var(--border-default);margin-bottom:18px;">
+          <span style="padding:0 0 10px;border-bottom:2px solid var(--brand);color:var(--text-primary);font-weight:600;font-size:13.5px;">Periods</span>
+          <span style="padding:0 0 10px;color:var(--text-muted);font-size:13.5px;">Archive</span>
+        </div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap;">
+          <span class="badge" style="background:var(--brand);color:#fff;border:none;border-radius:999px;padding:5px 13px;">All <b style="opacity:.7;margin-left:3px;">128</b></span>
+          <span class="badge badge-neutral" style="border-radius:999px;padding:5px 13px;">Drafts <b style="margin-left:3px;">6</b></span>
+          <span class="badge badge-neutral" style="border-radius:999px;padding:5px 13px;">Settled <b style="margin-left:3px;">94</b></span>
+        </div>
+        <div class="state-tags"><span>Underlined</span><span>Pill + counts</span></div>
+      </div>
+
+      <!-- Table -->
+      <div class="card" style="grid-column: span 2; overflow:hidden;">
+        <div style="padding:16px 20px 0;"><p class="comp-title" style="margin:0;">Table — header + rows</p></div>
+        <table class="tbl" style="margin-top:14px;">
+          <thead><tr><th>Date</th><th>Description</th><th style="text-align:right;">Amount</th><th>Classification</th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="mono" style="color:var(--text-secondary)">2026-05-28</td>
+              <td><div style="font-weight:500;">Stripe payout</div><div class="t-meta">Stripe Payments Europe</div></td>
+              <td class="num amt-income">+€4,210.00</td>
+              <td><span class="badge badge-success">✓ Confirmed</span></td>
+            </tr>
+            <tr>
+              <td class="mono" style="color:var(--text-secondary)">2026-05-27</td>
+              <td><div style="font-weight:500;">AWS EMEA invoice</div><div class="t-meta">Amazon Web Services</div></td>
+              <td class="num amt-expense">−€213.77</td>
+              <td><span class="badge badge-warning">⚠ Needs confirmation</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Drawer header -->
+      <div class="card card-pad">
+        <p class="comp-title">Drawer header</p>
+        <div style="border:1px solid var(--border-subtle);border-radius:10px;overflow:hidden;">
+          <div class="drawer-head" style="border-radius:0;">
+            <div>
+              <div class="t-meta" style="margin-bottom:4px;">Amazon Web Services</div>
+              <div class="t-hero-num amt-expense" style="font-size:24px;">−€213.77</div>
+            </div>
+            <button class="btn btn-ghost btn-sm" style="padding:6px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Toast -->
+      <div class="card card-pad">
+        <p class="comp-title">Toast</p>
+        <div class="toast">
+          <span style="color:var(--income-text);margin-top:1px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg></span>
+          <div><div style="font-weight:600;font-size:13.5px;">Period finalized</div><div class="t-meta" style="margin-top:2px;">May 2026 · OUT run sealed with step-up auth.</div></div>
+        </div>
+      </div>
+
+      <!-- Alert -->
+      <div class="card card-pad">
+        <p class="comp-title">Alert</p>
+        <div class="alert alert-warning">
+          <span style="color:var(--badge-warning-text);margin-top:1px;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></span>
+          <div style="font-size:13px;color:var(--badge-warning-text);"><b>2 gates failing.</b> Evidence not satisfied · approval not recorded.</div>
+        </div>
+      </div>
+
+      <!-- Skeleton -->
+      <div class="card card-pad">
+        <p class="comp-title">Skeleton</p>
+        <div class="skel" style="height:14px;width:60%;margin-bottom:10px;"></div>
+        <div class="skel" style="height:14px;width:90%;margin-bottom:10px;"></div>
+        <div class="skel" style="height:14px;width:75%;margin-bottom:18px;"></div>
+        <div class="skel" style="height:38px;width:100%;"></div>
+      </div>
+
+      <!-- Empty -->
+      <div class="card card-pad">
+        <p class="comp-title">Empty state</p>
+        <div class="empty-mock">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/></svg>
+          <div style="font-weight:500;color:var(--text-secondary);">No unmatched transactions</div>
+          <div style="font-size:12px;margin-top:3px;">Everything for May 2026 is reconciled.</div>
+        </div>
+      </div>
+
+      <!-- Left-accent card -->
+      <div class="card card-accent-danger card-pad" style="grid-column: span 2;">
+        <p class="comp-title" style="margin-bottom:11px;">Left-accent card — review item</p>
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px;">
+          <span class="badge badge-danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 2h8.2L22 7.9v8.2L16.1 22H7.9L2 16.1V7.9z"/><path d="M12 8v4M12 16h.01"/></svg>Blocking</span>
+          <span class="t-meta">Missing documents</span>
+        </div>
+        <div style="font-weight:600;font-size:15px;margin-bottom:4px;">Large payment flagged for review</div>
+        <div class="t-body" style="color:var(--text-secondary);max-width:480px;">The <span class="amt-expense mono">€1,200.00</span> rent payment is larger than usual for this account. Add a short explanation so it can be cleared for finalization.</div>
+        <div class="state-row" style="margin-top:14px;">
+          <button class="btn btn-primary btn-sm">Open transaction</button>
+          <button class="btn btn-secondary btn-sm">Assign to me</button>
+          <button class="btn btn-ghost btn-sm" aria-disabled="true" title="Blocking issues can't be snoozed">Snooze · locked</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 5. ELEVATION / RADIUS / SPACING ===== -->
+  <section class="block">
+    <div class="block-head">
+      <span class="block-num">05</span><h2>Depth, radius &amp; spacing</h2>
+      <p>Hairline-first. Warm-tinted, low-spread shadow only where elements truly float.</p>
+    </div>
+
+    <div class="label-row"><h3>Elevation</h3><span class="hr"></span></div>
+    <div class="elev-grid">
+      <div class="elev-card" style="box-shadow:var(--elev-1);">elev-1 · cards</div>
+      <div class="elev-card" style="box-shadow:var(--elev-2);">elev-2 · raised</div>
+      <div class="elev-card" style="box-shadow:var(--elev-3);">elev-3 · drawers</div>
+    </div>
+
+    <div class="label-row"><h3>Radius</h3><span class="hr"></span></div>
+    <div class="radius-grid">
+      <div class="radius-box" style="border-radius:6px;">6 · badge</div>
+      <div class="radius-box" style="border-radius:8px;">8 · button</div>
+      <div class="radius-box" style="border-radius:8px;">8 · input</div>
+      <div class="radius-box" style="border-radius:12px;">12 · card</div>
+      <div class="radius-box" style="border-radius:999px;width:64px;">full</div>
+    </div>
+
+    <div class="label-row"><h3>Spacing scale</h3><span class="hr"></span></div>
+    <div class="space-row" id="space-row"></div>
+  </section>
+
+  <!-- ===== Nav to screens (placeholders for now) ===== -->
+  <div class="nav-card">
+    <span class="lbl">Screens built on this system:</span>
+    <button class="btn btn-secondary btn-sm" disabled>Dashboard</button>
+    <button class="btn btn-secondary btn-sm" disabled>Periods</button>
+    <button class="btn btn-secondary btn-sm" disabled>Transactions</button>
+    <button class="btn btn-secondary btn-sm" disabled>Invoices</button>
+    <button class="btn btn-secondary btn-sm" disabled>Reviews</button>
+    <button class="btn btn-secondary btn-sm" disabled>Ledger / VAT</button>
+    <span class="t-meta" style="width:100%;margin-top:4px;">Coming next — each inherits these tokens verbatim.</span>
+  </div>
+
+</div>
+
+<script>
+function setTheme(t){
+  document.documentElement.setAttribute('data-theme', t);
+  document.getElementById('lightBtn').classList.toggle('on', t==='light');
+  document.getElementById('darkBtn').classList.toggle('on', t==='dark');
+  try { localStorage.setItem('cb-theme', t); } catch(e){}
+}
+(function(){ try { const s = localStorage.getItem('cb-theme'); if(s) setTheme(s); } catch(e){} })();
+
+/* ---- data-driven swatches ---- */
+const ICONS = {
+  check:'<path d="M20 6 9 17l-5-5"/>',
+  send:'<path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  alertTri:'<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>',
+  alertCirc:'<circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/>',
+  infoCirc:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
+  stop:'<path d="M7.9 2h8.2L22 7.9v8.2L16.1 22H7.9L2 16.1V7.9z"/><path d="M12 8v4M12 16h.01"/>',
+  x:'<path d="M18 6 6 18M6 6l12 12"/>',
+  doc:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>',
+  seal:'<path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="9"/>',
+  lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  loader:'<path d="M12 3v4M12 17v4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M3 12h4M17 12h4"/>',
+};
+function svg(name){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]}</svg>`; }
+
+function swatches(id, arr){
+  document.getElementById(id).innerHTML = arr.map(([nm,hex,dark]) =>
+    `<div class="swatch"><div class="chip" style="background:${hex}${dark?';border-bottom:1px solid var(--border-subtle)':''}"></div><div class="meta"><div class="nm">${nm}</div><div class="hex">${hex}</div></div></div>`
+  ).join('');
+}
+swatches('sw-neutral',[['Canvas','#F6F4EF'],['Surface','#FFFFFF'],['Surface sunken','#FAF8F4'],['Border subtle','#ECE8E1'],['Border default','#E2DDD3'],['Border strong','#CFC8BB'],['Text primary','#1C1A17'],['Text secondary','#57534C'],['Text muted','#8A847A']]);
+swatches('sw-brand',[['Brand · action','#2E4F75'],['Brand hover','#243F5E'],['Brand active','#1C3149'],['Brand tint','#EEF2F7']]);
+swatches('sw-bronze',[['Bronze','#9A7B4F'],['Bronze strong','#7E6238'],['Bronze tint','#F3EEE4']]);
+swatches('sw-money',[['Income text','#1F6B43'],['Income tint','#E8F2EB'],['Income border','#BFE0CC'],['Expense text','#A33A2E'],['Expense tint','#F7EAE7'],['Expense border','#E6C5BE']]);
+
+/* ---- badges ---- */
+function chip(tone, icon, label){ return `<span class="badge badge-${tone}">${svg(icon)}${label}</span>`; }
+document.getElementById('bd-tones').innerHTML = [
+  chip('neutral','doc','Neutral'), chip('info','send','Info'), chip('success','check','Success'),
+  chip('warning','alertTri','Warning'), chip('danger','stop','Danger')
+].join('');
+document.getElementById('bd-sev').innerHTML = [
+  `<span class="badge badge-danger">${svg('stop')}Blocking</span>`,
+  `<span class="badge badge-warning" style="font-weight:600;">${svg('alertTri')}High</span>`,
+  `<span class="badge badge-warning">${svg('alertCirc')}Medium</span>`,
+  `<span class="badge badge-info">${svg('infoCirc')}Low</span>`
+].join('');
+document.getElementById('bd-domain').innerHTML = [
+  chip('neutral','doc','Draft'), chip('info','send','Sent'), chip('info','loader','Running'),
+  chip('success','check','Paid'), chip('warning','clock','Awaiting approval'),
+  chip('success','check','Extracted'), chip('danger','x','Failed'), chip('danger','clock','Overdue')
+].join('');
+document.getElementById('bd-seal').innerHTML = [
+  `<span class="badge badge-seal">${svg('seal')}Finalized</span>`,
+  `<span class="badge badge-seal">${svg('lock')}Verified · integrity OK</span>`
+].join('');
+
+/* ---- spacing ruler ---- */
+document.getElementById('space-row').innerHTML = [4,8,12,16,24,32,48].map(v =>
+  `<div class="space-bar"><div class="b" style="width:${v}px;height:${v}px;"></div><div class="l">${v}</div></div>`
+).join('');
+</script>
+</body>
+</html>

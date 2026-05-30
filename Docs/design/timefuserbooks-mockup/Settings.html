@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TimeFuserBooks — Settings</title>
+<link rel="stylesheet" href="styles/tokens.css">
+<link rel="stylesheet" href="styles/shell.css">
+<style>
+  .set-layout { display: grid; grid-template-columns: 188px 1fr; gap: 32px; max-width: 920px; align-items: start; }
+  @media (max-width: 760px){ .set-layout { grid-template-columns: 1fr; } .set-nav { display: none; } }
+  .set-nav { position: sticky; top: 0; display: flex; flex-direction: column; gap: 2px; }
+  .set-nav a { padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; color: var(--text-secondary); text-decoration: none; cursor: pointer; }
+  .set-nav a.on { background: var(--brand-tint); color: var(--brand); font-weight: 600; }
+  .set-nav a:hover:not(.on) { background: var(--surface-sunken); }
+
+  .card { background: var(--surface); border: 1px solid var(--border-subtle); border-radius: var(--r-card); box-shadow: var(--elev-1); padding: 22px 24px; margin-bottom: 18px; }
+  .card h3 { font-size: 15px; font-weight: 600; margin: 0 0 4px; }
+  .card .ch-sub { font-size: 12.5px; color: var(--text-muted); margin-bottom: 18px; }
+
+  .frow { margin-bottom: 16px; }
+  .frow.two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .input-label { font-size: 12px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; display: block; }
+  .field { width: 100%; }
+
+  .integration { display: flex; align-items: center; gap: 13px; padding: 14px 0; border-top: 1px solid var(--border-subtle); }
+  .integration:first-of-type { border-top: none; }
+  .int-ic { width: 40px; height: 40px; border-radius: 10px; background: var(--surface-sunken); border: 1px solid var(--border-default); display: grid; place-items: center; color: var(--text-secondary); flex: none; }
+  .int-ic svg { width: 19px; height: 19px; }
+  .int-main { flex: 1; } .int-main .it { font-size: 13.5px; font-weight: 600; } .int-main .im { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+
+  .pref { display: flex; align-items: center; justify-content: space-between; padding: 13px 0; border-top: 1px solid var(--border-subtle); }
+  .pref:first-of-type { border-top: none; }
+  .pref .pl { font-size: 13.5px; font-weight: 500; } .pref .pm { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+  .switch { width: 38px; height: 22px; border-radius: 999px; background: var(--border-strong); position: relative; cursor: pointer; transition: background .16s; flex: none; }
+  .switch::after { content:""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform .16s; box-shadow: var(--elev-1); }
+  .switch.on { background: var(--income-text); } .switch.on::after { transform: translateX(16px); }
+  .seg { display: inline-flex; background: var(--surface-sunken); border: 1px solid var(--border-default); border-radius: 9px; padding: 3px; gap: 2px; }
+  .seg button { border: none; background: transparent; font: inherit; font-size: 12.5px; font-weight: 500; color: var(--text-secondary); padding: 6px 12px; border-radius: 7px; cursor: pointer; }
+  .seg button.on { background: var(--surface); color: var(--text-primary); box-shadow: var(--elev-1); }
+</style>
+</head>
+<body>
+<main class="main" id="main">
+  <div class="main-inner">
+
+    <div class="page-head">
+      <div data-screen-label="Settings">
+        <div class="ttl">Settings</div>
+        <div class="sub">Demo Trading Ltd</div>
+      </div>
+      <div class="page-actions"><button class="btn btn-primary btn-sm" id="saveBtn">Save changes</button></div>
+    </div>
+
+    <div class="set-layout">
+      <nav class="set-nav" id="setNav">
+        <a class="on" data-s="profile">Business profile</a>
+        <a data-s="vat">VAT &amp; compliance</a>
+        <a data-s="integrations">Integrations</a>
+        <a data-s="prefs">Preferences</a>
+      </nav>
+
+      <div>
+        <!-- profile -->
+        <div class="card" data-sec="profile">
+          <h3>Business profile</h3>
+          <div class="ch-sub">The legal entity these books belong to.</div>
+          <div class="frow"><label class="input-label">Business name</label><div class="field"><input value="Demo Trading Ltd"></div></div>
+          <div class="frow two">
+            <div><label class="input-label">Registration number</label><div class="field"><input value="HE 412785"></div></div>
+            <div><label class="input-label">Country</label><div class="field"><select><option>Cyprus</option><option>Greece</option></select><span data-i="chevD"></span></div></div>
+          </div>
+          <div class="frow"><label class="input-label">Registered address</label><div class="field"><input value="14 Makarios Ave, 1065 Nicosia, Cyprus"></div></div>
+        </div>
+
+        <!-- vat -->
+        <div class="card" data-sec="vat">
+          <h3>VAT &amp; compliance</h3>
+          <div class="ch-sub">Drives the Cyprus VAT engine and return schedule.</div>
+          <div class="frow two">
+            <div><label class="input-label">VAT number</label><div class="field"><input value="CY10412785V"></div></div>
+            <div><label class="input-label">Return frequency</label><div class="field"><select><option>Quarterly</option><option>Monthly</option></select><span data-i="chevD"></span></div></div>
+          </div>
+          <div class="frow two">
+            <div><label class="input-label">Default VAT scheme</label><div class="field"><select><option>Standard (accrual)</option><option>Cash accounting</option></select><span data-i="chevD"></span></div></div>
+            <div><label class="input-label">Default treatment</label><div class="field"><select><option>Domestic standard 19%</option><option>Domestic reduced 9%</option><option>Domestic reduced 5%</option></select><span data-i="chevD"></span></div></div>
+          </div>
+          <div class="pref"><div><div class="pl">VIES validation</div><div class="pm">Check EU VAT numbers against the VIES service</div></div><div class="switch on" onclick="this.classList.toggle('on')"></div></div>
+        </div>
+
+        <!-- integrations -->
+        <div class="card" data-sec="integrations">
+          <h3>Integrations</h3>
+          <div class="ch-sub">Where transactions and documents flow in from.</div>
+          <div class="integration"><span class="int-ic" data-i="ledger"></span><div class="int-main"><div class="it">Bank feed · Bank of Cyprus</div><div class="im">Last synced 12 minutes ago</div></div><span class="badge badge-success">Connected</span></div>
+          <div class="integration"><span class="int-ic" data-i="invoice"></span><div class="int-main"><div class="it">Email ingestion</div><div class="im">invoices@demotrading.timefuserbooks.app</div></div><span class="badge badge-success">Connected</span></div>
+          <div class="integration"><span class="int-ic" data-i="layers"></span><div class="int-main"><div class="it">Google Drive</div><div class="im">Auto-pull receipts from a shared folder</div></div><button class="btn btn-secondary btn-sm">Connect</button></div>
+          <div class="integration"><span class="int-ic" data-i="report"></span><div class="int-main"><div class="it">Tax Department e-filing</div><div class="im">Direct VAT 4 submission</div></div><span class="badge badge-warning">Coming soon</span></div>
+        </div>
+
+        <!-- prefs -->
+        <div class="card" data-sec="prefs">
+          <h3>Preferences</h3>
+          <div class="ch-sub">How the workspace looks and behaves for you.</div>
+          <div class="pref"><div><div class="pl">Theme</div><div class="pm">Light or warm dark</div></div>
+            <div class="seg" id="themeSeg"><button class="on" data-t="light">Light</button><button data-t="dark">Dark</button></div></div>
+          <div class="pref"><div><div class="pl">Default table density</div><div class="pm">Comfortable or compact rows</div></div>
+            <div class="seg"><button class="on">Comfortable</button><button>Compact</button></div></div>
+          <div class="pref"><div><div class="pl">Language</div><div class="pm">Interface language</div></div>
+            <div class="seg"><button class="on">English</button><button>Ελληνικά</button></div></div>
+          <div class="pref"><div><div class="pl">Email me the monthly close summary</div><div class="pm">When a period is finalized</div></div><div class="switch on" onclick="this.classList.toggle('on')"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="shared/shell.js"></script>
+<script>
+  CB.renderShell({ active: 'settings' });
+  const icon = CB.icon;
+  document.querySelectorAll('[data-i]').forEach(el => { el.innerHTML = icon(el.getAttribute('data-i')); });
+
+  // sub-nav scrollspy-ish (click scrolls within main)
+  const main = document.getElementById('main');
+  document.querySelectorAll('#setNav a').forEach(a => a.addEventListener('click', () => {
+    document.querySelectorAll('#setNav a').forEach(x => x.classList.remove('on')); a.classList.add('on');
+    const sec = document.querySelector(`[data-sec="${a.dataset.s}"]`);
+    if (sec) main.scrollTo({ top: sec.offsetTop - 80, behavior: 'smooth' });
+  }));
+
+  // theme seg syncs the real theme
+  document.querySelectorAll('#themeSeg button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('#themeSeg button').forEach(x => x.classList.remove('on')); b.classList.add('on');
+    CB.setTheme(b.dataset.t);
+  }));
+  // reflect current theme on load
+  (function(){ const cur = document.documentElement.getAttribute('data-theme') || 'light';
+    document.querySelectorAll('#themeSeg button').forEach(x => x.classList.toggle('on', x.dataset.t === cur)); })();
+</script>
+</body>
+</html>
