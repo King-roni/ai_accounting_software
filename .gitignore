@@ -3,6 +3,8 @@
 .env.local
 .env.*.local
 .env.production
+# secret inbox for pushing R4 keys into 1Password — never commit real values
+secrets.inbox.env
 node_modules/
 .claude/
 .playwright-mcp/
