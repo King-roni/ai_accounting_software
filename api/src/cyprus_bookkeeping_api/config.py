@@ -82,6 +82,20 @@ class Settings(BaseSettings):
         ),
     )
 
+    # --- Export-generation worker (R7.1) ---
+    worker_generate_exports: bool = Field(
+        default=True,
+        description="When true, each tick also generates claimable PENDING exports.",
+    )
+    worker_export_batch_size: int = Field(
+        default=10,
+        description="Max PENDING exports generated per tick.",
+    )
+    export_bucket: str = Field(
+        default="export-artifacts",
+        description="Private storage bucket generated export artifacts are written to.",
+    )
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:

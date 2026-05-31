@@ -32,11 +32,13 @@ def test_rejects_missing_header():
 
 def test_runs_tick_on_valid_secret(monkeypatch):
     monkeypatch.setattr(worker_route, "build_service_gateway", lambda s: object())
+    monkeypatch.setattr(worker_route, "build_service_storage", lambda s: object())
     monkeypatch.setattr(
         worker_route, "tick",
         lambda gw, s, **k: {
             "consumed": {"consumed": ["e1"], "failed": [], "created_run_ids": ["r1", "r2"]},
             "driven": [{"ok": True}, {"ok": True}],
+            "exports": {"generated": ["x1"], "failed": []},
         },
     )
     out = worker_route.worker_tick(settings=_settings("s3cret"), x_worker_tick_secret="s3cret")
@@ -44,3 +46,4 @@ def test_runs_tick_on_valid_secret(monkeypatch):
     assert out["consumed_events"] == ["e1"]
     assert out["created_run_ids"] == ["r1", "r2"]
     assert out["runs_driven"] == 2
+    assert out["exports_generated"] == ["x1"]

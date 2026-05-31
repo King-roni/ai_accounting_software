@@ -18,6 +18,8 @@ from types import FrameType
 from typing import Any
 
 from cyprus_bookkeeping_api.config import Settings, get_settings
+from cyprus_bookkeeping_api.exports.runner import generate_pending_exports
+from cyprus_bookkeeping_api.exports.storage import StoragePort, build_service_storage
 from cyprus_bookkeeping_api.orchestrator.engine import safe_drive_run
 from cyprus_bookkeeping_api.orchestrator.gates import GateEngine
 from cyprus_bookkeeping_api.orchestrator.models import DRIVABLE_STATUSES
@@ -34,8 +36,14 @@ def tick(
     *,
     gate_engine: GateEngine | None = None,
     phase_registry: PhaseRegistry | None = None,
+    storage: StoragePort | None = None,
 ) -> dict[str, Any]:
-    """One full pass: consume the outbox, then advance runnable runs."""
+    """One full pass: consume the outbox, advance runnable runs, generate exports.
+
+    Export generation runs only when a ``storage`` port is supplied (and the
+    feature flag is on) — the long-lived worker and the tick endpoint provide
+    one; callers that don't pass storage simply skip it.
+    """
     gate_engine = gate_engine or GateEngine()
     phase_registry = phase_registry or PhaseRegistry()
 
@@ -58,7 +66,12 @@ def tick(
         )
         for run in runnable
     ]
-    return {"consumed": consumed, "driven": driven}
+
+    exports: dict[str, Any] = {}
+    if storage is not None and settings.worker_generate_exports:
+        exports = generate_pending_exports(gateway, storage, settings)
+
+    return {"consumed": consumed, "driven": driven, "exports": exports}
 
 
 class _Stopper:
@@ -77,6 +90,7 @@ def run_worker(settings: Settings | None = None) -> None:
     gateway = build_service_gateway(settings)
     gate_engine = GateEngine()
     phase_registry = PhaseRegistry()
+    storage = build_service_storage(settings) if settings.worker_generate_exports else None
 
     stopper = _Stopper()
     signal.signal(signal.SIGTERM, stopper)
@@ -90,7 +104,13 @@ def run_worker(settings: Settings | None = None) -> None:
     )
     while not stopper.stop:
         try:
-            tick(gateway, settings, gate_engine=gate_engine, phase_registry=phase_registry)
+            tick(
+                gateway,
+                settings,
+                gate_engine=gate_engine,
+                phase_registry=phase_registry,
+                storage=storage,
+            )
         except Exception:  # noqa: BLE001 — a tick failure must not kill the loop
             logger.exception("worker tick failed; continuing")
         for _ in range(int(max(1, settings.worker_poll_interval_seconds))):

@@ -15,6 +15,7 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Header, HTTPException, status
 
 from cyprus_bookkeeping_api.deps import SettingsDep
+from cyprus_bookkeeping_api.exports.storage import build_service_storage
 from cyprus_bookkeeping_api.orchestrator.rpc import RpcError, build_service_gateway
 from cyprus_bookkeeping_api.worker import tick
 
@@ -39,7 +40,8 @@ def worker_tick(
 
     try:
         gateway = build_service_gateway(settings)
-        result = tick(gateway, settings)
+        storage = build_service_storage(settings) if settings.worker_generate_exports else None
+        result = tick(gateway, settings, storage=storage)
     except RpcError as exc:
         logger.exception("worker tick failed")
         raise HTTPException(
@@ -48,9 +50,12 @@ def worker_tick(
 
     consumed = result.get("consumed", {}) if isinstance(result, dict) else {}
     driven = result.get("driven", []) if isinstance(result, dict) else []
+    exports = result.get("exports", {}) if isinstance(result, dict) else {}
     return {
         "ok": True,
         "consumed_events": consumed.get("consumed", []),
         "created_run_ids": consumed.get("created_run_ids", []),
         "runs_driven": len(driven),
+        "exports_generated": exports.get("generated", []),
+        "exports_failed": exports.get("failed", []),
     }
