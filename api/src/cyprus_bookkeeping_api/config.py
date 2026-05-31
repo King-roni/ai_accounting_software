@@ -96,6 +96,32 @@ class Settings(BaseSettings):
         description="Private storage bucket generated export artifacts are written to.",
     )
 
+    # --- Statement-ingestion worker (R7.2) ---
+    worker_parse_statements: bool = Field(
+        default=True,
+        description="When true, each tick also parses claimable UPLOADED statements into transactions.",
+    )
+    worker_statement_batch_size: int = Field(
+        default=10,
+        description="Max UPLOADED statements parsed per tick.",
+    )
+    raw_upload_bucket: str = Field(
+        default="raw-uploads",
+        description="Private bucket uploaded statement/document bytes are read from.",
+    )
+    statement_default_currency: str = Field(
+        default="EUR",
+        description="Currency assumed for statement rows that don't carry one.",
+    )
+    statement_dedup_soft_window_days: int = Field(
+        default=30,
+        description="Date window for the B07 soft (probable) duplicate check.",
+    )
+    statement_dedup_amount_tolerance_cents: int = Field(
+        default=1,
+        description="Amount tolerance (cents) for the B07 soft (probable) duplicate check.",
+    )
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:

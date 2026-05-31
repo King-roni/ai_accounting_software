@@ -22,9 +22,11 @@ class StorageError(RuntimeError):
 class StoragePort(Protocol):
     def upload(self, bucket: str, path: str, data: bytes, content_type: str) -> None: ...
 
+    def download(self, bucket: str, path: str) -> bytes: ...
+
 
 class SupabaseStorage:
-    """Concrete uploader backed by ``supabase.Client`` storage."""
+    """Concrete uploader/downloader backed by ``supabase.Client`` storage."""
 
     def __init__(self, client: object) -> None:
         self._client = client
@@ -38,6 +40,12 @@ class SupabaseStorage:
             )
         except Exception as exc:  # noqa: BLE001 — normalise transport errors
             raise StorageError(f"upload to {bucket}/{path} failed: {exc}") from exc
+
+    def download(self, bucket: str, path: str) -> bytes:
+        try:
+            return self._client.storage.from_(bucket).download(path)  # type: ignore[attr-defined]
+        except Exception as exc:  # noqa: BLE001 — normalise transport errors
+            raise StorageError(f"download of {bucket}/{path} failed: {exc}") from exc
 
 
 def build_service_storage(settings: Settings) -> SupabaseStorage:

@@ -20,6 +20,7 @@ from typing import Any
 from cyprus_bookkeeping_api.config import Settings, get_settings
 from cyprus_bookkeeping_api.exports.runner import generate_pending_exports
 from cyprus_bookkeeping_api.exports.storage import StoragePort, build_service_storage
+from cyprus_bookkeeping_api.ingestion.runner import parse_pending_statements
 from cyprus_bookkeeping_api.orchestrator.engine import safe_drive_run
 from cyprus_bookkeeping_api.orchestrator.gates import GateEngine
 from cyprus_bookkeeping_api.orchestrator.models import DRIVABLE_STATUSES
@@ -49,6 +50,12 @@ def tick(
 
     consumed = consume_pending(gateway, settings)
 
+    # Parse UPLOADED statements → transactions BEFORE driving runs, so a run
+    # created this same tick finds its transactions when its phases advance.
+    statements: dict[str, Any] = {}
+    if storage is not None and settings.worker_parse_statements:
+        statements = parse_pending_statements(gateway, storage, settings)
+
     runnable = gateway.select(
         "workflow_runs",
         columns="id,status,created_at",
@@ -71,7 +78,12 @@ def tick(
     if storage is not None and settings.worker_generate_exports:
         exports = generate_pending_exports(gateway, storage, settings)
 
-    return {"consumed": consumed, "driven": driven, "exports": exports}
+    return {
+        "consumed": consumed,
+        "statements": statements,
+        "driven": driven,
+        "exports": exports,
+    }
 
 
 class _Stopper:

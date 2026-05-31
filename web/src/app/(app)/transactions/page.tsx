@@ -11,6 +11,7 @@ import {
 } from "@/components/transactions/transaction-helpers";
 import { TransactionDetailDrawer } from "@/components/transactions/TransactionDetailDrawer";
 import { UploadStatementDrawer } from "@/components/transactions/UploadStatementDrawer";
+import { RecentUploads } from "@/components/transactions/RecentUploads";
 
 function Stat({ label, value, tone }: { label: string; value: string | number; tone?: "in" | "out" }) {
   const color = tone === "in" ? "var(--color-status-success-text)" : tone === "out" ? "var(--color-status-danger-text)" : undefined;
@@ -129,6 +130,8 @@ export default function TransactionsPage() {
           </div>
         </>
       )}
+
+      {currentBusiness && !isMultiBusiness && <RecentUploads businessId={currentBusiness.id} />}
 
       {!currentBusiness ? (
         <EmptyState icon={Building2} heading="Select a business" body="Choose a business from the switcher to see its transactions." />
