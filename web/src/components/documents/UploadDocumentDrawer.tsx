@@ -4,6 +4,12 @@ import { UploadCloud } from "lucide-react";
 import { Alert, Button, Drawer, Select, useToast } from "@/components/ui";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useShell } from "@/components/shell/ShellContext";
+import {
+  completeDocumentUpload,
+  prepareUpload,
+  type UploadEntityType,
+} from "@/lib/uploads/actions";
+import { sha256Hex } from "@/lib/uploads/hash";
 
 const ENTITY_OPTIONS = [
   { value: "INVOICE", label: "Invoice", content: "application/pdf" },
@@ -12,9 +18,10 @@ const ENTITY_OPTIONS = [
 ] as const;
 
 /**
- * UploadDocumentDrawer — registers a supporting document (invoice/receipt/
- * contract) via the B07 `request_raw_upload` grant RPC. OCR + field extraction
- * run server-side (B09 pipeline); this surface performs the registration step.
+ * UploadDocumentDrawer — uploads a supporting document (invoice/receipt/
+ * contract). Flow (P0.2): request_raw_upload grant → byte PUT to the signed URL
+ * → confirm_raw_upload. OCR + field extraction → the matchable `documents` row
+ * run server-side in the B09 intake pipeline (P2).
  */
 export function UploadDocumentDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { currentBusiness } = useShell();
@@ -30,19 +37,39 @@ export function UploadDocumentDrawer({ open, onClose }: { open: boolean; onClose
     if (!file || !currentBusiness) return;
     setBusy(true);
     setError(null);
-    const supabase = createSupabaseBrowserClient();
-    const { error: rpcError } = await supabase.rpc("request_raw_upload", {
-      p_business_id: currentBusiness.id,
-      p_entity_type: entity,
-      p_original_filename: file.name,
-      p_declared_size_bytes: file.size,
-      p_declared_content_type: file.type || "application/pdf",
-      p_grant_ttl_seconds: 300,
-    });
-    setBusy(false);
-    if (rpcError) { setError(rpcError.message); return; }
-    toast({ variant: "success", title: "Document registered", description: `${file.name} will be OCR-processed and extracted.` });
-    close();
+    try {
+      const contentType = file.type || "application/pdf";
+      const grant = await prepareUpload({
+        businessId: currentBusiness.id,
+        entityType: entity as UploadEntityType,
+        filename: file.name,
+        sizeBytes: file.size,
+        contentType,
+      });
+      if (!grant.ok) { setError(grant.error); setBusy(false); return; }
+
+      const supabase = createSupabaseBrowserClient();
+      const { error: uploadError } = await supabase.storage
+        .from(grant.bucket)
+        .uploadToSignedUrl(grant.path, grant.token, file, { contentType });
+      if (uploadError) { setError(uploadError.message); setBusy(false); return; }
+
+      const fileHash = await sha256Hex(file);
+      const done = await completeDocumentUpload({
+        rawUploadFileId: grant.rawUploadFileId,
+        fileHash,
+        sizeBytes: file.size,
+        contentType,
+      });
+      if (!done.ok) { setError(done.error); setBusy(false); return; }
+
+      setBusy(false);
+      toast({ variant: "success", title: "Document uploaded", description: `${file.name} will be OCR-processed and offered for matching.` });
+      close();
+    } catch (err) {
+      setBusy(false);
+      setError(err instanceof Error ? err.message : "Upload failed");
+    }
   };
 
   return (
