@@ -256,13 +256,23 @@ level). `match_method_enum` = DETERMINISTIC_RULE, AI_FALLBACK.
 
 ## ✅ Layer 2 status (2026-05-31)
 All four deterministic engines built, unit-tested, ruff/mypy-clean, on `main`:
-CLASSIFICATION + MATCHING + LEDGER_PREPARATION + INCOME_MATCHING. Remaining to a
-clean full end-to-end drive: the demo business **chart of accounts is not
-configured** (`chart_of_accounts_mappings` empty, no active mapping version for
-the period) → `prepare_ledger_entries` raises and the run correctly holds at
-LEDGER. Configuring a minimal Cyprus chart + mapping version is a Block-11 setup
-task (separate from the orchestrator). Optional scale piece still open: the
-multi-worker run-claim lease.
+CLASSIFICATION + MATCHING + LEDGER_PREPARATION + INCOME_MATCHING.
+
+**Full end-to-end drive PROVEN** on the demo May OUT_MONTHLY run after configuring
+the chart of accounts: CREATED → 10 phases → AWAITING_APPROVAL, producing 3 vendor
+auto-confirmed classifications + 3 needs-confirmation, 3 match_records
+(EXACT/STRONG), and **12 balanced double-entry ledger rows** (expenses DR 6900 /
+CR 2000, income DR 1100 / CR 4000). Drive artifacts reset afterward.
+
+Chart setup performed: the demo business had a broken partial chart (3 custom
+accounts, empty mapping version dated after the period, no rules). Replaced via
+`load_default_chart_for_business` (canonical Cyprus chart: 41 accounts + 27
+mapping rules) with the version `effective_from` backdated to 2025-01-01 so
+`chart_resolve_mapping_version` covers the demo period. This is **persistent demo
+config** (not reset).
+
+Only optional piece still open: the multi-worker **run-claim lease** (single
+worker is correct without it).
 
 Each handler: unit tests (mock gateway) + live drive against the demo
 (business `0e000000-0000-4000-8000-0000000000b1`, 6 txns), reset after.
