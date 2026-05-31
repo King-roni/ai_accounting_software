@@ -72,6 +72,15 @@ class Settings(BaseSettings):
             "OCR) are skipped until P2."
         ),
     )
+    worker_tick_secret: str = Field(
+        default="",
+        description=(
+            "Shared secret for POST /internal/worker/tick (P0.4). When empty the "
+            "endpoint is disabled; the default deployment runs the continuous worker "
+            "and a scheduler (pg_cron+pg_net / external cron) only needs this for the "
+            "serverless tick-on-demand mode."
+        ),
+    )
 
 
 @lru_cache(maxsize=1)

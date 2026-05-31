@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from supabase import Client, create_client
 
 from cyprus_bookkeeping_api.config import Settings, get_settings
-from cyprus_bookkeeping_api.routes import health, me
+from cyprus_bookkeeping_api.routes import health, me, worker
 from cyprus_bookkeeping_api.secure_http import verify_security_baseline
 
 logger = logging.getLogger(__name__)
@@ -85,3 +85,4 @@ app.add_middleware(
 
 app.include_router(health.router, tags=["health"])
 app.include_router(me.router, tags=["me"])
+app.include_router(worker.router, tags=["worker"])
