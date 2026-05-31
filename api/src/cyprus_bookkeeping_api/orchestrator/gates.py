@@ -34,19 +34,27 @@ logger = logging.getLogger(__name__)
 Evaluator = Callable[[Gateway, RunContext, str], tuple[GateDecision, str | None]]
 
 
-def _db_satisfied_gate(rpc_name: str, **extra_params: str) -> Evaluator:
-    """Wrap a DB gate evaluator that returns ``{"satisfied": bool, "reason"?}``."""
+def _db_gate(rpc_name: str, *, with_context: bool = False) -> Evaluator:
+    """Wrap a DB gate evaluator keyed on ``p_workflow_run_id``.
+
+    Accepts either result key — ``satisfied`` (ledger) or ``passes`` (classify) —
+    and optionally passes ``p_context`` for gates whose signature requires it
+    (e.g. ``gate_in_workflow_classification_exit_v1``).
+    """
 
     def _evaluate(
         gateway: Gateway, ctx: RunContext, phase_state_id: str
     ) -> tuple[GateDecision, str | None]:
         params: dict[str, Any] = {"p_workflow_run_id": ctx.run_id}
-        params.update(extra_params)
+        if with_context:
+            params["p_context"] = {}
         result = gateway.rpc(rpc_name, params) or {}
         if isinstance(result, list):
             result = result[0] if result else {}
-        satisfied = bool(result.get("satisfied"))
-        if satisfied:
+        ok = result.get("satisfied")
+        if ok is None:
+            ok = result.get("passes")
+        if bool(ok):
             return GateDecision.ADVANCE, None
         return GateDecision.HOLD, result.get("reason") or f"{rpc_name} not satisfied"
 
@@ -55,8 +63,13 @@ def _db_satisfied_gate(rpc_name: str, **extra_params: str) -> Evaluator:
 
 # gate_name -> evaluator. Extend as block gate bodies are wired.
 _EVALUATORS: dict[str, Evaluator] = {
-    "ledger.exit_all_in_scope_entries_drafted_or_held_v1": _db_satisfied_gate(
+    "ledger.exit_all_in_scope_entries_drafted_or_held_v1": _db_gate(
         "evaluate_ledger_exit_gate"
+    ),
+    "classification.entry_v1": _db_gate("evaluate_classify_entry_gate"),
+    "classification.exit_v1": _db_gate("evaluate_classify_exit_gate"),
+    "in_workflow.classification_exit_v1": _db_gate(
+        "gate_in_workflow_classification_exit_v1", with_context=True
     ),
 }
 

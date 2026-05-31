@@ -169,7 +169,7 @@ _REGISTRY: dict[tuple[str, str], Handler] = {
     (WILDCARD, "MANUAL_UPLOAD_HOLD"): handle_noop_complete,
     (WILDCARD, "HUMAN_REVIEW_HOLD"): handle_noop_complete,
     (WILDCARD, "AI_END_SCAN"): handle_ai_end_scan_stub,
-    (WILDCARD, "CLASSIFICATION"): handle_wiring_pending,
+    # (WILDCARD, "CLASSIFICATION") wired at module bottom (layer-2 engine).
     ("OUT_MONTHLY", "MATCHING"): handle_wiring_pending,
     ("IN_MONTHLY", "INCOME_MATCHING"): handle_wiring_pending,
     ("IN_MONTHLY", "IN_FILTER"): handle_in_filter,
@@ -193,3 +193,14 @@ class PhaseRegistry:
 
     def run(self, workflow_type: str, phase_name: str, deps: PhaseDeps) -> PhaseOutcome:
         return self.resolve(workflow_type, phase_name)(deps)
+
+
+# --------------------------------------------------------------------------- #
+# Layer-2 engine handlers — imported after PhaseDeps + _REGISTRY exist so the
+# engines (which type-hint PhaseDeps) never create an import cycle.
+# --------------------------------------------------------------------------- #
+from cyprus_bookkeeping_api.orchestrator.engines.classification import (  # noqa: E402
+    handle_classification,
+)
+
+_REGISTRY[(WILDCARD, "CLASSIFICATION")] = handle_classification
