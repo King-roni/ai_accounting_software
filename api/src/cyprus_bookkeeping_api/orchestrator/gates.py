@@ -71,6 +71,12 @@ _EVALUATORS: dict[str, Evaluator] = {
     "in_workflow.classification_exit_v1": _db_gate(
         "gate_in_workflow_classification_exit_v1", with_context=True
     ),
+    "matching.exit_all_out_expense_match_status_set_v1": _db_gate(
+        "evaluate_matching_exit_gate"
+    ),
+    "income_matching.exit_all_in_match_status_set_v1": _db_gate(
+        "evaluate_income_matching_exit_gate"
+    ),
 }
 
 

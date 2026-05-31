@@ -10,5 +10,6 @@ from __future__ import annotations
 from cyprus_bookkeeping_api.orchestrator.engines.classification import (
     handle_classification,
 )
+from cyprus_bookkeeping_api.orchestrator.engines.matching import handle_matching
 
-__all__ = ["handle_classification"]
+__all__ = ["handle_classification", "handle_matching"]

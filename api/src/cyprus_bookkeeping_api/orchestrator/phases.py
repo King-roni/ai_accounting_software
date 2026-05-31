@@ -169,8 +169,7 @@ _REGISTRY: dict[tuple[str, str], Handler] = {
     (WILDCARD, "MANUAL_UPLOAD_HOLD"): handle_noop_complete,
     (WILDCARD, "HUMAN_REVIEW_HOLD"): handle_noop_complete,
     (WILDCARD, "AI_END_SCAN"): handle_ai_end_scan_stub,
-    # (WILDCARD, "CLASSIFICATION") wired at module bottom (layer-2 engine).
-    ("OUT_MONTHLY", "MATCHING"): handle_wiring_pending,
+    # CLASSIFICATION + MATCHING wired at module bottom (layer-2 engines).
     ("IN_MONTHLY", "INCOME_MATCHING"): handle_wiring_pending,
     ("IN_MONTHLY", "IN_FILTER"): handle_in_filter,
     (WILDCARD, "LEDGER_PREPARATION"): handle_wiring_pending,
@@ -202,5 +201,9 @@ class PhaseRegistry:
 from cyprus_bookkeeping_api.orchestrator.engines.classification import (  # noqa: E402
     handle_classification,
 )
+from cyprus_bookkeeping_api.orchestrator.engines.matching import (  # noqa: E402
+    handle_matching,
+)
 
 _REGISTRY[(WILDCARD, "CLASSIFICATION")] = handle_classification
+_REGISTRY[("OUT_MONTHLY", "MATCHING")] = handle_matching
