@@ -6,13 +6,14 @@ import { Badge, Button, EmptyState, ErrorState, Table, Tabs, useToast, type Colu
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useShell } from "@/components/shell/ShellContext";
 import { RequestExportDrawer } from "@/components/reports/RequestExportDrawer";
+import { getExportDownloadUrl } from "@/lib/exports/actions";
 import {
   EXPORT_COLUMNS, EXPORT_STATUS_BADGE, SCOPE_LABEL, kindLabel,
   type ExportCatalogueRow, type ExportRow,
 } from "@/components/reports/report-helpers";
 
 export default function ReportsPage() {
-  const { currentBusiness, isMultiBusiness, user } = useShell();
+  const { currentBusiness, isMultiBusiness } = useShell();
   const { toast } = useToast();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [tab, setTab] = useState("catalogue");
@@ -34,13 +35,17 @@ export default function ReportsPage() {
 
   async function download(e: ExportRow) {
     setBusyId(e.id);
-    const { data, error } = await supabase.rpc("record_export_download", { p_export_id: e.id, p_actor_user_id: user.id, p_context: {} });
+    const res = await getExportDownloadUrl(e.id);
     setBusyId(null);
-    if (error) { toast({ variant: "error", title: "Download failed", description: error.message }); return; }
-    const d = data as { signed_url?: string; url?: string } | null;
-    const url = d?.signed_url ?? d?.url;
-    if (url) { window.open(url, "_blank", "noopener"); }
-    else { toast({ variant: "info", title: "File not available yet", description: "The export is recorded but its file isn’t generated in this environment." }); }
+    if (!res.ok) {
+      const msg =
+        res.error === "EXPORT_NOT_READY"
+          ? "The export file isn’t generated yet."
+          : res.error;
+      toast({ variant: "error", title: "Download failed", description: msg });
+      return;
+    }
+    window.open(res.url, "_blank", "noopener");
     mutate();
   }
 
