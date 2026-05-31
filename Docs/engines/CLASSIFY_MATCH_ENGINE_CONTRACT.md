@@ -220,8 +220,8 @@ level). `match_method_enum` = DETERMINISTIC_RULE, AI_FALLBACK.
 1. ✅ CLASSIFICATION (done, on main `df56695`) — shared OUT/IN.
 2. ✅ MATCHING (done, on main `334971d`) — OUT scorer; NO_MATCH via
    `record_match_no_match`; status enum `transaction_match_status_enum`.
-3. LEDGER_PREPARATION — **real RPC names differ from the tool declarations**
-   (verified 2026-05-31 against pg_proc):
+3. ✅ LEDGER_PREPARATION (done, on main `052f761`) — **real RPC names differ
+   from the tool declarations** (verified 2026-05-31 against pg_proc):
    - writer: **`prepare_ledger_entries`**(org, biz, transaction_id, run,
      match_record_id, input_vat_reclaimable, output_vat_due, vat_amount,
      entry_period, actor, ctx) — *not* `prepare_entries`.
@@ -248,9 +248,21 @@ level). `match_method_enum` = DETERMINISTIC_RULE, AI_FALLBACK.
      to pin the true order (likely: resolve_counterparty → prepare_ledger_entries
      with preliminary VAT inputs → per-entry classify/compute enrich). This is the
      most correctness-sensitive engine (VAT/ledger) — build with care.
-4. INCOME_MATCHING (IN) — `get_match_candidates` + `apply_income_match_outcome`;
-   exit gate `evaluate_income_matching_exit_gate` requires `income_match_outcome`
+4. ✅ INCOME_MATCHING (done, on main `052f761`) — **no `get_match_candidates`
+   RPC exists** (candidate discovery is app-side over invoices); writer is
+   `apply_income_match`(txn, invoice, outcome, run, has_reference_match, actor, ctx).
+   Exit gate `evaluate_income_matching_exit_gate` requires `income_match_outcome`
    set on every IN-direction txn in period.
+
+## ✅ Layer 2 status (2026-05-31)
+All four deterministic engines built, unit-tested, ruff/mypy-clean, on `main`:
+CLASSIFICATION + MATCHING + LEDGER_PREPARATION + INCOME_MATCHING. Remaining to a
+clean full end-to-end drive: the demo business **chart of accounts is not
+configured** (`chart_of_accounts_mappings` empty, no active mapping version for
+the period) → `prepare_ledger_entries` raises and the run correctly holds at
+LEDGER. Configuring a minimal Cyprus chart + mapping version is a Block-11 setup
+task (separate from the orchestrator). Optional scale piece still open: the
+multi-worker run-claim lease.
 
 Each handler: unit tests (mock gateway) + live drive against the demo
 (business `0e000000-0000-4000-8000-0000000000b1`, 6 txns), reset after.
