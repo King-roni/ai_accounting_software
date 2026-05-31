@@ -201,9 +201,17 @@ class PhaseRegistry:
 from cyprus_bookkeeping_api.orchestrator.engines.classification import (  # noqa: E402
     handle_classification,
 )
+from cyprus_bookkeeping_api.orchestrator.engines.income import (  # noqa: E402
+    handle_income_matching,
+)
+from cyprus_bookkeeping_api.orchestrator.engines.ledger import (  # noqa: E402
+    handle_ledger_preparation,
+)
 from cyprus_bookkeeping_api.orchestrator.engines.matching import (  # noqa: E402
     handle_matching,
 )
 
 _REGISTRY[(WILDCARD, "CLASSIFICATION")] = handle_classification
 _REGISTRY[("OUT_MONTHLY", "MATCHING")] = handle_matching
+_REGISTRY[(WILDCARD, "LEDGER_PREPARATION")] = handle_ledger_preparation
+_REGISTRY[("IN_MONTHLY", "INCOME_MATCHING")] = handle_income_matching
