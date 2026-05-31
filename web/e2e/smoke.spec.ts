@@ -18,13 +18,12 @@ test.describe("shell & navigation", () => {
     // P0: unmatched count is filtered by match_status (seeded: 6 UNMATCHED).
     const unmatched = page.getByRole("button").filter({ hasText: /Unmatched Transactions/i });
     await expect(unmatched.getByText("transactions without a confirmed match")).toBeVisible();
-    // P1: a known-stub card's drill-down shows "Awaiting", not raw transactions.
-    await page.getByRole("button").filter({ hasText: /Client Invoice Aging/i }).first().click();
+    // R6/A6: analytics cards now render real projections — no "Awaiting data" anywhere.
+    await expect(page.getByText("Awaiting data")).toHaveCount(0);
+    await expect(page.getByRole("button").filter({ hasText: /Client Invoice Aging/i }).getByText("Outstanding receivables")).toBeVisible();
+    // Analytics drill-down lists real records (not the old stub/awaiting state).
+    await page.getByRole("button").filter({ hasText: /Tax Treatment Breakdown/i }).first().click();
     const drawer = page.getByRole("dialog");
-    await expect(drawer.getByText("Awaiting aggregated data")).toBeVisible();
-    await page.keyboard.press("Escape");
-    // Unmatched drill-down lists real filtered transactions (count agrees w/ card).
-    await unmatched.first().click();
     await expect(drawer.getByText(/record/)).toBeVisible();
     await expect(drawer.getByText("Awaiting aggregated data")).toHaveCount(0);
   });

@@ -9,7 +9,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useShell } from "@/components/shell/ShellContext";
 import { formatMoney, periodRange } from "@/components/transactions/transaction-helpers";
 import {
-  STUB_LABEL, STUB_VARIANT, UNMATCHED_COLUMNS, UNMATCHED_STATUSES, unmatchedLabel,
+  STUB_LABEL, UNMATCHED_COLUMNS, UNMATCHED_STATUSES, unmatchedLabel,
   type CardDef, type UnmatchedTxn,
 } from "./dashboard-helpers";
 
@@ -29,7 +29,7 @@ export function DashboardCard({ def, businessIds, onOpen }: { def: CardDef; busi
     case "unresolved_review_items": return <ReviewsCard def={def} businessIds={businessIds} onOpen={onOpen} />;
     case "unmatched_transactions": return <UnmatchedCard def={def} businessIds={businessIds} onOpen={onOpen} />;
     case "recent_finalizations": return <FinalizationsCard def={def} businessIds={businessIds} onOpen={onOpen} />;
-    default: return <StubCard def={def} onOpen={onOpen} />;
+    default: return <AnalyticsCard def={def} businessIds={businessIds} onOpen={onOpen} />;
   }
 }
 
@@ -186,7 +186,11 @@ function FinalizationsCard({ def, businessIds, onOpen }: { def: CardDef; busines
   );
 }
 
-/* ── stub cards: bespoke faint chart + "Awaiting data" + label ───────────── */
+/* ── analytics cards (REAL: analytics.* projections via dashboard_analytics_card) ─ */
+const num = (x: unknown): number => (typeof x === "number" ? x : Number(x) || 0);
+const TITLE = (s: string) => s.replace(/\b\w/g, (c) => c.toUpperCase());
+const SEG_PALETTE = ["var(--color-brand-500)", "var(--color-accent-bronze)", "var(--color-status-info)", "var(--color-text-muted)"];
+
 function AwaitingChip() {
   return (
     <span className="inline-flex items-center gap-2 rounded-full border border-border-default bg-surface-default px-3 py-1 text-[11px] font-semibold text-text-secondary shadow-1">
@@ -195,50 +199,173 @@ function AwaitingChip() {
     </span>
   );
 }
-const DONUT_LEGEND: Record<string, string[]> = {
-  vat_summary: ["Input VAT", "Output VAT", "Net VAT"],
-  tax_treatment_breakdown: ["Standard 19%", "Reduced 9/5%", "Reverse charge"],
-};
-function StubCard({ def, onOpen }: { def: CardDef; onOpen: (d: CardDef) => void }) {
-  const variant = STUB_VARIANT[def.card_id] ?? "bars";
+function Awaiting({ label }: { label?: string }) {
+  return (
+    <div className="relative flex-1">
+      <div className="absolute inset-0 grid place-items-center"><AwaitingChip /></div>
+      {label && <p className="absolute inset-x-0 bottom-0 text-center text-[11px] text-text-muted">{label}</p>}
+    </div>
+  );
+}
+/** Segmented donut (circumference ≈ 100 at r=15.9155). Decorative; real values in text. */
+function Donut({ segments }: { segments: { frac: number; color: string }[] }) {
+  const arcs = segments
+    .filter((s) => s.frac > 0.0001)
+    .map((s) => ({ dash: Math.min(100, s.frac * 100), color: s.color }));
+  const withOffset = arcs.map((a, i) => ({ ...a, offset: arcs.slice(0, i).reduce((sum, x) => sum + x.dash, 0) }));
+  return (
+    <svg width="60" height="60" viewBox="0 0 42 42" className="-rotate-90 shrink-0" aria-hidden="true">
+      <circle cx="21" cy="21" r="15.9155" fill="none" stroke="var(--color-bg-raised)" strokeWidth="6" />
+      {withOffset.map((a, i) => (
+        <circle key={i} cx="21" cy="21" r="15.9155" fill="none" stroke={a.color} strokeWidth="6" strokeDasharray={`${a.dash} ${100 - a.dash}`} strokeDashoffset={-a.offset} />
+      ))}
+    </svg>
+  );
+}
+function Ring({ pct }: { pct: number }) {
+  const c = 2 * Math.PI * 31, dash = Math.max(0, Math.min(100, pct)) / 100 * c;
+  return (
+    <svg width="60" height="60" viewBox="0 0 74 74" className="-rotate-90 shrink-0" aria-hidden="true">
+      <circle cx="37" cy="37" r="31" fill="none" stroke="var(--color-bg-raised)" strokeWidth="8" />
+      <circle cx="37" cy="37" r="31" fill="none" stroke="var(--color-status-success)" strokeWidth="8" strokeLinecap="round" strokeDasharray={`${dash} ${c - dash}`} />
+    </svg>
+  );
+}
+function Legend({ items }: { items: { label: string; value: string; color: string }[] }) {
+  return (
+    <ul className="flex min-w-0 flex-1 flex-col gap-1 text-xs">
+      {items.map((it) => (
+        <li key={it.label} className="flex items-center gap-1.5">
+          <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: it.color }} aria-hidden="true" />
+          <span className="truncate text-text-secondary">{it.label}</span>
+          <span className="ml-auto font-mono tabular-nums text-text-muted">{it.value}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+type Metric = Record<string, unknown>;
+
+function AnalyticsCard({ def, businessIds, onOpen }: { def: CardDef; businessIds: string[]; onOpen: (d: CardDef) => void }) {
+  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
+  const { data, isLoading } = useSWR<Metric>(["analytics-card", def.card_id, businessIds.join(",")], async () => {
+    const { data } = await supabase.rpc("dashboard_analytics_card", { p_card_id: def.card_id, p_business_ids: businessIds });
+    return (data ?? {}) as Metric;
+  });
   return (
     <Shell def={def} onOpen={onOpen}>
-      <div className="relative flex-1">
-        <div>
-          {variant === "bars" && (
-            <div className="flex h-20 items-end justify-between gap-1.5 px-1">
-              {[40, 62, 48, 78, 55, 88, 70].map((h, i) => <span key={i} className="flex-1 rounded-t-sm bg-border-default" style={{ height: `${h}%` }} />)}
-            </div>
-          )}
-          {variant === "line" && (
-            <svg viewBox="0 0 400 80" className="h-20 w-full" preserveAspectRatio="none"><polyline points="0,60 57,55 114,57 171,43 228,47 285,33 342,37 400,23" fill="none" stroke="var(--color-border-strong)" strokeWidth="2.5" vectorEffect="non-scaling-stroke" /></svg>
-          )}
-          {variant === "ring" && (
-            <div className="flex h-20 items-center justify-center">
-              <svg width="74" height="74" viewBox="0 0 74 74" className="-rotate-90"><circle cx="37" cy="37" r="31" fill="none" stroke="var(--color-bg-raised)" strokeWidth="8" /><circle cx="37" cy="37" r="31" fill="none" stroke="var(--color-border-strong)" strokeWidth="8" strokeDasharray="120 75" /></svg>
-            </div>
-          )}
-          {(variant === "donut") && (
-            <div className="flex h-20 items-center gap-3">
-              <svg width="74" height="74" viewBox="0 0 42 42" className="-rotate-90 shrink-0"><circle cx="21" cy="21" r="15.9" fill="none" stroke="var(--color-bg-raised)" strokeWidth="6" /><circle cx="21" cy="21" r="15.9" fill="none" stroke="var(--color-border-strong)" strokeWidth="6" strokeDasharray="38 62" /></svg>
-              <ul className="flex min-w-0 flex-1 flex-col gap-1 text-xs">
-                {(DONUT_LEGEND[def.card_id] ?? ["—", "—", "—"]).map((n) => (
-                  <li key={n} className="flex items-center gap-1.5"><span className="h-2 w-2 shrink-0 rounded-full bg-border-strong" /><span className="truncate text-text-secondary">{n}</span><span className="ml-auto text-text-muted">—</span></li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {variant === "aging" && (
-            <div className="flex flex-col gap-2">
-              {["Current", "1–30 days", "31–60 days", "60+ days"].map((b, i) => (
-                <div key={b} className="flex items-center gap-3 text-xs"><span className="w-20 shrink-0 text-text-muted">{b}</span><div className="h-2.5 flex-1 overflow-hidden rounded-sm bg-bg-raised"><div className="h-full rounded-sm bg-border-default" style={{ width: `${[60, 28, 14, 6][i]}%` }} /></div><span className="w-6 text-right text-text-muted">—</span></div>
-              ))}
-            </div>
-          )}
-        </div>
-        <div className="absolute inset-0 grid place-items-center"><AwaitingChip /></div>
-      </div>
-      {STUB_LABEL[def.card_id] && <p className="text-center text-[11px] text-text-muted">{STUB_LABEL[def.card_id]}</p>}
+      {isLoading || !data ? <Awaiting /> : <AnalyticsBody cardId={def.card_id} m={data} />}
     </Shell>
   );
+}
+
+function AnalyticsBody({ cardId, m }: { cardId: string; m: Metric }) {
+  const refreshed = !!m.last_refreshed_at;
+  const label = STUB_LABEL[cardId];
+
+  if (cardId === "vat_summary") {
+    if (!refreshed) return <Awaiting label={label} />;
+    const output = num(m.output_vat), input = num(m.input_vat), net = num(m.net_position), total = output + input;
+    return (
+      <>
+        <Hero value={formatMoney(net, "EUR")} color={net >= 0 ? income : expense} sub="Net VAT position" />
+        <div className="mt-auto flex items-center gap-3">
+          <Donut segments={[{ frac: total ? output / total : 0.5, color: "var(--color-brand-500)" }, { frac: total ? input / total : 0.5, color: "var(--color-accent-bronze)" }]} />
+          <Legend items={[{ label: "Output VAT", value: formatMoney(output, "EUR"), color: "var(--color-brand-500)" }, { label: "Input VAT", value: formatMoney(input, "EUR"), color: "var(--color-accent-bronze)" }]} />
+        </div>
+      </>
+    );
+  }
+
+  if (cardId === "income_overview" || cardId === "expense_overview") {
+    const inc = cardId === "income_overview";
+    const series = (Array.isArray(m.monthly_series) ? m.monthly_series : []) as { month: string; value: number }[];
+    if (!refreshed || series.length === 0) return <Awaiting label={label} />;
+    const max = Math.max(...series.map((s) => num(s.value)), 1);
+    const col = inc ? "var(--color-status-success)" : "var(--color-status-danger)";
+    return (
+      <>
+        <Hero value={`${inc ? "+" : ""}${formatMoney(num(m.mtd), "EUR")}`} color={inc ? income : expense} sub="This month" />
+        <div className="mt-auto flex h-16 items-end gap-1.5" aria-hidden="true">
+          {series.slice(-12).map((s, i) => <span key={i} title={`${s.month}: ${formatMoney(num(s.value), "EUR")}`} className="flex-1 rounded-t-sm" style={{ height: `${Math.max(6, (num(s.value) / max) * 100)}%`, background: col, opacity: 0.5 }} />)}
+        </div>
+        <p className="text-[11px] text-text-muted">12-month total {formatMoney(num(m.rolling_12m), "EUR")}</p>
+      </>
+    );
+  }
+
+  if (cardId === "subscription_recurring_totals") {
+    if (!refreshed) return <Awaiting label={label} />;
+    const count = num(m.vendor_count);
+    const suppliers = (Array.isArray(m.suppliers) ? m.suppliers : []) as { tag: string; amount: number }[];
+    if (count === 0) return <Awaiting label={label} />;
+    return (
+      <>
+        <Hero value={formatMoney(num(m.total_monthly), "EUR")} color={expense} sub={`${count} recurring vendor${count === 1 ? "" : "s"} · per month`} />
+        <ul className="mt-1 flex flex-col">
+          {suppliers.slice(0, 3).map((s, i) => (
+            <li key={i} className="flex items-center justify-between gap-2 border-t border-border-subtle py-2 text-sm first:border-t-0">
+              <span className="truncate text-text-secondary">{s.tag ?? "Vendor"}</span>
+              <span className="shrink-0 font-mono text-xs tabular-nums text-text-muted">{formatMoney(num(s.amount), "EUR")}</span>
+            </li>
+          ))}
+        </ul>
+      </>
+    );
+  }
+
+  if (cardId === "client_invoice_aging") {
+    if (!refreshed) return <Awaiting label={label} />;
+    const b = (m.buckets ?? {}) as Record<string, unknown>;
+    const rows: [string, number][] = [["Current", num(b.current)], ["1–30 days", num(b.d1_30)], ["31–60 days", num(b.d31_60)], ["60+ days", num(b.d60_plus)]];
+    const max = Math.max(...rows.map((r) => r[1]), 1);
+    return (
+      <>
+        <Hero value={formatMoney(num(m.total_outstanding), "EUR")} sub="Outstanding receivables" />
+        <div className="mt-auto flex flex-col gap-2">
+          {rows.map(([lbl, val]) => (
+            <div key={lbl} className="flex items-center gap-3 text-xs">
+              <span className="w-[72px] shrink-0 text-text-muted">{lbl}</span>
+              <div className="h-2.5 flex-1 overflow-hidden rounded-sm bg-bg-raised"><div className="h-full rounded-sm" style={{ width: `${Math.max(2, (val / max) * 100)}%`, background: "var(--color-accent-bronze)" }} aria-hidden="true" /></div>
+              <span className="w-16 text-right font-mono tabular-nums text-text-secondary">{formatMoney(val, "EUR")}</span>
+            </div>
+          ))}
+        </div>
+      </>
+    );
+  }
+
+  if (cardId === "evidence_collection_status") {
+    const total = num(m.total_transactions);
+    if (!refreshed || total === 0) return <Awaiting label={label} />;
+    const outstanding = num(m.outstanding_count), matched = Math.max(0, total - outstanding);
+    const rate = Math.round((matched / total) * 100);
+    return (
+      <>
+        <Hero value={String(outstanding)} sub="transactions awaiting evidence" />
+        <div className="mt-auto flex items-center gap-3">
+          <Ring pct={rate} />
+          <div><div className="font-mono text-lg font-semibold tabular-nums text-text-primary">{rate}%</div><div className="text-[11px] text-text-muted">{matched} of {total} matched</div></div>
+        </div>
+      </>
+    );
+  }
+
+  if (cardId === "tax_treatment_breakdown") {
+    const treatments = (Array.isArray(m.treatments) ? m.treatments : []) as { treatment: string; amount: number; count: number }[];
+    if (treatments.length === 0) return <Awaiting label={label} />;
+    const total = treatments.reduce((a, t) => a + num(t.amount), 0) || 1;
+    return (
+      <>
+        <Hero value={String(treatments.length)} sub={`VAT treatment${treatments.length === 1 ? "" : "s"} in use`} />
+        <div className="mt-auto flex items-center gap-3">
+          <Donut segments={treatments.map((t, i) => ({ frac: num(t.amount) / total, color: SEG_PALETTE[i % SEG_PALETTE.length] }))} />
+          <Legend items={treatments.slice(0, 4).map((t, i) => ({ label: TITLE(t.treatment.replace(/_/g, " ").toLowerCase()), value: formatMoney(num(t.amount), "EUR"), color: SEG_PALETTE[i % SEG_PALETTE.length] }))} />
+        </div>
+      </>
+    );
+  }
+
+  return <Awaiting label={label} />;
 }

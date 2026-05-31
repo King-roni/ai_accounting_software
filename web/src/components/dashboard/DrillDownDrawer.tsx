@@ -7,7 +7,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useShell } from "@/components/shell/ShellContext";
 import { periodRange } from "@/components/transactions/transaction-helpers";
 import {
-  CHART_TYPE_LABEL, DATA_SOURCE_BADGE, isStubResult, summarizeRow, STUB_LABEL, STUB_VARIANT,
+  CHART_TYPE_LABEL, DATA_SOURCE_BADGE, isStubResult, summarizeRow,
   UNMATCHED_COLUMNS, UNMATCHED_STATUSES, type CardDef, type DrillResult, type UnmatchedTxn,
 } from "./dashboard-helpers";
 
@@ -22,14 +22,10 @@ export function DrillDownDrawer({ def, businessIds, open, onClose }: { def: Card
 function Body({ def, businessIds }: { def: CardDef; businessIds: string[] }) {
   const { user, period } = useShell();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
-  // Cards whose backend metric isn't aggregated yet (their faces show "Awaiting
-  // data"). The generic operational drill-down would return raw transactions for
-  // these — misleading — so we mirror the face and don't fetch.
-  const isStubCard = def.card_id in STUB_VARIANT;
   const isUnmatched = def.card_id === "unmatched_transactions";
 
   const { data, isLoading, error } = useSWR<DrillResult | null>(
-    isStubCard ? null : ["drill", def.card_id, businessIds.join(","), period.year, period.month],
+    ["drill", def.card_id, businessIds.join(","), period.year, period.month],
     async () => {
       // Unmatched: query transactions directly with the match_status filter so
       // the drawer agrees with the card count (the RPC doesn't filter).
@@ -65,9 +61,7 @@ function Body({ def, businessIds }: { def: CardDef; businessIds: string[] }) {
         {def.description && <span className="text-sm text-text-secondary">{def.description}</span>}
       </div>
 
-      {isStubCard ? (
-        <EmptyState icon={Inbox} heading="Awaiting aggregated data" body={STUB_LABEL[def.card_id] ?? "This card lights up once the analytics engine aggregates the period’s data."} />
-      ) : isLoading ? (
+      {isLoading ? (
         <div className="flex flex-col gap-2">{[0, 1, 2, 3, 4].map((i) => <Skeleton key={i} height={20} />)}</div>
       ) : error ? (
         <p className="text-sm" style={{ color: "var(--color-status-danger)" }}>{error.message}</p>
