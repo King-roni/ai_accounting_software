@@ -59,8 +59,32 @@ This is the authoritative, dependency-ordered plan for the work that remains. Fo
 - **R3.1** Accessibility, i18n, mobile read-only, performance (B16·P12).
 - **R3.2** E2E tests + visual regression (B16·P13).
 
-### R4 · Productionization
-- Real TSA (RFC 3161), Vault, Google Document AI, Anthropic wiring · backup/restore drills · security review (RLS sweep + advisors clean) · deploy (web + api + Supabase).
+### R4 · Productionization *(superseded — detailed into the phased Pre-Testing roadmap below; the `[R4]` Plane ticket points to P2+P3)*
+
+---
+
+## 3b. Pre-Testing Roadmap (P0 → P3) — **the work-off order to reach the testing phase**
+
+> Created 2026-05-31 after a full Plane + architecture scan. **Done so far:** R0–R3 foundation+screens · R5 UI · **R6 analytics** (incl. auto-refresh A6.6). The scan found R7–R9 had assumed an **execution spine that doesn't exist** → added **P0** (must come first). Four ordered Plane cycles, one per phase. **Start at P0.1.** Minimum to run a local end-to-end test = **P0 + P1**; real testing adds P2; testing on the VPS adds P3.
+>
+> **Env:** local `.env` set — Supabase service-role + `INTEGRATION_TOKEN_ENC_KEY` + `ANTHROPIC_API_KEY` (+ optional `GEMINI_API_KEY`). No Document AI / Vault / TSA needed to test.
+> **OCR decision:** Claude vision is the default extractor (optional Gemini Flash for cheap bulk) — **Google Document AI dropped** (cost). See R8.2.
+
+### 🔴 P0 · Execution Spine & Self-Serve  *(Plane cycle "★ Pre-Testing P0" — the missed foundation, blocks everything)*
+- **P0.1** Pipeline orchestrator/worker — consume the outbox + run state, sequence the existing `start_/record_/complete_/evaluate_*_gate/transition_run` RPCs to drive a run end-to-end. *(THE big one; decide runtime: Supabase Edge Fn vs api worker vs standalone consumer.)*
+- **P0.2** Client byte-upload — actually PUT file bytes to the signed URL after `request_raw_upload` + emit the completion event (statement + document drawers).
+- **P0.3** Org + business creation + first-run onboarding — `create_organization`/`create_business` RPCs + onboarding route so a fresh signup self-serves (today orgs exist only via dev `seed.sql`).
+- **P0.4** Scheduler — install `pg_cron` + schedule `recurring_run_daily_scheduler` / pro-forma expiry / worker ticks.
+- **P0.5** Export-artifact bucket + signed-download wiring.
+
+### 🟠 P1 · Local end-to-end completeness  *(cycle "★ Pre-Testing P1 (R7)" — buildable now, no keys)*
+- **R7.1** export generation worker · **R7.2** statement parse→viewer (CSV) · **R7.3** notifications · **R7.4** personal audit feed · **R7.5** /account-in-shell · **R7.6** real VIES · **R7.7** perf budgets + visual-regression · **R7.8** adjustment re-finalization · **R7.9** demo seed + housekeeping.
+
+### 🟡 P2 · Real integrations  *(cycle "★ Pre-Testing P2 (R8)" — keys injected)*
+- **R8.1** Anthropic · **R8.2** document OCR via LLM vision (Claude default + optional Gemini; **no Document AI**) · **R8.3** Google OAuth Gmail/Drive finders · **R8.4** Vault KEK/DEK · **R8.5** RFC-3161 TSA · **R8.6** secrets + health · **R8.8** email provider · **R8.7** real-integration e2e verify.
+
+### 🟢 P3 · Deploy & hardening  *(cycle "★ Pre-Testing P3 (R9)")*
+- **R9.1** security / RLS sweep · **R9.2** backup/DR drill · **R9.3** VPS + Coolify + storage + DB · **R9.4** Tailscale + Caddy · **R9.5** deploy + smoke · **R9.6** observability.
 
 ---
 
