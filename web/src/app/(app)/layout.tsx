@@ -24,6 +24,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     .select("id, display_name, organization_id")
     .order("display_name");
 
+  // First-run: a user with no accessible business is sent to onboarding to
+  // create their organization + first business (P0.3 self-serve bootstrap).
+  if (!businesses || businesses.length === 0) redirect("/onboarding");
+
   const now = new Date();
   return (
     <AppShell
