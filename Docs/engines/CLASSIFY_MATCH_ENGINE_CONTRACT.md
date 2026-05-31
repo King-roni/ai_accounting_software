@@ -217,13 +217,40 @@ level). `match_method_enum` = DETERMINISTIC_RULE, AI_FALLBACK.
 ---
 
 ## Build order (layer 2)
-1. CLASSIFICATION (head of chain; fully specified above; shared OUT/IN).
-2. MATCHING (OUT) — resolve the NO_MATCH recorder + match_status enum first.
-3. LEDGER_PREPARATION — wire the existing per-txn executor RPCs (resolve_counterparty
-   → classify_vat_treatment → compute_reverse_charge_vies → prepare_entries →
-   compute_vat_and_evidence_flags → flag_for_review; then generate_vat_explanations
-   once per batch — AI, stub).
-4. INCOME_MATCHING (IN) — `get_match_candidates` + `apply_income_match_outcome`.
+1. ✅ CLASSIFICATION (done, on main `df56695`) — shared OUT/IN.
+2. ✅ MATCHING (done, on main `334971d`) — OUT scorer; NO_MATCH via
+   `record_match_no_match`; status enum `transaction_match_status_enum`.
+3. LEDGER_PREPARATION — **real RPC names differ from the tool declarations**
+   (verified 2026-05-31 against pg_proc):
+   - writer: **`prepare_ledger_entries`**(org, biz, transaction_id, run,
+     match_record_id, input_vat_reclaimable, output_vat_due, vat_amount,
+     entry_period, actor, ctx) — *not* `prepare_entries`.
+   - proposer: `resolve_counterparty`(... transaction_id ...) → counterparty
+     country/vat (may writeback vendor memory).
+   - per-draft-entry enrichers (take `draft_ledger_entry_id`, so they run AFTER
+     the writer creates the row): `classify_vat_treatment`,
+     **`compute_reverse_charge_and_vies`** (not `_vies`),
+     `compute_vat_and_evidence_flags`(+ document_extracted_vat_amount, matched_evidence_kind).
+   - **No** `flag_for_review` / `generate_vat_explanations` RPC exists — review
+     flagging is folded into `compute_vat_and_evidence_flags`; VAT explanations
+     are AI (Block 06) → STUB until P2.
+   - helpers: `suggest_vat_treatment`, `suggest_reverse_charge_applicable`,
+     `validate_vat_number_format`, `canonicalize_vat_number`,
+     `cyprus_vat_rate_for_category`.
+   - gates: EXIT `evaluate_ledger_exit_gate`(run) {satisfied} — every in-scope
+     txn has ≥1 draft_ledger_entries row OR a LEDGER_HELD_PENDING_CLASSIFICATION
+     audit. IN: `gate_in_workflow_ledger_preparation_exit_v1`(run, ctx).
+   - phase recorders: `record_ledger_phase_started/completed/holding`(run, phase_name, ...).
+   - ⚠️ **Sequence ambiguity to resolve before building:** `prepare_ledger_entries`
+     takes `input_vat_reclaimable`/`output_vat_due`/`vat_amount` as INPUT, but
+     `compute_vat_and_evidence_flags` produces those AFTER the draft row exists.
+     Read the `prepare_ledger_entries` + `classify_vat_treatment` *implementations*
+     to pin the true order (likely: resolve_counterparty → prepare_ledger_entries
+     with preliminary VAT inputs → per-entry classify/compute enrich). This is the
+     most correctness-sensitive engine (VAT/ledger) — build with care.
+4. INCOME_MATCHING (IN) — `get_match_candidates` + `apply_income_match_outcome`;
+   exit gate `evaluate_income_matching_exit_gate` requires `income_match_outcome`
+   set on every IN-direction txn in period.
 
 Each handler: unit tests (mock gateway) + live drive against the demo
 (business `0e000000-0000-4000-8000-0000000000b1`, 6 txns), reset after.
