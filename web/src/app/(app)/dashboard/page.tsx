@@ -1,6 +1,6 @@
 "use client";
 import { useMemo, useState } from "react";
-import useSWR from "swr";
+import useSWR, { useSWRConfig } from "swr";
 import { Building2, RefreshCw } from "lucide-react";
 import { Button, Card, CardBody, EmptyState, ErrorState, Skeleton, useToast } from "@/components/ui";
 import { formatPeriod, useShell } from "@/components/shell/ShellContext";
@@ -12,6 +12,7 @@ import { CARD_ORDER, CARD_SPAN, type CardDef } from "@/components/dashboard/dash
 export default function DashboardPage() {
   const { currentBusiness, businesses, isMultiBusiness, period, user } = useShell();
   const { toast } = useToast();
+  const { mutate } = useSWRConfig();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const heading = isMultiBusiness ? "Multi-business overview" : currentBusiness?.display_name ?? "Dashboard";
 
@@ -35,8 +36,10 @@ export default function DashboardPage() {
     const { error } = await supabase.rpc("dashboard_trigger_manual_refresh", {
       p_business_id: currentBusiness.id, p_organization_id: currentBusiness.organization_id, p_actor_user_id: user.id, p_context: {},
     });
+    // The RPC recomputes the analytics projections inline; revalidate every card.
+    if (!error) await mutate(() => true);
     setRefreshing(false);
-    toast(error ? { variant: "error", title: "Refresh failed", description: error.message } : { variant: "success", title: "Dashboard refresh queued" });
+    toast(error ? { variant: "error", title: "Refresh failed", description: error.message } : { variant: "success", title: "Dashboard refreshed" });
   }
 
   return (
