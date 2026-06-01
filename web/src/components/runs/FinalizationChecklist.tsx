@@ -5,6 +5,7 @@ import { CheckCircle2, CircleDashed, Lock, ShieldCheck, XCircle } from "lucide-r
 import { Badge, Button, Skeleton, useToast } from "@/components/ui";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useShell } from "@/components/shell/ShellContext";
+import StepUpModal from "@/components/step-up/StepUpModal";
 import { FINALIZATION_GATES, gatePassed, gateReason, type GateResult } from "./finalization-helpers";
 
 interface MasterResult { decision?: string; failing_gate?: string; failure_payload?: Record<string, unknown> | null }
@@ -23,6 +24,7 @@ export function FinalizationChecklist({
   const { toast } = useToast();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [busy, setBusy] = useState(false);
+  const [stepUpOpen, setStepUpOpen] = useState(false);
 
   const { data, isLoading, mutate } = useSWR(["fin-gates", runId], async () => {
     const [master, ...gates] = await Promise.all([
@@ -39,15 +41,13 @@ export function FinalizationChecklist({
   const ready = master?.decision === "ADVANCE";
   const canFinalize = ["AWAITING_APPROVAL", "REVIEW_HOLD"].includes(runStatus);
 
-  async function approveWithStepUp() {
+  // tokenId comes from StepUpModal → verifyStepUp, which performs the actual
+  // server-side MFA challenge+verify before minting the step-up token. The
+  // checklist must NOT call issue_step_up_token directly (that bypasses MFA —
+  // the RPC only checks active business role).
+  async function finalizeWithToken(tokenId: string) {
     setBusy(true);
-    // 1. Mint a step-up token for the FINALIZATION surface.
-    const tokenRes = await supabase.rpc("issue_step_up_token", { p_business_id: businessId, p_surface: "FINALIZATION" });
-    if (tokenRes.error) { setBusy(false); toast({ variant: "error", title: "Step-up failed", description: tokenRes.error.message }); return; }
-    const td = tokenRes.data as { token_id?: string; id?: string; decision?: string; reason?: string } | string | null;
-    const tokenId = typeof td === "string" ? td : (td?.token_id ?? td?.id ?? null);
-    if (!tokenId) { setBusy(false); toast({ variant: "warning", title: "Couldn’t mint step-up token", description: (typeof td === "object" && td?.reason) || "Step-up may require re-authentication." }); return; }
-    // 2. Approve with STEP_UP method, which lets the engine advance the FINALIZATION gate.
+    // 1. Approve with the MFA-backed STEP_UP token, advancing the FINALIZATION gate.
     const fn = side === "OUT" ? "out_workflow_user_approval" : "in_workflow_user_approval";
     const res = await supabase.rpc(fn, {
       p_organization_id: organizationId, p_business_id: businessId, p_run_id: runId,
@@ -124,8 +124,17 @@ export function FinalizationChecklist({
       {canFinalize && (
         <div className="flex items-center justify-between gap-2 border-t border-border-subtle pt-3">
           <p className="text-xs text-text-muted">{ready ? "All preconditions met. Approve with step-up to lock & archive." : "Resolve the blockers above before finalizing."}</p>
-          <Button size="sm" leadingIcon={ShieldCheck} loading={busy} disabled={!ready} onClick={approveWithStepUp}>Approve &amp; finalize</Button>
+          <Button size="sm" leadingIcon={ShieldCheck} loading={busy} disabled={!ready} onClick={() => setStepUpOpen(true)}>Approve &amp; finalize</Button>
         </div>
+      )}
+
+      {stepUpOpen && (
+        <StepUpModal
+          surface="FINALIZATION"
+          businessId={businessId}
+          onSuccess={(tokenId) => { setStepUpOpen(false); void finalizeWithToken(tokenId); }}
+          onCancel={() => setStepUpOpen(false)}
+        />
       )}
     </div>
   );

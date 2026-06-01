@@ -15,7 +15,7 @@ export default function AppError({ error, reset }: { error: Error & { digest?: s
   }, [error]);
 
   return (
-    <div className="flex flex-1 items-center justify-center py-12">
+    <div className="flex min-h-[60vh] items-center justify-center py-12">
       <Card className="w-full max-w-md">
         <CardBody className="flex flex-col items-center gap-3 px-6 py-10 text-center">
           <AlertOctagon size={32} strokeWidth={1.5} aria-hidden="true" style={{ color: "var(--color-status-danger)" }} />
