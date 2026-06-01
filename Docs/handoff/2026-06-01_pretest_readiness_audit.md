@@ -155,3 +155,73 @@ Subscriptions, Reports (catalogue + download the 2 COMPLETED exports), Matching
 7. Seed an MFA factor or script "enroll first" (Blocker 6).
 
 Plane: see cycle **"★ Pre-Testing — Readiness Blockers (2026-06-01 audit)"**.
+
+---
+
+# UPDATE — Phase-A fixes landed + re-audit verdict (2026-06-02)
+
+**New verdict: WALKABLE for guided testing (GO with caveats).** The core journey
+machinery is proven end-to-end on live data: a May OUT run was driven
+upload→classify→**confirm**→match→ledger→**FINALIZED** (archive `019e848a`, v1
+manifest) → **adjustment → v2 manifest**; April OUT reaches AWAITING_APPROVAL
+(multi-period unblocked). web tsc+eslint clean; api pytest 312 passed / 3 skipped
+(the 3 live-DB tests skip without creds). A read-only adversarial re-audit (7
+subsystems + adversarial verification + critic) confirmed **all Phase-A fixes
+hold** with live-DB + file:line evidence.
+
+## Phase-A fixes landed (committed, main ff'd, pushed)
+
+Migrations `20260601000010..000017` (live + repo) + web changes:
+- **B7 (real bug, not "missing"):** `record_classification_user_confirmed` wrote
+  `resolution_action='CONFIRM'` (not in the enum → 22P02; confirm path was
+  *unreachable*). Added `CONFIRM_CLASSIFICATION` enum value + fixed the RPC.
+- **H1:** REQUIRE_STEP_UP swept across the 8 RPCs (dynamic in-place rewrite) +
+  `list_stale_step_up_guard_functions()` sentinel + `test_step_up_vocab_guard.py`.
+- **H3:** `adjustment_records` dead-code → `run_id`/`delta_kind`.
+- **B1/B3/B6/H2/B4 (web):** finalize→`execute_lock_sequence` wiring; latest-period
+  default; branded `error/not-found/global-error`; gated live SWR refresh;
+  RecentUploads stuck-detection.
+- **B2:** `WORKER_SYSTEM_ACTOR_USER_ID` set; runs re-seeded canonically via
+  `out_workflow_start_run_manually`; worker drives them.
+- **NEW blocker found+fixed:** `evaluate_classify_entry_gate` was business-wide →
+  **every run after the first classification held forever** (broke all
+  multi-period + post-finalization runs). Now advances (engine only touches
+  PENDING; shared-phase dedup guards the sibling).
+- **NEW bug found+fixed:** `apply_income_match` emitted unregistered
+  `income_matching.{full_match,partial_payment,overpayment}` → 23503 crash on any
+  income match. Registered the 3 types.
+- **B5:** MFA seeding via SQL is unreliable on hosted GoTrue (encrypted factor
+  secret); enrollment is **step 1 of the test script** (sanctioned alternative).
+- **H4:** match_records↔match_status reconciled (stale CONFIRMED records removed);
+  driven state documented as intentional; 39 tracked `*.pyc` untracked.
+- **H5:** repo↔live ledger drift (live 271 vs repo 240) reconfirmed; **test
+  against live only** this phase (unchanged guidance).
+
+## Re-audit NEW findings (beyond the original audit)
+
+| # | Sev | Finding | Status |
+|---|-----|---------|--------|
+| N1 | BLOCKER | **Finalize step-up bypassed MFA** — checklist minted the token via client-side `issue_step_up_token` (role-only, no MFA challenge). | **FIXED** — routed through MFA-gated `StepUpModal`/`verifyStepUp` |
+| N2 | BLOCKER | `prepare_ledger_entries` re-run hits FK 23503 (`review_issues_draft_ledger_entry_id_fkey`, NO-ACTION) — blind delete+reinsert of draft entries referenced by review_issues. Forward-drive OK; **re-drive of a held IN run fails.** | OPEN (logged) — candidate fix: upsert / SET NULL with issue re-link |
+| N3 | HIGH | `permission_matrix` drift: DB has 23 surfaces/138 rows vs the 15-member Python `PermissionSurface` enum (incl. a stray lowercase `workflow_run`); breaks RLS parity test under live creds. | OPEN (logged) |
+| N4 | MED | `evaluate_classify_exit_gate` also business-wide (latent cross-period hold; same class as the entry-gate fix). | OPEN (logged) |
+| N5 | MED | `create_paired_workflow_runs` leaves `principal_snapshot` empty (masked for MANUAL by `started_by` backfill; EVENT runs depend on the settings fallback). | OPEN (logged) |
+| N6 | MED | `issue_step_up_token` surface is unvalidated free text (no matrix check). | OPEN (logged) |
+| N7 | MED | Sentinel `list_stale_step_up_guard_functions()` was anon/authenticated EXECUTE-able (REVOKE FROM PUBLIC no-op). | **FIXED** — REVOKE from the roles |
+| N8 | LOW | `ActorResolutionError` degrades to an opaque repeating `CRASH` log (deployment hygiene). | OPEN (logged) |
+| N9 | LOW | `(app)/error.tsx` not vertically centred. | **FIXED** |
+| — | n/a | `match_records`↔`match_status` (2 records vs UNMATCHED) — **NOT a bug**: proposed matches (`MATCHED_NEEDS_CONFIRMATION`/`POSSIBLE_MATCH`, `requires_user_confirmation=true`) correctly leave the txn UNMATCHED until confirmed (good Phase-C content). | by-design |
+
+## Demo state stood up (live, business `0e…b1`)
+
+May OUT FINALIZED + OUT_ADJUSTMENT FINALIZED (archive `019e848a`, v1+v2); April
+OUT AWAITING_APPROVAL (a finalize-via-UI target); May+April IN at REVIEW_HOLD
+(income review); 2 proposed match_records; 3 OPEN review issues; 24 draft ledger
+entries; 0 phantom finalization issues.
+
+**Go/no-go:** **GO for guided OUT-journey testing** (upload→classify→match→review
+→ledger→finalize→adjust→archive→export all walkable). **Caveat:** IN *finalize*
+is blocked by N2 (re-drive FK) — exercise IN via the review queue (confirm
+proposed matches/classifications) but route the finalize test through OUT. MFA
+must be enrolled first (B5). N3 (matrix drift) is a security-hygiene follow-up,
+not a tester blocker.
