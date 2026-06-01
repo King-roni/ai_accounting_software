@@ -60,7 +60,9 @@ def tick(
     runnable = gateway.select(
         "workflow_runs",
         columns="id,status,created_at",
-        in_filters={"status": sorted(DRIVABLE_STATUSES)},
+        # RunStatus is a (str, Enum); its members str() as "RunStatus.CREATED",
+        # which PostgREST sends verbatim → 22P02 invalid enum. Pass the .value.
+        in_filters={"status": sorted(s.value for s in DRIVABLE_STATUSES)},
         order="created_at",
         limit=settings.worker_batch_size,
     )
