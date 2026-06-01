@@ -38,7 +38,14 @@ export function FinalizationChecklist({
   });
 
   const master = data?.master;
-  const ready = master?.decision === "ADVANCE";
+  // "Approve & finalize" records the step-up approval itself (finalizeWithToken →
+  // out/in_workflow_user_approval STEP_UP). Gating the button on the FULL master
+  // gate deadlocks it: the master gate requires a step-up approval to already
+  // exist, but this button is the only thing that creates one. Enable on the
+  // DATA-precondition gates only; the click does MFA → approval → lock.
+  const APPROVAL_GATE_KEYS = new Set(["approval_recorded", "approval_present_and_step_up"]);
+  const dataGates = (data?.results ?? []).filter((g) => !APPROVAL_GATE_KEYS.has(g.key));
+  const dataReady = dataGates.length > 0 && dataGates.every((g) => gatePassed(g.result));
   const canFinalize = ["AWAITING_APPROVAL", "REVIEW_HOLD"].includes(runStatus);
 
   // tokenId comes from StepUpModal → verifyStepUp, which performs the actual
@@ -94,7 +101,7 @@ export function FinalizationChecklist({
           <Lock size={16} className="text-text-secondary" aria-hidden="true" />
           <span className="text-sm font-semibold text-text-primary">Finalization readiness</span>
         </div>
-        {isLoading ? <Skeleton height={20} className="w-24" /> : ready
+        {isLoading ? <Skeleton height={20} className="w-24" /> : dataReady
           ? <Badge variant="status-success">Ready</Badge>
           : <Badge variant="severity-medium">{master?.failing_gate ? `Blocked: ${master.failing_gate.replace("gate_finalization_", "").replaceAll("_", " ")}` : "Not ready"}</Badge>}
       </div>
@@ -123,14 +130,17 @@ export function FinalizationChecklist({
 
       {canFinalize && (
         <div className="flex items-center justify-between gap-2 border-t border-border-subtle pt-3">
-          <p className="text-xs text-text-muted">{ready ? "All preconditions met. Approve with step-up to lock & archive." : "Resolve the blockers above before finalizing."}</p>
-          <Button size="sm" leadingIcon={ShieldCheck} loading={busy} disabled={!ready} onClick={() => setStepUpOpen(true)}>Approve &amp; finalize</Button>
+          <p className="text-xs text-text-muted">{dataReady ? "All preconditions met. Approve with step-up to lock & archive." : "Resolve the blockers above before finalizing."}</p>
+          <Button size="sm" leadingIcon={ShieldCheck} loading={busy} disabled={!dataReady} onClick={() => setStepUpOpen(true)}>Approve &amp; finalize</Button>
         </div>
       )}
 
       {stepUpOpen && (
         <StepUpModal
-          surface="FINALIZATION"
+          // Must match the surface out/in_workflow_user_approval consumes the
+          // step-up token under (it maps STEP_UP → 'APPROVAL_STEP_UP'); minting
+          // for 'FINALIZATION' makes the token consume fail (STEP_UP_TOKEN_INVALID).
+          surface="APPROVAL_STEP_UP"
           businessId={businessId}
           onSuccess={(tokenId) => { setStepUpOpen(false); void finalizeWithToken(tokenId); }}
           onCancel={() => setStepUpOpen(false)}

@@ -36,6 +36,10 @@ const SURFACE_HEADLINES: Record<string, { title: string; body: string }> = {
     title: "Verify before finalizing",
     body: "Finalizing a period creates an immutable archive. Verify your identity to confirm.",
   },
+  APPROVAL_STEP_UP: {
+    title: "Verify before finalizing",
+    body: "Finalizing a period creates an immutable archive. Verify your identity to confirm.",
+  },
   BUSINESS_SETTINGS_EDIT: {
     title: "Verify before changing settings",
     body: "Changes to business settings affect future workflows. Verify your identity.",
