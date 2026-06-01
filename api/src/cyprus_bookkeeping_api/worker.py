@@ -27,6 +27,7 @@ from cyprus_bookkeeping_api.orchestrator.models import DRIVABLE_STATUSES, first_
 from cyprus_bookkeeping_api.orchestrator.outbox import consume_pending
 from cyprus_bookkeeping_api.orchestrator.phases import PhaseRegistry
 from cyprus_bookkeeping_api.orchestrator.rpc import Gateway, RpcError, build_service_gateway
+from cyprus_bookkeeping_api.vies.runner import verify_pending_vies
 
 logger = logging.getLogger(__name__)
 
@@ -85,12 +86,20 @@ def tick(
         except RpcError:
             logger.exception("notification projection failed; continuing")
 
+    vies: dict[str, Any] = {}
+    if settings.worker_verify_vies:
+        try:
+            vies = verify_pending_vies(gateway, settings)
+        except Exception:  # noqa: BLE001 — VIES network issues must not kill the tick
+            logger.exception("VIES verification pass failed; continuing")
+
     return {
         "consumed": consumed,
         "statements": statements,
         "driven": driven,
         "exports": exports,
         "notifications": notifications,
+        "vies": vies,
     }
 
 

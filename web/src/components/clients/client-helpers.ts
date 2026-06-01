@@ -97,10 +97,25 @@ export function clientStatusBadge(c: ClientRow): ClientStatusBadge {
     : { variant: "status-success", label: "Active" };
 }
 
-/** VAT-format badge (we validate format, not VIES — VIES check is deferred to R4). */
-export function vatFormatBadge(c: ClientRow): ClientStatusBadge | null {
+/** Per-client EU VIES status (from list_client_vies_statuses), keyed by client id. */
+export interface ClientViesStatus {
+  valid: boolean;
+  checked_at: string;
+  registered_name: string | null;
+}
+
+/**
+ * VAT badge — prefers the real EU VIES verdict (R7.6) when the worker has
+ * checked the number; otherwise falls back to the format-only check.
+ */
+export function vatBadge(c: ClientRow, vies: ClientViesStatus | undefined): ClientStatusBadge | null {
   if (!c.vat_number) return null;
+  if (vies) {
+    return vies.valid
+      ? { variant: "status-success", label: "VIES verified" }
+      : { variant: "severity-medium", label: "Not VIES-registered" };
+  }
   return c.vat_number_format_valid
-    ? { variant: "status-success", label: "Valid" }
-    : { variant: "severity-medium", label: "Check" };
+    ? { variant: "status-neutral", label: "Format OK" }
+    : { variant: "severity-medium", label: "Check format" };
 }

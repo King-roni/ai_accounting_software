@@ -128,6 +128,28 @@ class Settings(BaseSettings):
         description="When true, each tick projects notifications (review/run/export/token events).",
     )
 
+    # --- VIES VAT validation (R7.6) ---
+    worker_verify_vies: bool = Field(
+        default=True,
+        description="When true, each tick verifies a batch of clients' EU VAT numbers via VIES.",
+    )
+    worker_vies_batch_size: int = Field(
+        default=25,
+        description="Max client VAT numbers verified against VIES per tick.",
+    )
+    vies_recheck_days: int = Field(
+        default=30,
+        description="Re-verify a VAT number with VIES after this many days.",
+    )
+    vies_endpoint: str = Field(
+        default="https://ec.europa.eu/taxation_customs/vies/rest-api/check-vat-number",
+        description="EU VIES check-vat-number REST endpoint (public, no key).",
+    )
+    vies_timeout_seconds: float = Field(
+        default=20.0,
+        description="Per-request timeout for VIES calls.",
+    )
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:

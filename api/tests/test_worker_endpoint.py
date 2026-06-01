@@ -40,6 +40,7 @@ def test_runs_tick_on_valid_secret(monkeypatch):
             "driven": [{"ok": True}, {"ok": True}],
             "exports": {"generated": ["x1"], "failed": []},
             "notifications": {"ok": True, "created": 3},
+            "vies": {"checked": ["DE:DE811569869"], "unavailable": []},
         },
     )
     out = worker_route.worker_tick(settings=_settings("s3cret"), x_worker_tick_secret="s3cret")
@@ -49,3 +50,4 @@ def test_runs_tick_on_valid_secret(monkeypatch):
     assert out["runs_driven"] == 2
     assert out["exports_generated"] == ["x1"]
     assert out["notifications_created"] == 3
+    assert out["vies_checked"] == 1

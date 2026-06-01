@@ -9,7 +9,8 @@ import { useIsMobile } from "@/components/shell/use-is-mobile";
 import { useT } from "@/i18n/LocaleProvider";
 import { ClientFormDrawer } from "@/components/clients/ClientFormDrawer";
 import {
-  clientStatusBadge, flagEmoji, vatFormatBadge, vatTreatmentShort, type ClientRow,
+  clientStatusBadge, flagEmoji, vatBadge, vatTreatmentShort,
+  type ClientRow, type ClientViesStatus,
 } from "@/components/clients/client-helpers";
 
 export default function ClientsPage() {
@@ -33,6 +34,21 @@ export default function ClientsPage() {
     if (error) throw new Error(error.message);
     return ((data as { clients?: ClientRow[] })?.clients ?? []) as ClientRow[];
   });
+
+  // Per-client EU VIES status (worker-populated cache). Joined client-side.
+  const { data: viesRows } = useSWR<(ClientViesStatus & { client_id: string })[]>(
+    currentBusiness ? ["client-vies", currentBusiness.id] : null,
+    async () => {
+      const { data, error } = await supabase.rpc("list_client_vies_statuses", { p_business_id: currentBusiness!.id });
+      if (error) throw new Error(error.message);
+      return (data ?? []) as (ClientViesStatus & { client_id: string })[];
+    },
+    { revalidateOnFocus: true },
+  );
+  const viesMap = useMemo(
+    () => new Map((viesRows ?? []).map((r) => [r.client_id, r])),
+    [viesRows],
+  );
 
   const rows = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -72,7 +88,7 @@ export default function ClientsPage() {
     {
       id: "vat", header: "VAT number",
       cell: (c) => {
-        const b = vatFormatBadge(c);
+        const b = vatBadge(c, viesMap.get(c.id));
         return c.vat_number ? (
           <span className="inline-flex items-center gap-2">
             <span className="tabular-nums">{c.vat_number}</span>
