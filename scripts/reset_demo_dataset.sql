@@ -11,6 +11,20 @@
 --
 -- Run with the service_role connection (bypasses RLS). Re-running is safe.
 -- After a reset you can re-run scripts/seed_demo_dataset.sql to rebuild.
+--
+-- SCOPE NOTE (2026-06-01 pretest): this script tears down only the *additive*
+-- seed-r79 fixtures (file_id / invoice_number LIKE patterns above). It does NOT
+-- touch the driven workflow state stood up for the testing phase, which is
+-- INTENTIONAL and coherent demo content, not stale ad-hoc rows:
+--   * the canonical OUT/IN runs (started via out_workflow_start_run_manually),
+--   * their engine-produced match_records / review_issues / draft_ledger_entries,
+--   * the FINALIZED May 2026 OUT period + its archive_package (v1 manifest) and
+--     the OUT_ADJUSTMENT run (v2 manifest).
+-- The finalized period is deliberately PERMANENT: finalization writes an
+-- immutable, object-locked archive (3-layer immutability), so it cannot be
+-- reverted by a reset and is left in place as the Archive/adjustment demo.
+-- To rebuild non-finalized runs from scratch, cancel/remove them via the
+-- workflow RPCs and re-run out_workflow_start_run_manually + the worker.
 -- =============================================================================
 
 DO $$
