@@ -1,7 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
 import useSWR from "swr";
-import { BellRing, CheckCircle2, PlayCircle } from "lucide-react";
+import { BellRing, CheckCircle2, FilePlus2, PlayCircle } from "lucide-react";
 import { Badge, Button, Drawer, Textarea, useToast } from "@/components/ui";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useShell } from "@/components/shell/ShellContext";
@@ -11,6 +11,8 @@ import {
   type ApprovalRow, type PhaseDefRow, type PhaseStateRow, type RunRow,
 } from "./run-helpers";
 import { FinalizationChecklist } from "./FinalizationChecklist";
+import { AdjustmentForm } from "./AdjustmentForm";
+import { AdjustmentFinalizePanel } from "./AdjustmentFinalizePanel";
 
 type Decision = { decision?: string; reason_code?: string; reason?: string } | null;
 function denied(d: Decision): string | null {
@@ -32,6 +34,7 @@ function Body({ runId, onClose, onChanged }: { runId: string; onClose: () => voi
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [busy, setBusy] = useState<string | null>(null);
   const [approveOpen, setApproveOpen] = useState(false);
+  const [adjustOpen, setAdjustOpen] = useState(false);
   const [note, setNote] = useState("");
 
   const { data: run, mutate: mutateRun } = useSWR<RunRow | null>(["run", runId], async () => {
@@ -54,11 +57,23 @@ function Body({ runId, onClose, onChanged }: { runId: string; onClose: () => voi
     if (error) throw new Error(error.message);
     return (data ?? []) as ApprovalRow[];
   });
+  // Child adjustment runs (only meaningful once this is a finalized monthly run).
+  const showChildren = !!run && run.workflow_type.endsWith("MONTHLY") && run.status === "FINALIZED";
+  const { data: children, mutate: mutateChildren } = useSWR<RunRow[]>(
+    showChildren ? ["child-adjustments", runId] : null,
+    async () => {
+      const { data, error } = await supabase.from("workflow_runs").select(RUN_COLUMNS).eq("parent_run_id", runId).order("created_at");
+      if (error) throw new Error(error.message);
+      return (data ?? []) as unknown as RunRow[];
+    },
+  );
 
-  function refresh() { mutateRun(); mutateStates(); mutateApprovals(); onChanged(); }
+  function refresh() { mutateRun(); mutateStates(); mutateApprovals(); mutateChildren(); onChanged(); }
 
   if (!run) return <p className="text-sm text-text-muted">Loading…</p>;
   const side = WORKFLOW_SIDE[run.workflow_type];
+  const isAdjustment = run.workflow_type.endsWith("ADJUSTMENT");
+  const isFinalizedMonthly = run.workflow_type.endsWith("MONTHLY") && run.status === "FINALIZED";
   const b = runStatusBadge(run.status);
   const stateByName = new Map((states ?? []).map((s) => [s.phase_name, s]));
   const { completed, total } = phaseProgress(defs ?? [], states ?? []);
@@ -125,7 +140,36 @@ function Body({ runId, onClose, onChanged }: { runId: string; onClose: () => voi
         </ol>
       </div>
 
-      <FinalizationChecklist runId={run.id} runStatus={run.status} side={side} organizationId={run.organization_id} businessId={run.business_id} onChanged={refresh} />
+      {isAdjustment ? (
+        <AdjustmentFinalizePanel run={run} onChanged={refresh} />
+      ) : (
+        <FinalizationChecklist runId={run.id} runStatus={run.status} side={side} organizationId={run.organization_id} businessId={run.business_id} onChanged={refresh} />
+      )}
+
+      {isFinalizedMonthly && (
+        <div>
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Adjustments</p>
+            <Button size="sm" variant="secondary" leadingIcon={FilePlus2} onClick={() => setAdjustOpen(true)}>Start an adjustment</Button>
+          </div>
+          {(children ?? []).length === 0 ? (
+            <p className="text-sm text-text-muted">No corrections opened for this period.</p>
+          ) : (
+            <ul className="flex flex-col gap-1.5">
+              {(children ?? []).map((c) => {
+                const cb = runStatusBadge(c.status);
+                return (
+                  <li key={c.id} className="flex items-center gap-2 rounded-md border border-border-subtle px-3 py-2 text-sm">
+                    <span className="min-w-0 flex-1 truncate text-text-primary">{WORKFLOW_TYPE_LABEL[c.workflow_type]}</span>
+                    <span className="text-xs text-text-muted">{new Date(c.created_at).toLocaleDateString("en-GB")}</span>
+                    <Badge variant={cb.variant} size="sm">{cb.label}</Badge>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      )}
 
       <div>
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">Approvals</p>
@@ -173,6 +217,16 @@ function Body({ runId, onClose, onChanged }: { runId: string; onClose: () => voi
       <div className="sticky bottom-0 -mx-5 -mb-5 mt-1 flex items-center justify-end gap-2 border-t border-border-subtle bg-bg-overlay p-4">
         <Button variant="tertiary" onClick={onClose}>Close</Button>
       </div>
+
+      <Drawer open={adjustOpen} onClose={() => setAdjustOpen(false)} title="Open an adjustment" width={460}>
+        {adjustOpen && (
+          <AdjustmentForm
+            parentRun={run}
+            onClose={() => setAdjustOpen(false)}
+            onCreated={() => { setAdjustOpen(false); refresh(); }}
+          />
+        )}
+      </Drawer>
     </div>
   );
 }

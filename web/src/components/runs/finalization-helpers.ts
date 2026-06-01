@@ -47,3 +47,69 @@ export interface ArchivePackageRow {
 
 export const ARCHIVE_COLUMNS =
   "id, business_id, organization_id, workflow_run_id, period_start, period_end, bundle_hash_anchor, package_storage_object_id, step_up_auth_used, original_finalization, created_at";
+
+// --------------------------------------------------------------------------- //
+// Adjustment re-finalization (B15 / R7.8)
+// --------------------------------------------------------------------------- //
+
+/** The 8 adjustment delta kinds (adjustment_delta_kind_enum). */
+export type AdjustmentDeltaKind =
+  | "RECLASSIFY_TRANSACTION"
+  | "ADD_EVIDENCE"
+  | "CORRECT_VAT_TREATMENT"
+  | "ADJUST_AMOUNT"
+  | "OTHER"
+  | "RETROACTIVE_CREDIT_NOTE"
+  | "CORRECT_PAYMENT_ALLOCATION"
+  | "MARK_INVOICE_WRITTEN_OFF";
+
+export const DELTA_KIND_LABEL: Record<AdjustmentDeltaKind, string> = {
+  RECLASSIFY_TRANSACTION: "Reclassify transaction",
+  ADD_EVIDENCE: "Add evidence",
+  CORRECT_VAT_TREATMENT: "Correct VAT treatment",
+  ADJUST_AMOUNT: "Adjust amount",
+  OTHER: "Other",
+  RETROACTIVE_CREDIT_NOTE: "Retroactive credit note",
+  CORRECT_PAYMENT_ALLOCATION: "Correct payment allocation",
+  MARK_INVOICE_WRITTEN_OFF: "Mark invoice written off",
+};
+
+// The DB trigger fn_check_adjustment_delta_kind_vs_parent_workflow rejects these
+// kinds per parent side; mirror it so the picker never offers an invalid combo.
+const OUT_FORBIDDEN_KINDS: AdjustmentDeltaKind[] = [
+  "RETROACTIVE_CREDIT_NOTE",
+  "CORRECT_PAYMENT_ALLOCATION",
+  "MARK_INVOICE_WRITTEN_OFF",
+];
+const IN_FORBIDDEN_KINDS: AdjustmentDeltaKind[] = ["ADD_EVIDENCE", "ADJUST_AMOUNT"];
+
+/** Delta kinds valid for a given side (OUT = expenses, IN = income). */
+export function deltaKindsForSide(side: "OUT" | "IN"): AdjustmentDeltaKind[] {
+  const forbidden = side === "OUT" ? OUT_FORBIDDEN_KINDS : IN_FORBIDDEN_KINDS;
+  return (Object.keys(DELTA_KIND_LABEL) as AdjustmentDeltaKind[]).filter(
+    (k) => !forbidden.includes(k),
+  );
+}
+
+/** Row from public.archive_manifests (RLS-scoped, append-only, versioned). */
+export interface ManifestVersionRow {
+  id: string;
+  archive_package_id: string;
+  manifest_version_number: number;
+  manifest_hash: string | null;
+  produced_by_run_id: string | null;
+  produced_at: string;
+}
+export const MANIFEST_COLUMNS =
+  "id, archive_package_id, manifest_version_number, manifest_hash, produced_by_run_id, produced_at";
+
+/** Row from public.adjustment_records (RLS-scoped). One per adjustment run. */
+export interface AdjustmentRecordRow {
+  run_id: string;
+  parent_run_id: string;
+  delta_kind: AdjustmentDeltaKind;
+  reason: string;
+  created_at: string;
+}
+export const ADJUSTMENT_RECORD_COLUMNS =
+  "run_id, parent_run_id, delta_kind, reason, created_at";

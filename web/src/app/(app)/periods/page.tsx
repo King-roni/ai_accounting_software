@@ -8,9 +8,9 @@ import { useShell } from "@/components/shell/ShellContext";
 import { useIsMobile } from "@/components/shell/use-is-mobile";
 import { RunDetailDrawer } from "@/components/runs/RunDetailDrawer";
 import { ArchivePanel } from "@/components/runs/ArchivePanel";
-import { RUN_COLUMNS, periodLabel, phaseProgress, runStatusBadge, type RunRow } from "@/components/runs/run-helpers";
+import { RUN_COLUMNS, WORKFLOW_TYPE_LABEL, periodLabel, phaseProgress, runStatusBadge, type RunRow } from "@/components/runs/run-helpers";
 
-interface PeriodGroup { key: string; periodStart: string; out: RunRow | null; in: RunRow | null }
+interface PeriodGroup { key: string; periodStart: string; out: RunRow | null; in: RunRow | null; adjustments: RunRow[] }
 
 export default function PeriodsPage() {
   const { currentBusiness, isMultiBusiness } = useShell();
@@ -31,11 +31,13 @@ export default function PeriodsPage() {
     const m = new Map<string, PeriodGroup>();
     for (const r of data ?? []) {
       const k = r.period_start;
-      if (!m.has(k)) m.set(k, { key: k, periodStart: r.period_start, out: null, in: null });
+      if (!m.has(k)) m.set(k, { key: k, periodStart: r.period_start, out: null, in: null, adjustments: [] });
       const g = m.get(k)!;
-      if (r.workflow_type.startsWith("OUT")) g.out = r;
-      else g.in = r;
+      if (r.workflow_type === "OUT_MONTHLY") g.out = r;
+      else if (r.workflow_type === "IN_MONTHLY") g.in = r;
+      else g.adjustments.push(r); // OUT_ADJUSTMENT / IN_ADJUSTMENT
     }
+    for (const g of m.values()) g.adjustments.sort((a, b) => a.created_at.localeCompare(b.created_at));
     return [...m.values()].sort((a, b) => b.periodStart.localeCompare(a.periodStart));
   }, [data]);
 
@@ -76,6 +78,12 @@ export default function PeriodsPage() {
                             <RunRowItem side="OUT" title="Outgoing — expenses" descriptor="Expenses & payables" run={g.out} onOpen={setDetailId} />
                             <RunRowItem side="IN" title="Incoming — income" descriptor="Income & receivables" run={g.in} onOpen={setDetailId} />
                           </div>
+                          {g.adjustments.length > 0 && (
+                            <div className="flex flex-col gap-1.5 border-t border-border-subtle pt-3">
+                              <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Adjustments</p>
+                              {g.adjustments.map((a) => <AdjustmentRowItem key={a.id} run={a} onOpen={setDetailId} />)}
+                            </div>
+                          )}
                         </CardBody>
                       </Card>
                     ))}
@@ -137,6 +145,20 @@ function RunRowItem({ side, title, descriptor, run, onOpen }: { side: "OUT" | "I
         <div className="h-1.5 overflow-hidden rounded-full bg-border-subtle"><span className="block h-full rounded-full bg-action-primary transition-[width]" style={{ width: `${pct}%` }} /></div>
         <p className="mt-1 text-right font-mono text-[10.5px] text-text-muted">{prog ? `${done}/${total} phases` : "…"}</p>
       </div>
+      <Badge variant={b.variant} size="sm">{b.label}</Badge>
+      <ChevronRight size={16} className="shrink-0 text-text-muted" aria-hidden="true" />
+    </button>
+  );
+}
+
+function AdjustmentRowItem({ run, onOpen }: { run: RunRow; onOpen: (id: string) => void }) {
+  const b = runStatusBadge(run.status);
+  const side = run.workflow_type.startsWith("OUT") ? "OUT" : "IN";
+  return (
+    <button type="button" onClick={() => onOpen(run.id)} className="flex items-center gap-3 rounded-lg border border-border-subtle bg-surface-default px-3 py-2 text-left transition-colors hover:border-border-default hover:bg-bg-raised">
+      <span className="flex h-5 shrink-0 items-center rounded-md bg-bg-raised px-1.5 text-[10px] font-bold text-text-muted">{side}</span>
+      <span className="min-w-0 flex-1 truncate text-sm text-text-primary">{WORKFLOW_TYPE_LABEL[run.workflow_type]}</span>
+      <span className="hidden text-xs text-text-muted sm:block">{new Date(run.created_at).toLocaleDateString("en-GB")}</span>
       <Badge variant={b.variant} size="sm">{b.label}</Badge>
       <ChevronRight size={16} className="shrink-0 text-text-muted" aria-hidden="true" />
     </button>

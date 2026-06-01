@@ -64,6 +64,12 @@ test.describe("domain screens (seeded data)", () => {
     await page.getByRole("button", { name: /Outgoing — expenses/ }).first().click();
     await expect(page.getByRole("dialog")).toBeVisible();
     await expect(page.getByText("Finalization readiness")).toBeVisible();
+    // R7.8: the Archive tab renders the versioned-archive panel. No finalized
+    // periods are seeded yet → empty state, but the manifest + adjustment-record
+    // read queries must execute without error under the owner's RLS.
+    await page.keyboard.press("Escape");
+    await page.getByRole("tab", { name: "Archive" }).click();
+    await expect(page.getByText("No archived periods yet")).toBeVisible();
   });
 
   test("reports lists the export catalogue", async ({ page }) => {
