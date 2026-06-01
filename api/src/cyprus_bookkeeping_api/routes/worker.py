@@ -52,6 +52,7 @@ def worker_tick(
     driven = result.get("driven", []) if isinstance(result, dict) else []
     statements = result.get("statements", {}) if isinstance(result, dict) else {}
     exports = result.get("exports", {}) if isinstance(result, dict) else {}
+    notifications = result.get("notifications", {}) if isinstance(result, dict) else {}
     return {
         "ok": True,
         "consumed_events": consumed.get("consumed", []),
@@ -61,4 +62,5 @@ def worker_tick(
         "runs_driven": len(driven),
         "exports_generated": exports.get("generated", []),
         "exports_failed": exports.get("failed", []),
+        "notifications_created": notifications.get("created", 0),
     }

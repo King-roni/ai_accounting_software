@@ -9,6 +9,7 @@ import { MenuItem, Popover } from "@/components/ui";
 import { formatPeriod, stepPeriod, useShell, type Period } from "./ShellContext";
 import { ThemeToggle } from "./ThemeToggle";
 import { LocaleToggle } from "./LocaleToggle";
+import { useNotifications } from "./useNotifications";
 
 function BusinessSwitcher() {
   const { businesses, currentBusiness, isMultiBusiness, setCurrentBusinessId } = useShell();
@@ -143,6 +144,7 @@ function UserMenu() {
 
 export function TopNav() {
   const { setPaletteOpen, setNotifOpen } = useShell();
+  const { unreadCount } = useNotifications();
   return (
     <header
       role="banner"
@@ -173,10 +175,15 @@ export function TopNav() {
         <button
           type="button"
           onClick={() => setNotifOpen(true)}
-          aria-label="Notifications"
-          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-text-secondary hover:bg-bg-raised hover:text-text-primary"
+          aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications"}
+          className="relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-text-secondary hover:bg-bg-raised hover:text-text-primary"
         >
           <Bell size={18} strokeWidth={1.5} aria-hidden="true" />
+          {unreadCount > 0 && (
+            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-action-primary px-1 text-[10px] font-bold leading-none text-text-on-primary">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          )}
         </button>
         <LocaleToggle />
         <ThemeToggle />

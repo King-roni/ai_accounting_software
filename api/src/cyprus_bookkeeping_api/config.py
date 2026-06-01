@@ -122,6 +122,12 @@ class Settings(BaseSettings):
         description="Amount tolerance (cents) for the B07 soft (probable) duplicate check.",
     )
 
+    # --- Notifications (R7.3) ---
+    worker_project_notifications: bool = Field(
+        default=True,
+        description="When true, each tick projects notifications (review/run/export/token events).",
+    )
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:

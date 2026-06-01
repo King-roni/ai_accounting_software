@@ -23,10 +23,10 @@ from cyprus_bookkeeping_api.exports.storage import StoragePort, build_service_st
 from cyprus_bookkeeping_api.ingestion.runner import parse_pending_statements
 from cyprus_bookkeeping_api.orchestrator.engine import safe_drive_run
 from cyprus_bookkeeping_api.orchestrator.gates import GateEngine
-from cyprus_bookkeeping_api.orchestrator.models import DRIVABLE_STATUSES
+from cyprus_bookkeeping_api.orchestrator.models import DRIVABLE_STATUSES, first_row
 from cyprus_bookkeeping_api.orchestrator.outbox import consume_pending
 from cyprus_bookkeeping_api.orchestrator.phases import PhaseRegistry
-from cyprus_bookkeeping_api.orchestrator.rpc import Gateway, build_service_gateway
+from cyprus_bookkeeping_api.orchestrator.rpc import Gateway, RpcError, build_service_gateway
 
 logger = logging.getLogger(__name__)
 
@@ -78,11 +78,19 @@ def tick(
     if storage is not None and settings.worker_generate_exports:
         exports = generate_pending_exports(gateway, storage, settings)
 
+    notifications: dict[str, Any] = {}
+    if settings.worker_project_notifications:
+        try:
+            notifications = first_row(gateway.rpc("project_notifications", {})) or {}
+        except RpcError:
+            logger.exception("notification projection failed; continuing")
+
     return {
         "consumed": consumed,
         "statements": statements,
         "driven": driven,
         "exports": exports,
+        "notifications": notifications,
     }
 
 
