@@ -1,3 +1,26 @@
+> ## ⏱ CURRENT STATE (2026-06-01) — read this first
+>
+> **This file below is the STALE Stage-4/5 *elaboration* handoff (2026-05-17). It
+> predates the entire build and no longer reflects reality.** The DB (B02–B16) is
+> built + live on Supabase `noxvmnxrqlzsdfngfiww`; the frontend (R0–R3, R5) + P0
+> (execution spine/self-serve) + P1/R7 (local end-to-end completeness, R7.1–R7.9)
+> are done and on `main`. The product is heading into a **manual testing phase**.
+>
+> **A pre-testing readiness audit (34-agent read-only scan) ran 2026-06-01.**
+> Verdict: the app is **not yet walkable end-to-end** — a cluster of readiness
+> blockers (no worker running + seeded runs can't resolve an actor +
+> `execute_lock_sequence` has no caller + empty default period + silent upload
+> dead-end + no MFA factor + no error boundaries) must be cleared first.
+>
+> - **Full triaged findings:** `Docs/handoff/2026-06-01_pretest_readiness_audit.md`
+> - **Tracked in Plane cycle:** "★ Pre-Testing — Readiness Blockers (2026-06-01 audit)"
+> - **Next-session plan (fix → deep re-audit → guided E2E):** `Docs/NEXT_SESSION_START_PROMPT.md`
+> - **Latest build progress:** see the auto-memory `project_p1_r7_progress` + recent `Docs/handoff/` dated files.
+>
+> Everything below the line is historical elaboration context only.
+>
+> ---
+
 # HANDOFF — Cyprus Bookkeeping SaaS Elaboration
 
 **Purpose.** Meta-context for a new session continuing the elaboration work. The project content lives in the workspace docs (read those first); this file explains the working pattern, the conventions, and where we are in the 7-stage roadmap.
