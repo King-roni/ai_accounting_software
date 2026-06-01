@@ -8,7 +8,7 @@ import { useShell } from "@/components/shell/ShellContext";
 import { useIsMobile } from "@/components/shell/use-is-mobile";
 import { RunDetailDrawer } from "@/components/runs/RunDetailDrawer";
 import { ArchivePanel } from "@/components/runs/ArchivePanel";
-import { RUN_COLUMNS, WORKFLOW_TYPE_LABEL, periodLabel, phaseProgress, runStatusBadge, type RunRow } from "@/components/runs/run-helpers";
+import { RUN_COLUMNS, WORKFLOW_TYPE_LABEL, periodLabel, phaseProgress, runIsActive, runStatusBadge, type RunRow } from "@/components/runs/run-helpers";
 
 interface PeriodGroup { key: string; periodStart: string; out: RunRow | null; in: RunRow | null; adjustments: RunRow[] }
 
@@ -25,6 +25,9 @@ export default function PeriodsPage() {
     const { data, error } = await supabase.from("workflow_runs").select(RUN_COLUMNS).eq("business_id", currentBusiness!.id).order("period_start", { ascending: false });
     if (error) throw new Error(error.message);
     return (data ?? []) as unknown as RunRow[];
+  }, {
+    // Poll only while a run is still in-flight so finished periods don't refetch.
+    refreshInterval: (latest) => (latest ?? []).some((r) => runIsActive(r.status)) ? 8000 : 0,
   });
 
   const groups = useMemo<PeriodGroup[]>(() => {

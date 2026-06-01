@@ -28,12 +28,33 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // create their organization + first business (P0.3 self-serve bootstrap).
   if (!businesses || businesses.length === 0) redirect("/onboarding");
 
+  // Default the shell to the period that actually has data so screens don't
+  // open on an empty future month. We use the first accessible business — the
+  // same default the shell picks client-side — and fall back to the current
+  // month if there's no data (or the query fails for any reason).
   const now = new Date();
+  let initialPeriod = { year: now.getUTCFullYear(), month: now.getUTCMonth() + 1 };
+  try {
+    const { data: latestTxn } = await supabase
+      .from("transactions")
+      .select("transaction_date")
+      .eq("business_id", businesses[0].id)
+      .order("transaction_date", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (latestTxn?.transaction_date) {
+      const d = new Date(latestTxn.transaction_date);
+      initialPeriod = { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1 };
+    }
+  } catch {
+    // Keep the current-month fallback — never crash the layout over this.
+  }
+
   return (
     <AppShell
       user={{ id: profile?.id ?? "", email: user.email ?? profile?.email ?? "", displayName: profile?.display_name ?? null }}
       businesses={businesses ?? []}
-      initialPeriod={{ year: now.getFullYear(), month: now.getMonth() + 1 }}
+      initialPeriod={initialPeriod}
     >
       {children}
     </AppShell>

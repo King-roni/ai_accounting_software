@@ -8,6 +8,7 @@ import { formatPeriod, useShell } from "@/components/shell/ShellContext";
 import { LEDGER_COLUMNS, STATUS_BADGE, money, vatTreatment, type LedgerRow } from "@/components/ledger/ledger-helpers";
 import { LedgerDetailDrawer } from "@/components/ledger/LedgerDetailDrawer";
 import { periodRange } from "@/components/transactions/transaction-helpers";
+import { RUN_COLUMNS, runIsActive, type RunRow } from "@/components/runs/run-helpers";
 
 function Stat({ label, value, tone, hint }: { label: string; value: string; tone?: "in" | "out"; hint?: string }) {
   const color = tone === "in" ? "var(--color-status-success-text)" : tone === "out" ? "var(--color-status-danger-text)" : undefined;
@@ -25,6 +26,15 @@ export default function LedgerPage() {
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const { start, end } = periodRange(period);
 
+  // Shared runs SWR (same key/shape as the Periods list) — drives a gated poll
+  // so ledger entries refresh while a run is still preparing them, then stop.
+  const { data: runs } = useSWR<RunRow[]>(currentBusiness ? ["runs", currentBusiness.id] : null, async () => {
+    const { data, error } = await supabase.from("workflow_runs").select(RUN_COLUMNS).eq("business_id", currentBusiness!.id).order("period_start", { ascending: false });
+    if (error) throw new Error(error.message);
+    return (data ?? []) as unknown as RunRow[];
+  });
+  const anyRunActive = (runs ?? []).some((r) => runIsActive(r.status));
+
   const key = currentBusiness ? ["ledger", currentBusiness.id, start, end] : null;
   const { data, error, isLoading, mutate } = useSWR<LedgerRow[]>(key, async () => {
     const res = await supabase.from("draft_ledger_entries").select(LEDGER_COLUMNS)
@@ -32,7 +42,7 @@ export default function LedgerPage() {
       .order("entry_period", { ascending: true });
     if (res.error) throw new Error(res.error.message);
     return (res.data ?? []) as unknown as LedgerRow[];
-  });
+  }, { refreshInterval: anyRunActive ? 10000 : 0 });
 
   // Chart of accounts name map for this business.
   const { data: coa } = useSWR(currentBusiness ? ["coa", currentBusiness.id] : null, async () => {

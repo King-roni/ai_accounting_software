@@ -7,7 +7,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useShell } from "@/components/shell/ShellContext";
 import {
   GATE_LABEL, PHASE_STATUS_META, RUN_COLUMNS, WORKFLOW_SIDE, WORKFLOW_TYPE_LABEL,
-  periodLabel, phaseProgress, runStatusBadge,
+  periodLabel, phaseProgress, runIsActive, runStatusBadge,
   type ApprovalRow, type PhaseDefRow, type PhaseStateRow, type RunRow,
 } from "./run-helpers";
 import { FinalizationChecklist } from "./FinalizationChecklist";
@@ -41,6 +41,9 @@ function Body({ runId, onClose, onChanged }: { runId: string; onClose: () => voi
     const { data, error } = await supabase.from("workflow_runs").select(RUN_COLUMNS).eq("id", runId).single();
     if (error) throw new Error(error.message);
     return data as unknown as RunRow;
+  }, {
+    // Live-update while the run is still progressing; stop once it's terminal.
+    refreshInterval: (latest) => latest && runIsActive(latest.status) ? 5000 : 0,
   });
   const { data: defs } = useSWR<PhaseDefRow[]>(run ? ["phase-defs", run.workflow_type] : null, async ([, wfType]: [string, string]) => {
     const { data, error } = await supabase.from("workflow_phase_definitions").select("phase_order, phase_name, optional, description").eq("workflow_type", wfType).order("phase_order");
@@ -51,6 +54,9 @@ function Body({ runId, onClose, onChanged }: { runId: string; onClose: () => voi
     const { data, error } = await supabase.from("workflow_phase_states").select("phase_name, phase_order, status, gate_decision, error_summary, started_at, completed_at").eq("workflow_run_id", runId).order("phase_order");
     if (error) throw new Error(error.message);
     return (data ?? []) as PhaseStateRow[];
+  }, {
+    // Phase states change as the engine advances — poll while the run is active.
+    refreshInterval: run && runIsActive(run.status) ? 5000 : 0,
   });
   const { data: approvals, mutate: mutateApprovals } = useSWR<ApprovalRow[]>(["run-approvals", runId], async () => {
     const { data, error } = await supabase.from("workflow_run_approvals").select("id, approved_by, approved_at, approval_method, approval_note, revoked_at").eq("run_id", runId).order("approved_at");

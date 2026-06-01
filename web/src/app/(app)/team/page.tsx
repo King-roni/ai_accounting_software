@@ -58,15 +58,23 @@ export default async function TeamPage() {
   if (!orgMembership) return <Notice>You are not a member of any organization yet.</Notice>;
 
   const organizationId = orgMembership.organization_id;
-  const [{ data: membersData, error: membersErr }, { data: businessesData }, { data: invitationsData }] = await Promise.all([
-    supabase.rpc("list_organization_members", { p_organization_id: organizationId }),
-    supabase.from("business_entities").select("id, display_name, organization_id").eq("organization_id", organizationId).order("display_name"),
-    supabase.from("organization_invitations").select("id, email, invited_role_per_business, expires_at, created_at").eq("organization_id", organizationId).eq("status", "PENDING").order("created_at", { ascending: false }),
-  ]);
-
-  const members: MemberRow[] = (membersData as MemberRow[] | null) ?? [];
-  const businesses: BusinessOption[] = (businessesData as BusinessOption[] | null) ?? [];
-  const invitations: PendingInvitation[] = (invitationsData as PendingInvitation[] | null) ?? [];
+  let members: MemberRow[] = [];
+  let businesses: BusinessOption[] = [];
+  let invitations: PendingInvitation[] = [];
+  let membersErr: { message: string } | null = null;
+  try {
+    const [{ data: membersData, error: mErr }, { data: businessesData }, { data: invitationsData }] = await Promise.all([
+      supabase.rpc("list_organization_members", { p_organization_id: organizationId }),
+      supabase.from("business_entities").select("id, display_name, organization_id").eq("organization_id", organizationId).order("display_name"),
+      supabase.from("organization_invitations").select("id, email, invited_role_per_business, expires_at, created_at").eq("organization_id", organizationId).eq("status", "PENDING").order("created_at", { ascending: false }),
+    ]);
+    members = (membersData as MemberRow[] | null) ?? [];
+    businesses = (businessesData as BusinessOption[] | null) ?? [];
+    invitations = (invitationsData as PendingInvitation[] | null) ?? [];
+    membersErr = mErr ?? null;
+  } catch (e) {
+    return <Notice><span style={{ color: "var(--color-status-danger)" }}>Could not load the team right now. Please refresh — if it persists, the service may be temporarily unavailable.{e instanceof Error ? ` (${e.message})` : ""}</span></Notice>;
+  }
   if (membersErr && !membersErr.message.includes("MEMBERS_REQUIRES_OWNER_OR_ADMIN")) {
     return <Notice><span style={{ color: "var(--color-status-danger)" }}>Could not load members: {membersErr.message}</span></Notice>;
   }

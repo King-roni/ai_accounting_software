@@ -9,6 +9,7 @@ import { useShell } from "@/components/shell/ShellContext";
 import {
   LEVEL_BADGE, MATCH_SELECT, money, scoreColor, SIGNAL_LABELS, STATUS_BADGE, type MatchRow,
 } from "@/components/matching/match-helpers";
+import { RUN_COLUMNS, runIsActive, type RunRow } from "@/components/runs/run-helpers";
 
 function SignalBars({ signals }: { signals: Record<string, number> | null }) {
   if (!signals) return null;
@@ -50,12 +51,21 @@ export default function MatchingPage() {
   const { toast } = useToast();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
 
+  // Shared runs SWR (same key/shape as the Periods list) — drives a gated poll
+  // so matches refresh while a run is still producing them, then stop.
+  const { data: runs } = useSWR<RunRow[]>(currentBusiness ? ["runs", currentBusiness.id] : null, async () => {
+    const { data, error } = await supabase.from("workflow_runs").select(RUN_COLUMNS).eq("business_id", currentBusiness!.id).order("period_start", { ascending: false });
+    if (error) throw new Error(error.message);
+    return (data ?? []) as unknown as RunRow[];
+  });
+  const anyRunActive = (runs ?? []).some((r) => runIsActive(r.status));
+
   const key = currentBusiness ? ["matches", currentBusiness.id] : null;
   const { data, error, isLoading, mutate } = useSWR<MatchRow[]>(key, async () => {
     const res = await supabase.from("match_records").select(MATCH_SELECT).eq("business_id", currentBusiness!.id).order("match_score", { ascending: false });
     if (res.error) throw new Error(res.error.message);
     return (res.data ?? []) as unknown as MatchRow[];
-  });
+  }, { refreshInterval: anyRunActive ? 10000 : 0 });
 
   const [filter, setFilter] = useState("NEEDS");
   const [busyId, setBusyId] = useState<string | null>(null);

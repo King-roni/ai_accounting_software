@@ -54,11 +54,36 @@ export function FinalizationChecklist({
       p_approval_method: "STEP_UP", p_approval_note: "Finalize period", p_actor_user_id: user.id,
       p_context: {}, p_step_up_token_id: tokenId,
     });
-    setBusy(false);
-    if (res.error) { toast({ variant: "error", title: "Approval failed", description: res.error.message }); return; }
+    if (res.error) { setBusy(false); toast({ variant: "error", title: "Approval failed", description: res.error.message }); return; }
     const d = res.data as { decision?: string; reason?: string; reason_code?: string } | null;
-    if (d?.decision && !["ALLOW", "APPROVED", "OK"].includes(d.decision)) { toast({ variant: "warning", title: "Not allowed", description: d.reason ?? d.reason_code ?? d.decision }); return; }
-    toast({ variant: "success", title: "Step-up approval recorded" });
+    if (d?.decision && !["ALLOW", "APPROVED", "OK"].includes(d.decision)) { setBusy(false); toast({ variant: "warning", title: "Not allowed", description: d.reason ?? d.reason_code ?? d.decision }); return; }
+    // 3. Approval landed — drive the FINALIZATION gate by running the lock
+    //    sequence (lock period → build & anchor the archive package). Mirrors
+    //    AdjustmentFinalizePanel.refinalize's result handling.
+    const { data: lockData, error: lockErr } = await supabase.rpc("execute_lock_sequence", {
+      p_run_id: runId,
+      p_actor_user_id: user.id,
+      p_context: {},
+    });
+    setBusy(false);
+    if (lockErr) { toast({ variant: "error", title: "Finalization failed", description: lockErr.message }); return; }
+    const lock = lockData as { decision?: string; reason?: string; review_issue_id?: string; last_error?: string } | null;
+    switch (lock?.decision) {
+      case "COMMITTED":
+        toast({ variant: "success", title: "Period finalized", description: "Archive package created." });
+        break;
+      case "NO_OP":
+        toast({ variant: "success", title: "Already finalized", description: "This period was already locked." });
+        break;
+      case "BLOCKED":
+        toast({ variant: "error", title: "Finalization blocked", description: lock.reason ?? lock.review_issue_id ?? "A precondition is no longer satisfied." });
+        break;
+      case "FAILED":
+        toast({ variant: "error", title: "Finalization failed", description: lock.reason ?? lock.last_error ?? "The lock sequence did not complete." });
+        break;
+      default:
+        toast({ variant: "warning", title: "Not finalized", description: lock?.reason ?? lock?.decision ?? "The lock sequence returned an unexpected result." });
+    }
     mutate(); onChanged();
   }
 

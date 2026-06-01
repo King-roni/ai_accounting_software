@@ -31,6 +31,14 @@ const STATUS_BADGE: Record<UploadRow["upload_status"], { variant: BadgeVariant; 
   FAILED: { variant: "severity-blocking", label: "Failed" },
 };
 
+/** A still-queued/parsing upload older than this is likely stuck (worker down). */
+const STUCK_THRESHOLD_MS = 3 * 60 * 1000;
+function isStuck(u: UploadRow): boolean {
+  if (u.upload_status !== "UPLOADED" && u.upload_status !== "PARSING") return false;
+  const uploadedAt = new Date(u.uploaded_at).getTime();
+  return Number.isFinite(uploadedAt) && Date.now() - uploadedAt > STUCK_THRESHOLD_MS;
+}
+
 export function RecentUploads({ businessId }: { businessId: string }) {
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
 
@@ -104,6 +112,11 @@ export function RecentUploads({ businessId }: { businessId: string }) {
                 {warnings > 0 && (
                   <span className="inline-flex items-center gap-1 text-text-secondary">
                     <AlertTriangle size={13} aria-hidden="true" style={{ color: "var(--color-status-warning)" }} /> {warnings} skipped
+                  </span>
+                )}
+                {isStuck(u) && (
+                  <span className="inline-flex items-center gap-1" style={{ color: "var(--color-status-warning)" }} title="This upload has been queued for a while.">
+                    <AlertTriangle size={13} aria-hidden="true" /> Still queued — the processing service may be offline
                   </span>
                 )}
                 <Badge variant={badge.variant} size="sm">{badge.label}</Badge>

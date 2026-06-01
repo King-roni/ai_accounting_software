@@ -34,8 +34,14 @@ export default async function IntegrationsPage(props: {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [{ data: businesses }, { data: integrations }, { data: driveMappings }] =
-    await Promise.all([
+  // Degrade gracefully if any of the integration queries fails — a transient
+  // backend error should leave the page usable (empty state) rather than crash.
+  let businesses: BusinessRow[] | null = null;
+  let integrations: IntegrationRow[] | null = null;
+  let driveMappings: DriveMappingRow[] | null = null;
+  let loadError: string | null = null;
+  try {
+    const [biz, ints, mappings] = await Promise.all([
       supabase
         .from("business_entities")
         .select("id, display_name, organization_id")
@@ -49,16 +55,23 @@ export default async function IntegrationsPage(props: {
         .from("drive_folder_mappings")
         .select("business_id, root_folder_id, root_folder_name"),
     ]);
+    businesses = (biz.data as BusinessRow[] | null) ?? null;
+    integrations = (ints.data as IntegrationRow[] | null) ?? null;
+    driveMappings = (mappings.data as DriveMappingRow[] | null) ?? null;
+    loadError = biz.error?.message ?? ints.error?.message ?? mappings.error?.message ?? null;
+  } catch (e) {
+    loadError = e instanceof Error ? e.message : "Could not load integrations.";
+  }
 
   const byBusiness = new Map<string, { biz: BusinessRow; rows: IntegrationRow[] }>();
-  for (const b of (businesses as BusinessRow[] | null) ?? []) {
+  for (const b of businesses ?? []) {
     byBusiness.set(b.id, { biz: b, rows: [] });
   }
-  for (const r of (integrations as IntegrationRow[] | null) ?? []) {
+  for (const r of integrations ?? []) {
     byBusiness.get(r.business_id)?.rows.push(r);
   }
   const mappingByBusiness = new Map(
-    ((driveMappings as DriveMappingRow[] | null) ?? []).map((m) => [m.business_id, m]),
+    (driveMappings ?? []).map((m) => [m.business_id, m]),
   );
 
   return (
@@ -77,6 +90,11 @@ export default async function IntegrationsPage(props: {
           {error === "OAUTH_NOT_CONFIGURED"
             ? "Google OAuth is not configured in this environment. Set GOOGLE_OAUTH_CLIENT_ID / GOOGLE_OAUTH_CLIENT_SECRET."
             : `Could not complete integration: ${error}`}
+        </div>
+      )}
+      {loadError && (
+        <div className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-800 dark:border-red-700 dark:bg-red-950 dark:text-red-200">
+          Couldn’t load your integrations right now. Please refresh — if it persists, the service may be temporarily unavailable.
         </div>
       )}
       {connected && (
