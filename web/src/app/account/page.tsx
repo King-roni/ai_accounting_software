@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import EmailForm from "./EmailForm";
 import PasswordForm from "./PasswordForm";
 import ProfileForm from "./ProfileForm";
+import PersonalAuditFeed from "./PersonalAuditFeed";
 
 export default async function AccountSettingsPage() {
   // Layout already gates auth + provides the chrome; we can read user here.
@@ -92,7 +93,7 @@ export default async function AccountSettingsPage() {
             Business integrations
           </h2>
           <p className="mb-2 text-sm text-zinc-500">
-            Connect Gmail and Drive on businesses where you're Owner or Admin.
+            Connect Gmail and Drive on businesses where you&apos;re Owner or Admin.
           </p>
           <Link
             href="/integrations"
@@ -103,16 +104,14 @@ export default async function AccountSettingsPage() {
         </section>
       )}
 
-      <section className="rounded-lg border border-dashed border-zinc-300 bg-zinc-50 p-5 text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-400">
-        <h2 className="mb-1 text-base font-medium text-zinc-700 dark:text-zinc-300">
+      <section className="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+        <h2 className="mb-1 text-base font-medium text-zinc-900 dark:text-zinc-50">
           Personal audit feed
         </h2>
-        <p>
-          A 30-day timeline of your account-scoped events (sign-ins, MFA
-          actions, settings changes, integrations) will appear here once
-          the append-only audit log is wired in (B05·P02). Until then,
-          Supabase Auth's own log records these events.
+        <p className="mb-3 text-sm text-zinc-500">
+          A 30-day timeline of your own actions from the append-only audit log.
         </p>
+        <PersonalAuditFeed />
       </section>
     </div>
   );
