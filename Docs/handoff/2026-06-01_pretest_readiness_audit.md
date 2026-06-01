@@ -225,3 +225,76 @@ is blocked by N2 (re-drive FK) — exercise IN via the review queue (confirm
 proposed matches/classifications) but route the finalize test through OUT. MFA
 must be enrolled first (B5). N3 (matrix drift) is a security-hygiene follow-up,
 not a tester blocker.
+
+---
+
+# PHASE C — guided E2E (real browser) + final go/no-go (2026-06-02)
+
+Driven as the demo OWNER (admin@admin.com) against the live DB via the local
+Next.js dev server + the orchestrator worker. Screenshots in `.playwright-mcp/`
+(`phaseC-01..04`).
+
+## What was walked successfully (end-to-end, in the real UI)
+
+1. **Login** → dashboard (period correctly defaults to **May 2026**, the latest
+   month with data — B3 holds; dashboard cards all live).
+2. **MFA enrollment** (Account → Multi-factor → Enroll authenticator): QR + TOTP
+   verified, **8 recovery codes** generated (B5 path validated; secret captured
+   to drive step-up).
+3. **Upload** a Revolut CSV (June 2026) → worker **parsed it** → 6 transactions
+   created → **classified** → **June OUT run auto-driven to AWAITING_APPROVAL**,
+   June IN to REVIEW_HOLD. The upload→parse→classify→drive pipeline + the
+   multi-period classify-gate fix work live.
+4. **Review queue** populated with real issues (needs-confirmation + missing-docs).
+5. **Finalize via UI** (June OUT): data-preconditions ready → "Approve & finalize"
+   → **MFA step-up modal** (N1 fix: real challenge, not a silent token mint) →
+   TOTP verified → **run FINALIZED + archive package + v1 manifest created**.
+6. **Periods/Archive**: May Finalized + its Adjustment (v2), June Finalized,
+   April awaiting — all render; Archive tab present.
+7. **Nav sweep**: Dashboard, Transactions, Invoices, Documents, Matching, Ledger,
+   Reviews, Periods, Reports, Subscriptions, Team, Clients all render with no
+   crash. Branded **error boundary** caught the `/help` 500 ("Something went
+   wrong" + recovery) and the **not-found** boundary rendered for a bad URL
+   (B6 validated on a real crash).
+
+## Fixed during Phase C (committed)
+
+Driving the real UI exposed several blockers the prior audits missed (they only
+tested single runs / SQL paths):
+- **Worker `tick()` 22P02** — `sorted(DRIVABLE_STATUSES)` sent `RunStatus` enum
+  members (`"RunStatus.CREATED"`) to the status filter; every tick failed. Fixed
+  (`.value`). The worker had literally never ticked.
+- **Finalize-via-UI deadlock** — "Approve & finalize" gated on the *full* master
+  gate (which requires a step-up approval that only that button creates). Fixed:
+  gate on data-preconditions; the click records the step-up approval + locks.
+- **Finalize token surface mismatch** — modal minted the token for `FINALIZATION`
+  but the approval RPC consumes `APPROVAL_STEP_UP` → `STEP_UP_TOKEN_INVALID`.
+  Fixed: mint for `APPROVAL_STEP_UP`.
+- (+ N1 MFA-bypass + N7 sentinel grant + N9 error.tsx centering, above.)
+
+## Open defects logged this pass (Plane cycle, BOOK-952…963)
+
+BLOCKER: **C1** review queue can't resolve issues (only Snooze/Assign → can't
+clear a fresh upload's issues in-app); **N2** `prepare_ledger_entries` re-run FK.
+HIGH: **N3** permission_matrix drift. MEDIUM: **C5** `/help` 500, **N4** classify
+exit gate business-wide, **N5** empty principal_snapshot, **N6** step-up token
+surface unvalidated. LOW: **C6** 405 on a gate RPC fetch, **C7** checklist stale
+after approve, **C8** off-brand login, **C9** uploads list stale until reload,
+**N8** opaque ActorResolutionError.
+
+## FINAL VERDICT: **GO (with caveats) — open the product to guided testers.**
+
+The full bookkeeping journey is walkable end-to-end in the real UI for the OUT
+side (upload→classify→match→review→ledger→**finalize (MFA)**→archive→adjust), and
+the demo carries a finalized+adjusted period for Archive. Required tester
+guidance / known limitations:
+- **Enroll MFA first** (Account → Multi-factor) — step 1 of the script.
+- **Confirm classifications via SQL/admin until C1 lands** — the review queue UI
+  can't yet resolve a needs-confirmation/missing-doc issue, so a *fresh upload*
+  can't be finalized purely in-app without C1. The pre-driven May/June finalized
+  periods + the OUT finalize flow are fully demoable.
+- **Don't re-drive a held IN run** until N2 is fixed (re-run FK).
+- AI/OCR/integrations remain scoped out (P2 keys); Help 500s (caught by the
+  boundary); matrix-drift (N3) is a security-hygiene follow-up.
+- The worker (`python -m cyprus_bookkeeping_api.worker`, `WORKER_SYSTEM_ACTOR_USER_ID`
+  set) and the dev server must be running for the test window.
