@@ -27,6 +27,18 @@ export default function ReviewsPage() {
     return (res.data ?? []) as unknown as IssueRow[];
   });
 
+  // Per-issue-type allowed resolution actions (from issue_type_registry) so the
+  // drawer renders the right resolve buttons; apply_resolution_action re-checks.
+  const { data: actionsByType } = useSWR(currentBusiness ? ["issue-actions"] : null, async () => {
+    const res = await supabase.from("issue_type_registry").select("issue_type, allowed_resolution_actions");
+    if (res.error) throw new Error(res.error.message);
+    const m: Record<string, string[]> = {};
+    (res.data ?? []).forEach((r: { issue_type: string; allowed_resolution_actions: string[] | null }) => {
+      m[r.issue_type] = r.allowed_resolution_actions ?? [];
+    });
+    return m;
+  });
+
   const [group, setGroup] = useState<IssueGroup | "ALL">("ALL");
   const [detail, setDetail] = useState<IssueRow | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -69,6 +81,23 @@ export default function ReviewsPage() {
     if (d) { toast({ variant: "warning", title: "Can’t assign this issue", description: d }); return; }
     toast({ variant: "success", title: "Assigned to you" });
     mutate();
+  }
+  async function resolve(r: IssueRow, action: string, opts?: { note?: string; reason?: string }) {
+    setBusyId(r.id);
+    const payload = opts?.reason ? { reason: opts.reason } : {};
+    const { data, error: e } = await supabase.rpc("apply_resolution_action", {
+      p_actor_user_id: user.id, p_issue_id: r.id, p_action: action,
+      p_payload: payload, p_note: opts?.note ?? null, p_context: {},
+    });
+    setBusyId(null);
+    if (e) { toast({ variant: "error", title: "Couldn’t resolve", description: e.message }); return; }
+    const dd = data as { decision?: string; reason_code?: string } | null;
+    if (dd?.decision && dd.decision !== "ALLOW") {
+      toast({ variant: "warning", title: "Action not allowed", description: (dd.reason_code ?? "").replaceAll("_", " ").toLowerCase() || "This action isn’t allowed for this issue." });
+      return;
+    }
+    toast({ variant: "success", title: "Issue resolved" });
+    setDetail(null); mutate();
   }
 
   return (
@@ -131,7 +160,16 @@ export default function ReviewsPage() {
         </div>
       )}
 
-      <ReviewDetailDrawer row={detail} open={!!detail} onClose={() => setDetail(null)} onSnooze={snooze} onAssign={assign} busy={busyId === detail?.id} />
+      <ReviewDetailDrawer
+        row={detail}
+        open={!!detail}
+        onClose={() => setDetail(null)}
+        onSnooze={snooze}
+        onAssign={assign}
+        onResolve={resolve}
+        allowedActions={detail ? (actionsByType?.[detail.issue_type] ?? []) : []}
+        busy={busyId === detail?.id}
+      />
     </div>
   );
 }

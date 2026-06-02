@@ -42,6 +42,36 @@ export const SEVERITY_BADGE: Record<Severity, { variant: BadgeVariant }> = {
 };
 export const SEVERITY_RANK: Record<Severity, number> = { BLOCKING: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
 
+/** Friendly labels for the resolution_action_kind_enum values. */
+export const ACTION_LABEL: Record<string, string> = {
+  CONFIRM_CLASSIFICATION: "Confirm classification",
+  CONFIRM_MATCH: "Confirm match",
+  REJECT_MATCH: "Mark as wrong",
+  MARK_AS_NO_INVOICE_AVAILABLE: "No invoice available",
+  UPLOAD_DOCUMENT: "Upload document",
+  ADD_EXPLANATION_NOTE: "Add note",
+  IGNORE_WITH_REASON: "Ignore with reason",
+  SEND_TO_ACCOUNTANT_REVIEW: "Send to accountant",
+  CHANGE_TAG: "Change tag",
+  CHANGE_TRANSACTION_TYPE: "Change type",
+  MARK_AS_INTERNAL_TRANSFER: "Internal transfer",
+  MARK_AS_BANK_FEE: "Bank fee",
+  MARK_AS_NON_DEDUCTIBLE: "Non-deductible",
+  RERUN_SCAN_AFTER_CHANGE: "Re-run scan",
+};
+
+/** Actions whose apply_resolution_action call requires a free-text reason/note. */
+export const ACTION_NEEDS_TEXT = new Set<string>([
+  "MARK_AS_NO_INVOICE_AVAILABLE", "ADD_EXPLANATION_NOTE", "IGNORE_WITH_REASON",
+]);
+
+/** Actions the review drawer renders as in-place resolve buttons (others route
+ *  to another surface, or are handled by Assign). */
+export const INLINE_RESOLVE_ACTIONS = new Set<string>([
+  "CONFIRM_CLASSIFICATION", "CONFIRM_MATCH", "REJECT_MATCH",
+  "MARK_AS_NO_INVOICE_AVAILABLE", "ADD_EXPLANATION_NOTE", "IGNORE_WITH_REASON",
+]);
+
 /** Map a recommended resolution action to the surface that resolves it. */
 export function resolutionRoute(action: string | null): { label: string; href: string } | null {
   switch (action) {
