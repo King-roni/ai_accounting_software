@@ -1,6 +1,6 @@
 "use client";
 import { useMemo, useState } from "react";
-import useSWR from "swr";
+import useSWR, { mutate as globalMutate } from "swr";
 import { BellRing, CheckCircle2, FilePlus2, PlayCircle } from "lucide-react";
 import { Badge, Button, Drawer, Textarea, useToast } from "@/components/ui";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -74,7 +74,10 @@ function Body({ runId, onClose, onChanged }: { runId: string; onClose: () => voi
     },
   );
 
-  function refresh() { mutateRun(); mutateStates(); mutateApprovals(); mutateChildren(); onChanged(); }
+  // Also revalidate the FinalizationChecklist's gate SWR (it owns the
+  // ["fin-gates", runId] key) so its "Approval recorded" / step-up items reflect
+  // an approval recorded here without a manual page reload.
+  function refresh() { mutateRun(); mutateStates(); mutateApprovals(); mutateChildren(); void globalMutate(["fin-gates", runId]); onChanged(); }
 
   if (!run) return <p className="text-sm text-text-muted">Loading…</p>;
   const side = WORKFLOW_SIDE[run.workflow_type];

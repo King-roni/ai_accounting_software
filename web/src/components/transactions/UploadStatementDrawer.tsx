@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { mutate as globalMutate } from "swr";
 import { UploadCloud } from "lucide-react";
 import { Alert, Button, Drawer, Input, useToast } from "@/components/ui";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -66,6 +67,9 @@ export function UploadStatementDrawer({ open, onClose }: { open: boolean; onClos
       if (!done.ok) { setError(done.error); setBusy(false); return; }
 
       setBusy(false);
+      // Refresh the RecentUploads list (it owns the ["stmt-uploads", businessId]
+      // key) so the just-registered upload appears without a manual reload.
+      void globalMutate(["stmt-uploads", currentBusiness.id]);
       toast({
         variant: "success",
         title: "Statement uploaded",
