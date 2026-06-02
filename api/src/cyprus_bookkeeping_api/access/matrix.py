@@ -1,10 +1,11 @@
 """The canonical (role, surface) → Decision matrix.
 
-Mirrors the consolidated table in
-`Docs/sub/reference/permission_matrix.md`. Step-up is currently marked only
-on FINALIZATION; the per-business-optional toggles on BUSINESS_SETTINGS_EDIT
-/ USER_INVITE / EXTERNAL_INTEGRATION are deferred Stage 2 toggles and are
-NOT encoded as REQUIRE_STEP_UP here.
+Mirrors the live `public.permission_matrix` table (and the consolidated table in
+`Docs/sub/reference/permission_matrix.md`). Step-up is marked on FINALIZATION,
+APPROVAL_STEP_UP, and WORKFLOW_RUN (upload / manual run trigger). The
+per-business-optional toggles on BUSINESS_SETTINGS_EDIT / USER_INVITE /
+EXTERNAL_INTEGRATION are deferred Stage 2 toggles and are NOT encoded as
+REQUIRE_STEP_UP here.
 
 Adding or changing a grant requires a `Docs/decisions_log.md` amendment.
 """
@@ -44,6 +45,15 @@ _ROWS: tuple[tuple[PermissionSurface, tuple[Decision, ...]], ...] = (
     (PermissionSurface.REPORT_EXPORT_FULL,       (_ALLOW, _ALLOW, _DENY,  _ALLOW, _DENY,  _DENY)),
     (PermissionSurface.DASHBOARD_VIEW,           (_ALLOW, _ALLOW, _ALLOW, _ALLOW, _ALLOW, _ALLOW)),
     (PermissionSurface.DASHBOARD_REFRESH_MANUAL, (_ALLOW, _ALLOW, _ALLOW, _ALLOW, _ALLOW, _ALLOW)),
+    # Later-block surfaces — decisions mirrored from the live permission_matrix.
+    (PermissionSurface.APPROVAL_STANDARD,        (_ALLOW, _ALLOW, _ALLOW, _DENY,  _DENY,  _DENY)),
+    (PermissionSurface.APPROVAL_STEP_UP,         (_STEP,  _STEP,  _DENY,  _DENY,  _DENY,  _DENY)),
+    (PermissionSurface.CLIENT_MANAGE,            (_ALLOW, _ALLOW, _ALLOW, _DENY,  _DENY,  _DENY)),
+    (PermissionSurface.CREDIT_NOTE_ISSUE,        (_ALLOW, _ALLOW, _ALLOW, _DENY,  _DENY,  _DENY)),
+    (PermissionSurface.INVOICE_CREATE,           (_ALLOW, _ALLOW, _ALLOW, _DENY,  _DENY,  _DENY)),
+    (PermissionSurface.INVOICE_MANAGE,           (_ALLOW, _ALLOW, _ALLOW, _DENY,  _DENY,  _DENY)),
+    (PermissionSurface.WORKFLOW_CONFIG_MANAGE,   (_ALLOW, _ALLOW, _DENY,  _DENY,  _DENY,  _DENY)),
+    (PermissionSurface.WORKFLOW_RUN,             (_STEP,  _STEP,  _DENY,  _DENY,  _DENY,  _DENY)),
 )
 
 

@@ -18,7 +18,7 @@ from dataclasses import replace
 from typing import Any
 
 from cyprus_bookkeeping_api.config import Settings
-from cyprus_bookkeeping_api.orchestrator.actors import require_actor
+from cyprus_bookkeeping_api.orchestrator.actors import ActorResolutionError, require_actor
 from cyprus_bookkeeping_api.orchestrator.gates import GateEngine
 from cyprus_bookkeeping_api.orchestrator.models import (
     DRIVABLE_STATUSES,
@@ -231,6 +231,13 @@ def safe_drive_run(
     """drive_run wrapper that never raises — for the worker's per-run isolation."""
     try:
         return drive_run(gateway, settings, run_id, **kwargs)
+    except ActorResolutionError as exc:
+        # Misconfiguration, not a run defect: no started_by / principal actor and
+        # WORKER_SYSTEM_ACTOR_USER_ID unset. Surface a distinct, single-line
+        # diagnostic (warning, not an exception stack) so a bad deploy is obvious
+        # instead of an opaque CRASH that repeats every tick.
+        logger.warning("drive_run skipped %s — actor unresolved: %s", run_id, exc)
+        return {"run_id": run_id, "ok": False, "reason": "ACTOR_UNRESOLVED", "error": str(exc)}
     except (OrchestratorError, RpcError) as exc:
         logger.exception("drive_run failed for %s", run_id)
         return {"run_id": run_id, "ok": False, "reason": "DRIVE_FAILED", "error": str(exc)}

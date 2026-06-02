@@ -83,6 +83,6 @@ def test_postgres_mirror_matches_python_matrix() -> None:
     )
 
 
-def test_postgres_mirror_has_exactly_90_rows() -> None:
+def test_postgres_mirror_has_exactly_138_rows() -> None:
     db_matrix = _fetch_postgres_matrix()
-    assert len(db_matrix) == 90, f"expected 90 cells, got {len(db_matrix)}"
+    assert len(db_matrix) == 138, f"expected 138 cells, got {len(db_matrix)}"

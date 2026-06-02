@@ -83,6 +83,39 @@ EXPECTED: dict[PermissionSurface, dict[Role, Decision]] = {
         Role.OWNER: _ALLOW, Role.ADMIN: _ALLOW, Role.BOOKKEEPER: _ALLOW,
         Role.ACCOUNTANT: _ALLOW, Role.REVIEWER: _ALLOW, Role.READ_ONLY: _ALLOW,
     },
+    # Later-block surfaces (mirrored from the live permission_matrix).
+    PermissionSurface.APPROVAL_STANDARD: {
+        Role.OWNER: _ALLOW, Role.ADMIN: _ALLOW, Role.BOOKKEEPER: _ALLOW,
+        Role.ACCOUNTANT: _DENY, Role.REVIEWER: _DENY, Role.READ_ONLY: _DENY,
+    },
+    PermissionSurface.APPROVAL_STEP_UP: {
+        Role.OWNER: _STEP, Role.ADMIN: _STEP, Role.BOOKKEEPER: _DENY,
+        Role.ACCOUNTANT: _DENY, Role.REVIEWER: _DENY, Role.READ_ONLY: _DENY,
+    },
+    PermissionSurface.CLIENT_MANAGE: {
+        Role.OWNER: _ALLOW, Role.ADMIN: _ALLOW, Role.BOOKKEEPER: _ALLOW,
+        Role.ACCOUNTANT: _DENY, Role.REVIEWER: _DENY, Role.READ_ONLY: _DENY,
+    },
+    PermissionSurface.CREDIT_NOTE_ISSUE: {
+        Role.OWNER: _ALLOW, Role.ADMIN: _ALLOW, Role.BOOKKEEPER: _ALLOW,
+        Role.ACCOUNTANT: _DENY, Role.REVIEWER: _DENY, Role.READ_ONLY: _DENY,
+    },
+    PermissionSurface.INVOICE_CREATE: {
+        Role.OWNER: _ALLOW, Role.ADMIN: _ALLOW, Role.BOOKKEEPER: _ALLOW,
+        Role.ACCOUNTANT: _DENY, Role.REVIEWER: _DENY, Role.READ_ONLY: _DENY,
+    },
+    PermissionSurface.INVOICE_MANAGE: {
+        Role.OWNER: _ALLOW, Role.ADMIN: _ALLOW, Role.BOOKKEEPER: _ALLOW,
+        Role.ACCOUNTANT: _DENY, Role.REVIEWER: _DENY, Role.READ_ONLY: _DENY,
+    },
+    PermissionSurface.WORKFLOW_CONFIG_MANAGE: {
+        Role.OWNER: _ALLOW, Role.ADMIN: _ALLOW, Role.BOOKKEEPER: _DENY,
+        Role.ACCOUNTANT: _DENY, Role.REVIEWER: _DENY, Role.READ_ONLY: _DENY,
+    },
+    PermissionSurface.WORKFLOW_RUN: {
+        Role.OWNER: _STEP, Role.ADMIN: _STEP, Role.BOOKKEEPER: _DENY,
+        Role.ACCOUNTANT: _DENY, Role.REVIEWER: _DENY, Role.READ_ONLY: _DENY,
+    },
 }
 
 
