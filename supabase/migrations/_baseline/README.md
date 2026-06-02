@@ -33,9 +33,22 @@ are **excluded** — the platform owns those.
 ## How to rebuild a fresh DB
 
 ```
+# 1. Squashed schema snapshot (current state @ 2026-05-29)
 psql "$DB_URL" -f supabase/migrations/_baseline/20260529T000000_live_schema_baseline.sql
-psql "$DB_URL" -f supabase/seed.sql        # reference/seed data
+# 2. Migrations committed AFTER the baseline timestamp (2026-05-30 onward, e.g.
+#    the 20260601*/20260602* pretest fixes). The baseline already contains
+#    everything up to its timestamp, so ONLY post-baseline files apply here.
+for f in $(ls supabase/migrations/*.sql | awk -F/ '$NF > "20260529T000000"' | sort); do
+  psql "$DB_URL" -f "$f"
+done
+# 3. Reference / seed data
+psql "$DB_URL" -f supabase/seed.sql
 ```
+
+Do **not** replay the full `supabase/migrations/*.sql` set on top of the baseline
+— that double-applies everything up to 2026-05-29. The Postgres major version and
+seed path are pinned in `supabase/config.toml` (PG 17) so a `supabase` CLI rebuild
+matches the live engine.
 
 The baseline begins with `SET check_function_bodies = false` and emits functions
 before tables, so the table-default ↔ function circular dependency resolves on a

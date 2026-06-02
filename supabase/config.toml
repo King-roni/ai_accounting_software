@@ -1,0 +1,25 @@
+# Supabase project config — TimeFuserBooks (Cyprus bookkeeping SaaS).
+#
+# Purpose (audit H5 — migration rebuild integrity): pin the Postgres major
+# version and the seed path so a fresh / branch rebuild reproduces the live
+# engine. Live engine = Postgres 17 (project noxvmnxrqlzsdfngfiww, eu-west-1,
+# 17.6.1.121). Day-to-day work runs against the LIVE DB; the `supabase` CLI is
+# only needed for a from-scratch rebuild.
+#
+# Rebuild model (see supabase/migrations/_baseline/README.md):
+#   1. apply the squashed snapshot _baseline/20260529T000000_live_schema_baseline.sql
+#   2. apply every supabase/migrations/*.sql dated AFTER that baseline timestamp
+#   3. apply supabase/seed.sql
+# Before the next rebuild, regenerate the baseline with `pg_dump --schema-only`
+# (canonical; supersedes the MCP-introspected snapshot) and reconcile
+# supabase_migrations.schema_migrations — both require a DB connection string.
+
+project_id = "noxvmnxrqlzsdfngfiww"
+
+[db]
+# Match the live engine so a local/branch rebuild can't drift on PG version.
+major_version = 17
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]
