@@ -1,13 +1,11 @@
 import { redirect } from "next/navigation";
 
 import { Alert } from "@/components/ui";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import SignOutOthersButton from "./SignOutOthersButton";
 
 type SessionRow = {
   id: string;
-  user_id: string;
   created_at: string;
   updated_at: string;
   factor_id: string | null;
@@ -25,21 +23,12 @@ export default async function SessionsPage() {
 
   let sessions: SessionRow[] = [];
   let error: string | null = null;
-  try {
-    const admin = createSupabaseAdminClient();
-    const { data, error: queryErr } = await admin
-      .schema("auth")
-      .from("sessions")
-      .select("id, user_id, created_at, updated_at, factor_id, aal, user_agent, ip")
-      .eq("user_id", user.id)
-      .order("updated_at", { ascending: false });
+  // BOOK-964: the `auth` schema isn't exposed via PostgREST. Read the caller's
+  // own sessions through the SECURITY DEFINER RPC (scoped by auth.uid()).
+  {
+    const { data, error: queryErr } = await supabase.rpc("list_my_sessions");
     if (queryErr) error = queryErr.message;
     else sessions = (data as unknown as SessionRow[]) ?? [];
-  } catch (err) {
-    error =
-      err instanceof Error
-        ? err.message
-        : "Service-role key not configured; sessions are read via the admin client.";
   }
 
   return (
