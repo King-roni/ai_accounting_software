@@ -58,6 +58,7 @@ export const ACTION_LABEL: Record<string, string> = {
   MARK_AS_BANK_FEE: "Bank fee",
   MARK_AS_NON_DEDUCTIBLE: "Non-deductible",
   RERUN_SCAN_AFTER_CHANGE: "Re-run scan",
+  CONFIRM_LEDGER_ENTRY: "Confirm entry",
 };
 
 /** Actions whose apply_resolution_action call requires a free-text reason/note. */
@@ -70,6 +71,7 @@ export const ACTION_NEEDS_TEXT = new Set<string>([
 export const INLINE_RESOLVE_ACTIONS = new Set<string>([
   "CONFIRM_CLASSIFICATION", "CONFIRM_MATCH", "REJECT_MATCH",
   "MARK_AS_NO_INVOICE_AVAILABLE", "ADD_EXPLANATION_NOTE", "IGNORE_WITH_REASON",
+  "CONFIRM_LEDGER_ENTRY",
 ]);
 
 /** Map a recommended resolution action to the surface that resolves it. */
