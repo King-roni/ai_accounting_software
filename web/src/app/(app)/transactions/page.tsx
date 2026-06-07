@@ -79,12 +79,25 @@ export default function TransactionsPage() {
       cell: (r) => <span style={{ color: Number(r.amount) < 0 ? "var(--color-status-danger-text)" : "var(--color-status-success-text)" }}>{formatMoney(Number(r.amount), r.currency)}</span>,
     },
     {
-      id: "class", header: "Classification", width: 150,
+      id: "class", header: "Classification", width: 180,
       cell: (r) => {
         const tag = txnTag(r);
-        if (tag) return <Badge variant="status-success" size="sm">{tag}</Badge>;
+        // BOOK-970: only a CONFIRMED classification reads as confident (green).
+        // An unconfirmed suggestion (e.g. the no-AI fallback) shows the status
+        // badge ("Needs review") with the proposed tag muted alongside, so it
+        // never looks like a settled category.
+        if (tag && r.classification_status === "CONFIRMED") {
+          return <Badge variant="status-success" size="sm">{tag}</Badge>;
+        }
         const b = CLASSIFICATION_BADGE[r.classification_status];
-        return <Badge variant={b.variant} size="sm">{b.label}</Badge>;
+        return (
+          <span className="inline-flex items-center gap-1.5">
+            <Badge variant={b.variant} size="sm">{b.label}</Badge>
+            {tag && (
+              <span className="truncate text-xs text-text-muted" title={tag}>{tag}</span>
+            )}
+          </span>
+        );
       },
     },
     {
