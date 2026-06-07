@@ -88,6 +88,11 @@ function Body({ runId, onClose, onChanged }: { runId: string; onClose: () => voi
   const { completed, total } = phaseProgress(defs ?? [], states ?? []);
   const canApprove = ["AWAITING_APPROVAL", "REVIEW_HOLD"].includes(run.status);
   const canClearHold = run.status === "REVIEW_HOLD";
+  // BOOK-969: a REVIEW_HOLD can come from the HUMAN_REVIEW_HOLD side phase or from
+  // a phase gate (e.g. LEDGER_PREPARATION). The clear-hold RPC only clears the
+  // former; for a gate hold we resume + re-drive instead.
+  const heldPhaseName = (states ?? []).find((s) => s.status === "HOLDING")?.phase_name ?? null;
+  const isHumanReviewHold = heldPhaseName === "HUMAN_REVIEW_HOLD" || heldPhaseName === null;
   const canRemind = side === "OUT" && ["RUNNING", "REVIEW_HOLD", "AWAITING_APPROVAL", "PAUSED"].includes(run.status);
 
   async function call(label: string, args: { fn: string; params: Record<string, unknown> }, okMsg: string) {
@@ -201,13 +206,17 @@ function Body({ runId, onClose, onChanged }: { runId: string; onClose: () => voi
       {(canApprove || canRemind) && (
         <div className="flex flex-wrap gap-2 border-t border-border-subtle pt-4">
           {canApprove && <Button size="sm" leadingIcon={CheckCircle2} onClick={() => setApproveOpen((v) => !v)}>Approve run</Button>}
-          {canClearHold && (
+          {canClearHold && (isHumanReviewHold ? (
             <Button size="sm" variant="secondary" leadingIcon={PlayCircle} loading={busy === "clear"} onClick={() => call("clear",
               side === "OUT"
                 ? { fn: "out_workflow_clear_human_review_hold", params: { p_organization_id: run.organization_id, p_business_id: run.business_id, p_run_id: run.id, p_actor_user_id: user.id, p_context: {} } }
                 : { fn: "in_workflow_clear_human_review_hold", params: { p_run_id: run.id, p_context: {} } },
               "Hold cleared")}>Clear review hold</Button>
-          )}
+          ) : (
+            <Button size="sm" variant="secondary" leadingIcon={PlayCircle} loading={busy === "resume"} onClick={() => call("resume",
+              { fn: "resume_workflow_run", params: { p_run_id: run.id, p_actor_user_id: user.id, p_context: {} } },
+              "Run resumed")}>Resume run</Button>
+          ))}
           {canRemind && (
             <Button size="sm" variant="ghost" leadingIcon={BellRing} loading={busy === "remind"} onClick={() => call("remind", { fn: "out_workflow_send_reminder", params: { p_organization_id: run.organization_id, p_business_id: run.business_id, p_run_id: run.id, p_actor_user_id: user.id, p_context: {} } }, "Reminder sent")}>Send reminder</Button>
           )}
