@@ -22,9 +22,26 @@ export function UploadStatementDrawer({ open, onClose }: { open: boolean; onClos
   const [provider, setProvider] = useState("Revolut");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // BOOK-965: a business with no bank account can't upload (NO_BANK_ACCOUNT_CONFIGURED).
+  // Reveal an inline add-bank-account form, then retry the upload.
+  const [needBank, setNeedBank] = useState(false);
+  const [bankName, setBankName] = useState("");
+  const [bankCurrency, setBankCurrency] = useState("EUR");
+  const [bankIban, setBankIban] = useState("");
 
-  const reset = () => { setFile(null); setError(null); setBusy(false); };
+  const reset = () => {
+    setFile(null); setError(null); setBusy(false);
+    setNeedBank(false); setBankName(""); setBankIban("");
+  };
   const close = () => { reset(); onClose(); };
+
+  const isNoBankErr = (msg: string | null | undefined) => !!msg && /NO_BANK_ACCOUNT/i.test(msg);
+  const revealBankForm = () => {
+    setNeedBank(true);
+    setBankName((n) => n || `${provider} account`);
+    setError(null);
+    setBusy(false);
+  };
 
   const submit = async () => {
     if (!file || !currentBusiness) return;
@@ -42,7 +59,10 @@ export function UploadStatementDrawer({ open, onClose }: { open: boolean; onClos
         sizeBytes: file.size,
         contentType,
       });
-      if (!grant.ok) { setError(grant.error); setBusy(false); return; }
+      if (!grant.ok) {
+        if (isNoBankErr(grant.error)) { revealBankForm(); return; }
+        setError(grant.error); setBusy(false); return;
+      }
 
       const supabase = createSupabaseBrowserClient();
       const { error: uploadError } = await supabase.storage
@@ -64,7 +84,10 @@ export function UploadStatementDrawer({ open, onClose }: { open: boolean; onClos
         periodMonth: period.month,
         filename: file.name,
       });
-      if (!done.ok) { setError(done.error); setBusy(false); return; }
+      if (!done.ok) {
+        if (isNoBankErr(done.error)) { revealBankForm(); return; }
+        setError(done.error); setBusy(false); return;
+      }
 
       setBusy(false);
       // Refresh the RecentUploads list (it owns the ["stmt-uploads", businessId]
@@ -79,6 +102,32 @@ export function UploadStatementDrawer({ open, onClose }: { open: boolean; onClos
     } catch (err) {
       setBusy(false);
       setError(err instanceof Error ? err.message : "Upload failed");
+    }
+  };
+
+  const createBank = async () => {
+    if (!currentBusiness || !bankName.trim()) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { data, error: rpcErr } = await supabase.rpc("create_bank_account", {
+        p_business_id: currentBusiness.id,
+        p_account_name: bankName.trim(),
+        p_provider: provider,
+        p_currency: bankCurrency.trim() || "EUR",
+        p_masked_iban: bankIban.trim() || null,
+      });
+      if (rpcErr) { setBusy(false); setError(rpcErr.message); return; }
+      const res = data as { ok?: boolean; reason?: string } | null;
+      if (!res?.ok) { setBusy(false); setError(res?.reason ?? "Could not create bank account"); return; }
+      setNeedBank(false);
+      toast({ variant: "success", title: "Bank account added" });
+      // Retry the upload now that the business has a bank account.
+      await submit();
+    } catch (err) {
+      setBusy(false);
+      setError(err instanceof Error ? err.message : "Could not create bank account");
     }
   };
 
@@ -118,6 +167,20 @@ export function UploadStatementDrawer({ open, onClose }: { open: boolean; onClos
           Business: <span className="text-text-primary">{currentBusiness?.display_name ?? "—"}</span><br />
           Period: <span className="text-text-primary tabular-nums">{formatPeriod(period)}</span>
         </div>
+
+        {needBank && (
+          <div className="flex flex-col gap-3 rounded-md border border-border-default bg-bg-raised p-3">
+            <Alert variant="status-info" title="No bank account yet">
+              Add the bank account this statement belongs to, then we&rsquo;ll register the upload.
+            </Alert>
+            <Input label="Account name" value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="e.g. Revolut EUR Current" />
+            <Input label="Currency" value={bankCurrency} onChange={(e) => setBankCurrency(e.target.value)} />
+            <Input label="Masked IBAN (optional)" value={bankIban} onChange={(e) => setBankIban(e.target.value)} placeholder="CY** **** … 1234" />
+            <Button leadingIcon={UploadCloud} loading={busy} disabled={!bankName.trim()} onClick={createBank}>
+              Add bank account &amp; upload
+            </Button>
+          </div>
+        )}
 
         {error && <Alert variant="status-danger" title="Could not register statement">{error}</Alert>}
       </div>
