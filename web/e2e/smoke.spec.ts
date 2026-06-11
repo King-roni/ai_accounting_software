@@ -64,12 +64,15 @@ test.describe("domain screens (seeded data)", () => {
     await page.getByRole("button", { name: /Outgoing — expenses/ }).first().click();
     await expect(page.getByRole("dialog")).toBeVisible();
     await expect(page.getByText("Finalization readiness")).toBeVisible();
-    // R7.8: the Archive tab renders the versioned-archive panel. No finalized
-    // periods are seeded yet → empty state, but the manifest + adjustment-record
-    // read queries must execute without error under the owner's RLS.
+    // R7.8: the Archive tab renders the versioned-archive panel; the manifest +
+    // adjustment-record read queries must execute without error under the owner's
+    // RLS. Resilient to whether a period has been finalized — the empty state and
+    // the package list both render the panel intro, so anchor on that rather than
+    // on the (mutable) "no archived periods" empty state.
     await page.keyboard.press("Escape");
     await page.getByRole("tab", { name: "Archive" }).click();
-    await expect(page.getByText("No archived periods yet")).toBeVisible();
+    await expect(page.getByText(/tamper-evident packages/i)).toBeVisible();
+    await expect(page.getByText("Something went wrong")).toHaveCount(0);
   });
 
   test("reports lists the export catalogue", async ({ page }) => {
@@ -98,9 +101,10 @@ test.describe("domain screens (seeded data)", () => {
     await page.goto("/subscriptions");
     await expect(page.getByRole("heading", { name: "Subscriptions" })).toBeVisible();
     // Seeded ACTIVE vendor-memory + the demo OUT ledger → a tracked recurring vendor.
-    await expect(page.getByText("Amazon Web Services")).toBeVisible();
+    // exact: true — "Amazon Web Services" also prefixes "Amazon Web Services EMEA".
+    await expect(page.getByText("Amazon Web Services", { exact: true })).toBeVisible();
     await expect(page.getByText("Est. monthly")).toBeVisible();
-    await page.getByText("Amazon Web Services").click();
+    await page.getByText("Amazon Web Services", { exact: true }).click();
     await expect(page.getByRole("dialog")).toBeVisible();
     await expect(page.getByRole("dialog").getByText("Recurring amount")).toBeVisible();
   });

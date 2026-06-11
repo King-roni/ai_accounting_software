@@ -5,6 +5,10 @@ import { defineConfig, devices } from "@playwright/test";
  * dev server, or starts one). Auth is performed once in auth.setup.ts and the
  * session is reused via storageState. Data assertions target the seeded
  * "Demo Trading Ltd" business (admin@admin.com).
+ *
+ * The seeded admin has a verified TOTP factor, so auth.setup completes the MFA
+ * step-up — set E2E_TOTP_SECRET to that user's TOTP secret (BOOK-975). Override
+ * E2E_EMAIL / E2E_PASSWORD for a different account.
  */
 export default defineConfig({
   testDir: "./e2e",
