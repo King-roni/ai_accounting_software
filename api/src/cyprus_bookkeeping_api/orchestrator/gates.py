@@ -37,9 +37,13 @@ Evaluator = Callable[[Gateway, RunContext, str], tuple[GateDecision, str | None]
 def _db_gate(rpc_name: str, *, with_context: bool = False) -> Evaluator:
     """Wrap a DB gate evaluator keyed on ``p_workflow_run_id``.
 
-    Accepts either result key — ``satisfied`` (ledger) or ``passes`` (classify) —
-    and optionally passes ``p_context`` for gates whose signature requires it
-    (e.g. ``gate_in_workflow_classification_exit_v1``).
+    Accepts any of the result conventions in use: ``satisfied`` (ledger),
+    ``passes`` (classify), or a ``decision`` of ``ADVANCE``/``ALLOW`` (the
+    in_workflow.* gates, e.g. ``gate_in_workflow_classification_exit_v1``).
+    BOOK-976: those gates return ``{"decision": "ADVANCE"}`` and were previously
+    read as not-satisfied, so the IN_MONTHLY workflow could never pass
+    CLASSIFICATION / LEDGER_PREPARATION. Optionally passes ``p_context`` for gates
+    whose signature requires it.
     """
 
     def _evaluate(
@@ -54,6 +58,10 @@ def _db_gate(rpc_name: str, *, with_context: bool = False) -> Evaluator:
         ok = result.get("satisfied")
         if ok is None:
             ok = result.get("passes")
+        if ok is None:
+            decision = result.get("decision")
+            if decision is not None:
+                ok = decision in ("ADVANCE", "ALLOW")
         if bool(ok):
             return GateDecision.ADVANCE, None
         return GateDecision.HOLD, result.get("reason") or f"{rpc_name} not satisfied"
