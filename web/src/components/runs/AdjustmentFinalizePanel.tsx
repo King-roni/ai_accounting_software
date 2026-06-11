@@ -44,14 +44,28 @@ export function AdjustmentFinalizePanel({ run, onChanged }: { run: RunRow; onCha
     return (data ?? null) as unknown as AdjustmentRecordRow | null;
   });
 
-  // Parent archive package (the package keyed on the original monthly run).
+  // Parent archive package for the period.
   const { data: pkg } = useSWR<ParentPkg | null>(
     run.parent_run_id ? ["adj-parent-pkg", run.parent_run_id] : null,
     async () => {
+      // BOOK-979: resolve the package via the parent run's archive_package_id, not
+      // archive_packages.workflow_run_id. A paired IN run attaches to the OUT run's
+      // period package (BOOK-977), so the package row's workflow_run_id names only
+      // the side that built it — keying off it returns nothing for an IN parent and
+      // the re-finalize button never enables. The run's archive_package_id link is
+      // set correctly on both sides (= the shared period package).
+      const { data: parent, error: pErr } = await supabase
+        .from("workflow_runs")
+        .select("archive_package_id")
+        .eq("id", run.parent_run_id!)
+        .maybeSingle();
+      if (pErr) throw new Error(pErr.message);
+      const pkgId = (parent as { archive_package_id: string | null } | null)?.archive_package_id;
+      if (!pkgId) return null;
       const { data, error } = await supabase
         .from("archive_packages")
         .select("id, bundle_hash_anchor")
-        .eq("workflow_run_id", run.parent_run_id!)
+        .eq("id", pkgId)
         .maybeSingle();
       if (error) throw new Error(error.message);
       if (!data) return null;
