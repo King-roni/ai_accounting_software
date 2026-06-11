@@ -63,7 +63,7 @@ export const STUB_LABEL: Record<string, string> = {
   vat_summary: "Lights up when the VAT engine is connected",
   income_overview: "Weekly inflow · target view",
   expense_overview: "Weekly outflow · target view",
-  subscription_recurring_totals: "MRR trend — lights up when recurring invoices run",
+  subscription_recurring_totals: "Recurring vendor spend — lights up when recurring vendors are detected",
   tax_treatment_breakdown: "VAT treatment mix · target view",
   evidence_collection_status: "Evidence match rate · target view",
   client_invoice_aging: "Receivables aging · target view",
