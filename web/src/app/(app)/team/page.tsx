@@ -93,8 +93,12 @@ export default async function TeamPage() {
       <header>
         <h1 className="text-2xl font-semibold text-text-primary">Team</h1>
         <p className="text-sm text-text-secondary">
-          {orgName ? `${orgName} · ` : ""}{memberList.length} member{memberList.length === 1 ? "" : "s"}
-          {invitations.length > 0 && ` · ${invitations.length} invited`}
+          {orgName ?? ""}
+          {/* BOOK-973: the roster RPC is Owner/Admin-only; don't claim "0 members"
+              to members who simply can't see the list. */}
+          {isOwnerOrAdmin
+            ? `${orgName ? " · " : ""}${memberList.length} member${memberList.length === 1 ? "" : "s"}${invitations.length > 0 ? ` · ${invitations.length} invited` : ""}`
+            : `${orgName ? " · " : ""}roster visible to Owners & Admins`}
         </p>
       </header>
 
@@ -117,7 +121,7 @@ export default async function TeamPage() {
           </thead>
           <tbody>
             {memberList.length === 0 ? (
-              <tr><td colSpan={4} className="px-4 py-8 text-center text-text-muted">No members yet.</td></tr>
+              <tr><td colSpan={4} className="px-4 py-8 text-center text-text-muted">{isOwnerOrAdmin ? "No members yet." : "Only Owners and Admins can view the full team roster."}</td></tr>
             ) : memberList.map(([uid, info]) => {
               const roles = [...new Set(info.rows.map((r) => r.role))];
               const joined = info.rows.map((r) => r.joined_at).sort()[0];
