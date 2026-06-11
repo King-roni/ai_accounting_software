@@ -5,6 +5,7 @@ import { Building2, Contact, Plus, Search, UserX } from "lucide-react";
 import { Badge, Button, EmptyState, ErrorState, Input, Table, useToast, type Column } from "@/components/ui";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useShell } from "@/components/shell/ShellContext";
+import { can } from "@/lib/permissions";
 import { useIsMobile } from "@/components/shell/use-is-mobile";
 import { useT } from "@/i18n/LocaleProvider";
 import { ClientFormDrawer } from "@/components/clients/ClientFormDrawer";
@@ -105,14 +106,14 @@ export default function ClientsPage() {
     },
     {
       id: "actions", header: "", align: "right",
-      cell: (c) => (
+      cell: (c) => can.manageClients(currentBusiness?.role) ? (
         <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
           <Button variant="tertiary" size="sm" onClick={() => { setEditing(c); setFormOpen(true); }}>Edit</Button>
           {!c.disabled_at && (
             <Button variant="ghost" size="sm" leadingIcon={UserX} loading={busyId === c.id} onClick={() => disable(c)}>Disable</Button>
           )}
         </div>
-      ),
+      ) : null,
     },
   ];
 
@@ -125,7 +126,7 @@ export default function ClientsPage() {
             {isMultiBusiness ? "All businesses" : currentBusiness?.display_name ?? "—"} · {(data ?? []).length} {showInactive ? "total" : "active"}
           </p>
         </div>
-        {currentBusiness && !isMultiBusiness && !isMobile && (
+        {currentBusiness && !isMultiBusiness && !isMobile && can.manageClients(currentBusiness?.role) && (
           <Button leadingIcon={Plus} onClick={() => { setEditing(null); setFormOpen(true); }}>New client</Button>
         )}
       </header>
@@ -163,7 +164,7 @@ export default function ClientsPage() {
           empty={
             q.trim()
               ? <EmptyState icon={Search} heading="No clients match your search" body="Try a different name, email, or VAT number." />
-              : <EmptyState icon={Contact} heading="No clients yet" body="Add your first client to start creating invoices." action={<Button leadingIcon={Plus} onClick={() => { setEditing(null); setFormOpen(true); }}>New client</Button>} />
+              : <EmptyState icon={Contact} heading="No clients yet" body="Add your first client to start creating invoices." action={can.manageClients(currentBusiness?.role) ? <Button leadingIcon={Plus} onClick={() => { setEditing(null); setFormOpen(true); }}>New client</Button> : undefined} />
           }
         />
       )}

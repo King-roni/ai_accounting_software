@@ -5,6 +5,8 @@ export interface Business {
   id: string;
   display_name: string;
   organization_id: string;
+  /** The caller's active role on this business (BOOK-972), for UI action gating. */
+  role?: string | null;
 }
 export interface ShellUser {
   /** public.users.id — the actor id RPCs expect (not auth.users.id). */

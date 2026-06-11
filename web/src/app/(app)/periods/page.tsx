@@ -5,6 +5,7 @@ import { Building2, CalendarPlus, ChevronRight } from "lucide-react";
 import { Badge, Button, Card, CardBody, Drawer, EmptyState, ErrorState, Input, Select, Skeleton, Tabs, Textarea, useToast } from "@/components/ui";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useShell } from "@/components/shell/ShellContext";
+import { can } from "@/lib/permissions";
 import { useIsMobile } from "@/components/shell/use-is-mobile";
 import { RunDetailDrawer } from "@/components/runs/RunDetailDrawer";
 import { ArchivePanel } from "@/components/runs/ArchivePanel";
@@ -51,7 +52,7 @@ export default function PeriodsPage() {
           <h1 className="text-2xl font-semibold text-text-primary">Periods</h1>
           <p className="text-sm text-text-secondary">{isMultiBusiness ? "All businesses" : currentBusiness?.display_name ?? "—"} · {groups.length} period{groups.length === 1 ? "" : "s"}</p>
         </div>
-        {currentBusiness && !isMultiBusiness && !isMobile && <Button leadingIcon={CalendarPlus} onClick={() => setStartOpen(true)}>Start a period</Button>}
+        {currentBusiness && !isMultiBusiness && !isMobile && can.startPeriod(currentBusiness?.role) && <Button leadingIcon={CalendarPlus} onClick={() => setStartOpen(true)}>Start a period</Button>}
       </header>
 
       {!currentBusiness ? (
@@ -70,7 +71,7 @@ export default function PeriodsPage() {
                 ) : isLoading ? (
                   <div className="flex flex-col gap-3">{[0, 1].map((i) => <Card key={i}><CardBody className="pt-5"><Skeleton height={64} /></CardBody></Card>)}</div>
                 ) : groups.length === 0 ? (
-                  <EmptyState icon={CalendarPlus} heading="No periods run yet" body="Start a monthly period to run the outgoing (expenses) and incoming (income) workflows." action={<Button leadingIcon={CalendarPlus} onClick={() => setStartOpen(true)}>Start a period</Button>} />
+                  <EmptyState icon={CalendarPlus} heading="No periods run yet" body="Start a monthly period to run the outgoing (expenses) and incoming (income) workflows." action={can.startPeriod(currentBusiness?.role) ? <Button leadingIcon={CalendarPlus} onClick={() => setStartOpen(true)}>Start a period</Button> : undefined} />
                 ) : (
                   <div className="flex flex-col gap-3">
                     {groups.map((g) => (

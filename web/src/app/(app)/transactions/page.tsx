@@ -5,6 +5,7 @@ import { Building2, Plus, Search } from "lucide-react";
 import { Badge, Button, EmptyState, ErrorState, Input, Select, Table, type Column } from "@/components/ui";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { formatPeriod, useShell } from "@/components/shell/ShellContext";
+import { can } from "@/lib/permissions";
 import {
   CLASSIFICATION_BADGE, DEDUP_BADGE, formatMoney, periodRange, TXN_COLUMNS,
   txnDescription, txnTag, type TxnRow,
@@ -115,7 +116,9 @@ export default function TransactionsPage() {
             {isMultiBusiness ? "All businesses" : currentBusiness?.display_name ?? "—"} · {formatPeriod(period)}
           </p>
         </div>
-        <Button leadingIcon={Plus} disabled={!currentBusiness} onClick={() => setUploadOpen(true)}>Upload statement</Button>
+        {can.uploadStatement(currentBusiness?.role) && (
+          <Button leadingIcon={Plus} disabled={!currentBusiness} onClick={() => setUploadOpen(true)}>Upload statement</Button>
+        )}
       </header>
 
       {currentBusiness && (
@@ -162,7 +165,7 @@ export default function TransactionsPage() {
             <EmptyState
               heading="No transactions this period"
               body="Upload a bank statement to import transactions for this period."
-              action={<Button size="sm" leadingIcon={Plus} onClick={() => setUploadOpen(true)}>Upload statement</Button>}
+              action={can.uploadStatement(currentBusiness?.role) ? <Button size="sm" leadingIcon={Plus} onClick={() => setUploadOpen(true)}>Upload statement</Button> : undefined}
             />
           }
         />

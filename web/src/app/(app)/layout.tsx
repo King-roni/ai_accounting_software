@@ -28,6 +28,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // create their organization + first business (P0.3 self-serve bootstrap).
   if (!businesses || businesses.length === 0) redirect("/onboarding");
 
+  // BOOK-972: attach the caller's role per business so the shell can gate action
+  // affordances by role (the server still enforces can_perform / RLS).
+  const { data: roleRows } = await supabase
+    .from("business_user_roles")
+    .select("business_id, role")
+    .eq("user_id", profile?.id ?? "")
+    .eq("status", "ACTIVE");
+  const roleByBusiness = new Map((roleRows ?? []).map((r) => [r.business_id, r.role as string]));
+  const businessesWithRole = businesses.map((b) => ({ ...b, role: roleByBusiness.get(b.id) ?? null }));
+
   // Default the shell to the period that actually has data so screens don't
   // open on an empty future month. We use the first accessible business — the
   // same default the shell picks client-side — and fall back to the current
@@ -53,7 +63,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <AppShell
       user={{ id: profile?.id ?? "", email: user.email ?? profile?.email ?? "", displayName: profile?.display_name ?? null }}
-      businesses={businesses ?? []}
+      businesses={businessesWithRole}
       initialPeriod={initialPeriod}
     >
       {children}
